@@ -16,3 +16,9 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+
+petcare:
+  security:
+    jwt-secret: test-secret-key-for-unit-tests-at-least-32-chars
+    jwt-issuer: petcare-o2o-api-test
+    jwt-expiration-minutes: 120

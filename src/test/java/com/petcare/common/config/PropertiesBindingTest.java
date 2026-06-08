@@ -25,8 +25,10 @@ class PropertiesBindingTest {
     @Test
     void securityProperties_shouldBindFromYaml() {
         assertNotNull(securityProperties);
-        // JWT_SECRET defaults to empty string in test profile
-        assertEquals("", securityProperties.jwtSecret());
+        // Test profile has a dedicated test secret in application-test.yml
+        assertNotNull(securityProperties.jwtSecret());
+        assertEquals("petcare-o2o-api-test", securityProperties.jwtIssuer());
+        assertEquals(120, securityProperties.jwtExpirationMinutes());
     }
 
     @Test

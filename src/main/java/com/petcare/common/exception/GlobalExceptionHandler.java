@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,6 +17,9 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 /**
  * Global exception handler that converts exceptions into unified ApiResponse format.
  * Ensures error responses never leak SQL, stack traces, or secrets.
+ *
+ * Spring Security exceptions are primarily handled by RestAuthenticationEntryPoint and
+ * RestAccessDeniedHandler. This class provides fallback coverage for edge cases.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -46,6 +51,26 @@ public class GlobalExceptionHandler {
         HttpStatus status = resolveHttpStatus(ex.getCode());
         ApiResponse<Void> body = ApiResponse.error(ex.getCode(), ex.getMessage());
         return ResponseEntity.status(status).body(body);
+    }
+
+    /**
+     * Handles Spring Security access denied (403).
+     * This is a fallback; primary handling is in RestAccessDeniedHandler.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.FORBIDDEN, "权限不足，无法访问");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    /**
+     * Handles Spring Security authentication failures (401).
+     * This is a fallback; primary handling is in RestAuthenticationEntryPoint.
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.UNAUTHORIZED, "认证失败，请先登录");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 
     /**
@@ -81,6 +106,7 @@ public class GlobalExceptionHandler {
             case ErrorCode.STATE_CONFLICT -> HttpStatus.CONFLICT;
             case ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
             case ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN;
+            case ErrorCode.WECHAT_LOGIN_NOT_ENABLED -> HttpStatus.UNPROCESSABLE_ENTITY;
             default -> HttpStatus.UNPROCESSABLE_ENTITY;
         };
     }

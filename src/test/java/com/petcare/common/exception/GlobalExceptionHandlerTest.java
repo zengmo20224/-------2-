@@ -1,8 +1,10 @@
 package com.petcare.common.exception;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -13,12 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.petcare.common.config.SecurityConfig;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,9 +27,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Verifies that validation errors, business exceptions, and unexpected errors
  * are all converted into the unified ApiResponse format.
  */
-@WebMvcTest
-@Import({SecurityConfig.class, GlobalExceptionHandler.class, GlobalExceptionHandlerTest.TestController.class})
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(GlobalExceptionHandlerTest.TestController.class)
 class GlobalExceptionHandlerTest {
 
     @Autowired
@@ -65,13 +65,13 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @WithMockUser
+    @DisplayName("Validation error returns 400 with field errors")
     void handleValidation_shouldReturn400WithFieldErrors() throws Exception {
         String body = """
                 {"name": ""}
                 """;
 
         mockMvc.perform(post("/api/v1/test/validate")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
@@ -83,9 +83,9 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @WithMockUser
+    @DisplayName("Business exception returns 422 with error code")
     void handleBusiness_shouldReturn422WithErrorCode() throws Exception {
         mockMvc.perform(post("/api/v1/test/business")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.success").value(false))
@@ -95,9 +95,9 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @WithMockUser
+    @DisplayName("Unexpected exception returns 500 with generic message")
     void handleUnexpected_shouldReturn500WithGenericMessage() throws Exception {
         mockMvc.perform(post("/api/v1/test/unexpected")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))

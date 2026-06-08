@@ -16,5 +16,8 @@ public final class ErrorCode {
     public static final String STATE_CONFLICT = "state_conflict";
     public static final String UNAUTHORIZED = "unauthorized";
     public static final String FORBIDDEN = "forbidden";
+    public static final String WECHAT_LOGIN_NOT_ENABLED = "wechat_login_not_enabled";
+    public static final String INVALID_TOKEN = "invalid_token";
+    public static final String EXPIRED_TOKEN = "expired_token";
     public static final String INTERNAL_ERROR = "internal_error";
 }
