@@ -1,76 +1,76 @@
-# Integration Gates
+# 集成门禁
 
-Date: 2026-06-08
+日期：2026-06-08
 
-No phase should be treated as finished until its gate passes.
+任何阶段在通过对应门禁前，都不能算真正完成。
 
-## Gate 1: Schema
+## 门禁 1：Schema
 
-- [ ] `schema.sql` exists.
-- [ ] all required tables are present.
-- [ ] SQL imports into MySQL 8 from a clean database.
-- [ ] table comments exist.
-- [ ] important field comments exist.
-- [ ] unique indexes exist.
-- [ ] high-frequency query indexes exist.
-- [ ] defaults exist for status, create time, update time, and deleted fields.
-- [ ] Git commit exists.
+- [ ] `schema.sql` 存在。
+- [ ] 所有必需表都存在。
+- [ ] SQL 可以导入干净的 MySQL 8 数据库。
+- [ ] 表注释存在。
+- [ ] 重要字段注释存在。
+- [ ] 唯一索引存在。
+- [ ] 高频查询索引存在。
+- [ ] 状态、创建时间、更新时间、deleted 字段默认值存在。
+- [ ] Git 提交存在。
 
-## Gate 2: Backend Skeleton
+## 门禁 2：后端骨架
 
-- [ ] Spring Boot app starts.
-- [ ] health endpoint works.
-- [ ] database connection is environment-configured.
-- [ ] unified response envelope exists.
-- [ ] global exception handling exists.
-- [ ] no hardcoded secrets.
-- [ ] Git commit exists.
+- [ ] Spring Boot 应用可以启动。
+- [ ] 健康检查接口可用。
+- [ ] 数据库连接通过环境配置。
+- [ ] 统一响应结构存在。
+- [ ] 全局异常处理存在。
+- [ ] 没有硬编码密钥。
+- [ ] Git 提交存在。
 
-## Gate 3: Core Business Logic
+## 门禁 3：核心业务逻辑
 
-- [ ] unit tests cover pure calculations.
-- [ ] integration tests cover database-backed flows.
-- [ ] booking conflict rules pass.
-- [ ] home service distance rules pass.
-- [ ] status transition rules pass.
-- [ ] Git commit exists.
+- [ ] 单元测试覆盖纯计算逻辑。
+- [ ] 集成测试覆盖数据库业务流。
+- [ ] 预约冲突规则通过。
+- [ ] 上门服务距离规则通过。
+- [ ] 状态流转规则通过。
+- [ ] Git 提交存在。
 
-## Gate 4: Security
+## 门禁 4：安全
 
-- [ ] admin APIs require authentication.
-- [ ] role authorization is enforced.
-- [ ] user ownership is enforced.
-- [ ] passwords are hashed.
-- [ ] provider secrets are environment-driven.
-- [ ] errors do not leak stack traces or SQL details.
-- [ ] Git commit exists.
+- [ ] 后台 API 必须认证。
+- [ ] 角色授权已生效。
+- [ ] 用户资源归属已校验。
+- [ ] 密码已哈希。
+- [ ] Provider 密钥来自环境变量。
+- [ ] 错误不会泄露堆栈或 SQL 细节。
+- [ ] Git 提交存在。
 
-## Gate 5: AI Safety
+## 门禁 5：AI 安全
 
-- [ ] AI provider is behind one adapter.
-- [ ] provider can be mocked.
-- [ ] customer service is grounded by backend context.
-- [ ] admin analysis uses backend aggregates.
-- [ ] high-risk pet symptoms trigger veterinarian recommendation.
-- [ ] AI cannot directly query the database.
-- [ ] Git commit exists.
+- [ ] AI Provider 位于统一适配器之后。
+- [ ] Provider 可以被 Mock。
+- [ ] AI 客服由后端上下文接地。
+- [ ] 管理端分析使用后端聚合数据。
+- [ ] 高风险宠物症状会触发建议就医。
+- [ ] AI 不能直接查询数据库。
+- [ ] Git 提交存在。
 
-## Gate 6: Frontend Readiness
+## 门禁 6：前端准备
 
-- [ ] API docs or endpoint list exists.
-- [ ] user critical flows are available.
-- [ ] admin critical flows are available.
-- [ ] list endpoints support pagination.
-- [ ] error shape is consistent.
-- [ ] seed data or demo data exists.
-- [ ] Git commit exists.
+- [ ] API 文档或接口清单存在。
+- [ ] 用户关键流程可用。
+- [ ] 后台关键流程可用。
+- [ ] 列表接口支持分页。
+- [ ] 错误结构一致。
+- [ ] 种子数据或演示数据存在。
+- [ ] Git 提交存在。
 
-## Gate 7: Release Candidate
+## 门禁 7：候选发布
 
-- [ ] backend build passes.
-- [ ] tests pass.
-- [ ] coverage target is met or documented.
-- [ ] SQL migration/import path is reproducible.
-- [ ] Docker Compose starts required services.
-- [ ] no critical security issue remains.
-- [ ] Git working tree is clean.
+- [ ] 后端构建通过。
+- [ ] 测试通过。
+- [ ] 覆盖率达标或有明确说明。
+- [ ] SQL 迁移或导入路径可复现。
+- [ ] Docker Compose 可以启动必需服务。
+- [ ] 没有遗留严重安全问题。
+- [ ] Git 工作区干净。

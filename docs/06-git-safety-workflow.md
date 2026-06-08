@@ -1,12 +1,12 @@
-# Git Safety Workflow
+# Git 防护流程
 
-Date: 2026-06-08
+日期：2026-06-08
 
-The project must use Git checkpoints to prevent AI-generated changes from damaging the core project.
+项目必须使用 Git 检查点，防止 AI 生成的错误变更破坏核心项目。
 
-## Branch Policy
+## 分支策略
 
-Use one branch per phase:
+每个阶段使用一个独立分支：
 
 ```text
 phase-1-schema
@@ -21,22 +21,22 @@ phase-9-admin-api
 phase-10-frontend
 ```
 
-Do not mix unrelated phases in one branch.
+不要把无关阶段混在一个分支里。
 
-## Before Starting Work
+## 开始工作前
 
-Run:
+运行：
 
 ```powershell
 git status --short --branch
 git diff --stat
 ```
 
-If there are unexpected changes, stop and document them before editing.
+如果出现意外变更，先停下来记录清楚，再开始编辑。
 
-## Commit Rules
+## 提交规则
 
-Use conventional commits:
+使用 Conventional Commits：
 
 ```text
 docs: add project planning baseline
@@ -47,17 +47,17 @@ fix: reject home service outside radius
 refactor: simplify booking interval calculation
 ```
 
-Each commit should be small enough to review.
+每个提交都应该足够小，方便审查。
 
-## TDD Checkpoint Commits
+## TDD 检查点提交
 
-For business logic:
+业务逻辑按以下节奏提交：
 
-1. Commit failing tests after RED is verified.
-2. Commit implementation after GREEN is verified.
-3. Commit refactor only after tests remain GREEN.
+1. RED 验证后提交失败测试。
+2. GREEN 验证后提交实现。
+3. 只有测试保持绿色时，才提交重构。
 
-Example:
+示例：
 
 ```powershell
 git add src/test/java
@@ -67,9 +67,9 @@ git add src/main/java
 git commit -m "feat: implement booking availability calculation"
 ```
 
-## Protection Commands
+## 防护命令
 
-Inspect changes before committing:
+提交前检查变更：
 
 ```powershell
 git diff --stat
@@ -77,18 +77,18 @@ git diff --check
 git diff
 ```
 
-After commit:
+提交后检查：
 
 ```powershell
 git status --short --branch
 git log --oneline -5
 ```
 
-## Restore Policy
+## 恢复策略
 
-Do not use destructive commands casually.
+不要随意使用破坏性命令。
 
-Forbidden unless the user explicitly authorizes:
+除非用户明确授权，否则禁止使用：
 
 ```powershell
 git reset --hard
@@ -96,18 +96,18 @@ git clean -fd
 git checkout -- .
 ```
 
-If a generated change is wrong, prefer:
+如果 AI 生成的变更是错的，优先：
 
-- edit forward with a new commit
-- revert a specific commit with `git revert <hash>`
-- create a backup branch before risky cleanup
+- 用新的提交向前修正。
+- 使用 `git revert <hash>` 回滚指定提交。
+- 在高风险清理前创建备份分支。
 
-## Handoff Requirement
+## 交接要求
 
-A phase handoff must include:
+阶段交接必须包含：
 
-- branch name
-- latest commit hash
-- `git status --short --branch` output summary
-- validation commands run
-- validation results
+- 分支名
+- 最新提交 hash
+- `git status --short --branch` 输出摘要
+- 运行过的验证命令
+- 验证结果

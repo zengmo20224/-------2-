@@ -1,36 +1,36 @@
-# Code Standards
+# 代码规范
 
-Date: 2026-06-08
+日期：2026-06-08
 
-## General Rules
+## 通用规则
 
-- Prefer simple, readable code over clever abstractions.
-- Keep functions small and focused.
-- Keep files cohesive; split files before they become hard to review.
-- Validate all external input at system boundaries.
-- Return user-friendly messages to clients.
-- Log detailed server-side context without leaking secrets.
-- Never silently swallow errors.
-- Never hardcode API keys, passwords, tokens, or database credentials.
+- 优先写简单、可读的代码，不追求炫技式抽象。
+- 函数保持短小，职责单一。
+- 文件保持高内聚；文件变得难以审查时就拆分。
+- 所有外部输入都必须在系统边界校验。
+- 返回给用户的错误信息要友好。
+- 服务端日志可以记录详细上下文，但不能泄露密钥。
+- 不能静默吞掉异常。
+- 不能硬编码 API Key、密码、Token 或数据库凭据。
 
-## Java And Spring Boot Rules
+## Java 与 Spring Boot 规则
 
-- Use Java 17 or newer.
-- Use constructor injection.
-- Use Bean Validation for request DTOs.
-- Use DTOs for API input and output; do not expose entity classes directly from controllers.
-- Put business transactions in services.
-- Keep mappers focused on persistence.
-- Use enum-like constants for status values.
-- Use `BigDecimal` for money and distance values where precision matters.
-- Use `LocalDate`, `LocalTime`, and `LocalDateTime` for date/time fields.
-- Use clear exception types for validation, authorization, not found, conflict, and business rule failures.
+- 使用 Java 17 或更高版本。
+- 使用构造器注入。
+- 请求 DTO 使用 Bean Validation。
+- API 入参和出参使用 DTO，不要从 Controller 直接暴露实体类。
+- 业务事务放在 Service 层。
+- Mapper 只负责持久化。
+- 状态字段使用常量或枚举式定义。
+- 金额和需要精度的距离使用 `BigDecimal`。
+- 日期时间使用 `LocalDate`、`LocalTime`、`LocalDateTime`。
+- 对参数校验、无权限、资源不存在、状态冲突、业务规则失败使用清晰的异常类型。
 
-## Package Boundaries
+## 包边界
 
-Business modules should own their API, service, mapper, entity, and DTO classes.
+业务模块应拥有自己的 API、Service、Mapper、Entity 和 DTO。
 
-Example:
+示例：
 
 ```text
 booking/
@@ -42,40 +42,40 @@ booking/
   domain/
 ```
 
-Shared utilities belong in `common` only when at least two modules need them.
+只有至少两个模块复用的工具才放进 `common`。
 
-## API Rules
+## API 规则
 
-- Use `/api/v1`.
-- Use plural resource names.
-- Use nouns for resources and verbs only for business actions such as `/cancel` or `/confirm`.
-- Use pagination for list endpoints.
-- Use consistent response envelopes.
-- Use correct HTTP status codes.
-- Never return stack traces to clients.
+- 使用 `/api/v1`。
+- 资源名使用复数。
+- 资源 URL 用名词，只有业务动作才使用 `/cancel`、`/confirm` 这类动词。
+- 列表接口必须支持分页。
+- 使用统一响应结构。
+- 使用正确 HTTP 状态码。
+- 不向客户端返回堆栈。
 
-## Database Rules
+## 数据库规则
 
-- Use indexes intentionally; every index must support a query pattern.
-- Do not use `SELECT *` in custom SQL.
-- Avoid N+1 query patterns.
-- Wrap multi-table state changes in transactions.
-- Keep logical delete behavior consistent.
-- Keep status transitions explicit and test-covered.
+- 索引要有明确查询场景支撑。
+- 自定义 SQL 不使用 `SELECT *`。
+- 避免 N+1 查询。
+- 多表状态变更必须放进事务。
+- 逻辑删除行为要一致。
+- 状态流转必须显式实现并有测试覆盖。
 
-## AI Rules
+## AI 规则
 
-- AI provider calls must go through one backend adapter.
-- Provider credentials must come from environment variables.
-- AI prompts must be built from approved context objects.
-- AI customer service must not invent business facts.
-- AI admin analysis must use backend aggregate data, not direct SQL execution by AI.
-- AI medical safety refusals and veterinarian referral must be deterministic where high-risk symptoms are detected.
+- AI Provider 调用必须经过一个统一后端适配层。
+- Provider 凭据必须来自环境变量。
+- Prompt 必须由经过批准的上下文对象构造。
+- AI 客服不能编造业务事实。
+- AI 管理端分析必须使用后端聚合数据，不能让 AI 直接执行 SQL。
+- 对高风险宠物症状，安全拒答和建议就医必须是确定性规则，不完全依赖模型自由发挥。
 
-## Frontend Rules For Later Phases
+## 后续前端规则
 
-- Use typed API clients where possible.
-- Handle loading, empty, error, and success states.
-- Do not store sensitive tokens in unsafe locations without review.
-- Keep business state in Pinia stores only when shared across pages.
-- Use semantic UI labels and stable test selectors for E2E tests.
+- 尽量使用类型化 API Client。
+- 页面必须处理加载、空数据、错误和成功状态。
+- 未经审查，不要把敏感 Token 存在不安全位置。
+- 只有跨页面共享的业务状态才放进 Pinia。
+- 使用语义化 UI 文案和稳定的测试选择器，方便 E2E 测试。

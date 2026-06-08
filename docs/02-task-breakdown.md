@@ -1,232 +1,232 @@
-# Task Breakdown
+# 任务拆解
 
-Date: 2026-06-08
+日期：2026-06-08
 
-## Phase 0: Planning Baseline
+## 阶段 0：规划基线
 
-Status: in progress
+状态：已完成初版
 
-Deliverables:
+交付物：
 
-- project boundary document
-- architecture design document
-- GLM5.1 implementation plan
-- code standards
-- testing and verification gates
-- Git safety workflow
+- 项目边界文档
+- 架构设计文档
+- GLM5.1 实施计划
+- 代码规范
+- 测试与验证门禁
+- Git 防护流程
 
-Exit criteria:
+退出标准：
 
-- documents committed to Git
-- GLM5.1 can start Phase 1 without guessing project scope
+- 文档已提交到 Git。
+- GLM5.1 可以在不猜测项目范围的情况下开始阶段 1。
 
-## Phase 1: Database Schema
+## 阶段 1：数据库 Schema
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
 - `schema.sql`
-- optional `docs/schema-notes.md` if field-level clarifications are needed
+- 如需解释字段微调，可新增 `docs/schema-notes.md`
 
-Required tasks:
+必做任务：
 
-1. Generate complete MySQL 8 DDL for every table in the pasted requirement.
-2. Keep table and field names aligned with the requirement unless a documented correction is necessary.
-3. Add table comments and important field comments.
-4. Add default status values.
-5. Add `create_time DEFAULT CURRENT_TIMESTAMP`.
-6. Add `update_time DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`.
-7. Add `deleted TINYINT DEFAULT 0`.
-8. Add unique indexes for `openid`, `username`, `booking_no`, `order_no`, and relation uniqueness.
-9. Add indexes for high-frequency queries.
-10. Validate by importing into MySQL 8.
+1. 为原始需求中的每张表生成完整 MySQL 8 DDL。
+2. 表名和字段名保持与需求一致，除非有文档化的修正理由。
+3. 添加表注释和重要字段注释。
+4. 添加合理的状态默认值。
+5. 添加 `create_time DEFAULT CURRENT_TIMESTAMP`。
+6. 添加 `update_time DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`。
+7. 添加 `deleted TINYINT DEFAULT 0`。
+8. 为 `openid`、`username`、`booking_no`、`order_no` 和关系唯一性添加唯一索引。
+9. 为高频查询添加索引。
+10. 导入 MySQL 8 验证。
 
-Exit criteria:
+退出标准：
 
-- SQL imports successfully from a clean database.
-- `SHOW TABLES` confirms all tables exist.
-- representative `SHOW CREATE TABLE` checks confirm comments, defaults, and indexes.
-- Git commit exists for the validated schema.
+- SQL 可以导入一个干净数据库。
+- `SHOW TABLES` 确认所有表存在。
+- 代表性 `SHOW CREATE TABLE` 检查确认注释、默认值和索引存在。
+- 验证后的 Schema 已提交 Git。
 
-## Phase 2: Backend Skeleton
+## 阶段 2：后端骨架
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- Spring Boot 3 project
-- Maven or Gradle build file
+- Spring Boot 3 项目
+- Maven 或 Gradle 构建文件
 - `application.yml`
-- unified response and error structure
-- base packages and module directories
-- MyBatis-Plus configured
-- database connection configured through environment variables
+- 统一响应和错误结构
+- 基础包结构和模块目录
+- MyBatis-Plus 配置
+- 通过环境变量配置数据库连接
 
-Exit criteria:
+退出标准：
 
-- application starts locally
-- health endpoint works
-- build passes
-- no hardcoded secrets
-- Git commit exists
+- 应用可以本地启动。
+- 健康检查接口可用。
+- 构建通过。
+- 没有硬编码密钥。
+- 已提交 Git。
 
-## Phase 3: Core Domain Entities And Mappers
+## 阶段 3：核心实体与 Mapper
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- entity classes matching `schema.sql`
-- mapper interfaces
-- basic CRUD service foundations for each module
-- enum constants for status fields
+- 与 `schema.sql` 匹配的实体类
+- Mapper 接口
+- 各模块基础 CRUD Service
+- 状态字段对应的常量或枚举
 
-Exit criteria:
+退出标准：
 
-- mapper integration tests pass against test database
-- status constants match database defaults
-- no direct controller-to-mapper shortcuts for business flows
-- Git commit exists
+- Mapper 集成测试在测试数据库上通过。
+- 状态常量与数据库默认值一致。
+- 业务流程中没有 Controller 直接调用 Mapper 的捷径。
+- 已提交 Git。
 
-## Phase 4: Authentication And Authorization
+## 阶段 4：认证与授权
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- admin login
-- user login placeholder suitable for later WeChat integration
-- token authentication
-- admin role checks
-- user ownership checks
+- 管理员登录
+- 为后续微信登录预留的用户登录占位实现
+- Token 认证
+- 后台角色校验
+- 用户资源归属校验
 
-Exit criteria:
+退出标准：
 
-- unauthorized requests return `401`
-- forbidden role access returns `403`
-- password hashing test exists
-- no token or password logged
-- Git commit exists
+- 未认证请求返回 `401`。
+- 无权限角色访问返回 `403`。
+- 密码哈希测试存在。
+- Token 和密码不会被日志记录。
+- 已提交 Git。
 
-## Phase 5: Service Booking And Scheduling
+## 阶段 5：服务预约与排班
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- service listing
-- available time calculation
-- booking creation
-- merchant confirm, reject, cancel, complete
-- status log recording
-- manual staff reassignment
-- home service radius validation
+- 服务列表
+- 可预约时间计算
+- 预约创建
+- 商家确认、拒绝、取消、完成
+- 状态日志记录
+- 人工改派员工
+- 上门服务半径校验
 
-Exit criteria:
+退出标准：
 
-- unit tests cover interval subtraction and slot generation
-- integration tests cover booking conflicts
-- cancelled and rejected bookings do not occupy time
-- pending, confirmed, and in-service bookings occupy time
-- Git commit exists
+- 单元测试覆盖时间段扣减和时间槽生成。
+- 集成测试覆盖预约冲突。
+- 取消和拒绝的预约不占用时间。
+- 待确认、已确认、服务中预约占用时间。
+- 已提交 Git。
 
-## Phase 6: Community And Moderation
+## 阶段 6：社区与内容审核
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- topic, post, image, comment APIs
-- like, favorite, report APIs
-- sensitive word matching
-- review record creation
-- admin moderation APIs
+- 话题、帖子、图片、评论 API
+- 点赞、收藏、举报 API
+- 敏感词匹配
+- 审核记录创建
+- 后台审核 API
 
-Exit criteria:
+退出标准：
 
-- tests cover no-risk, mild-risk, medium-risk, severe-risk content paths
-- severe content is rejected
-- mild and medium content enters review
-- comments also pass moderation
-- Git commit exists
+- 测试覆盖无风险、轻度风险、中度风险、严重风险内容路径。
+- 严重风险内容被拒绝。
+- 轻度和中度风险内容进入待审核。
+- 评论同样经过内容审核。
+- 已提交 Git。
 
-## Phase 7: Product Pickup Orders
+## 阶段 7：商品到店自提订单
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- product listing
-- cart item management
-- pickup order creation
-- merchant confirmation
-- prepare, ready, paid, completed, cancelled flows
+- 商品列表
+- 购物车管理
+- 自提订单创建
+- 商家确认
+- 备货、待自提、确认收款、完成、取消流程
 
-Exit criteria:
+退出标准：
 
-- stock and order amount are handled transactionally
-- duplicate cart rows are prevented
-- order state transitions are tested
-- Git commit exists
+- 库存和订单金额在事务中处理。
+- 防止购物车重复行。
+- 订单状态流转有测试。
+- 已提交 Git。
 
-## Phase 8: AI Provider And AI Features
+## 阶段 8：AI Provider 与 AI 功能
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- unified AI provider client
-- conversation and message persistence
-- usage logging
-- customer service context builder
-- pet companion safety guardrails
-- post assistant
-- admin analysis report generation from backend aggregation
+- 统一 AI Provider Client
+- 会话和消息持久化
+- 用量日志
+- AI 客服上下文构造器
+- 宠物陪伴安全边界
+- 发帖辅助
+- 基于后端聚合数据生成管理端分析报告
 
-Exit criteria:
+退出标准：
 
-- AI provider can be mocked in tests
-- missing API key fails fast with safe error
-- customer service responses are grounded in supplied context
-- medical high-risk symptoms trigger veterinarian recommendation
-- AI cannot directly query database
-- Git commit exists
+- AI Provider 可以在测试中 Mock。
+- API Key 缺失时快速失败，并返回安全错误。
+- AI 客服回答基于传入上下文。
+- 高风险宠物症状会触发建议就医。
+- AI 不能直接查询数据库。
+- 已提交 Git。
 
-## Phase 9: Admin API Completion
+## 阶段 9：后台 API 完成
 
-Owner: GLM5.1
+负责人：GLM5.1
 
-Deliverables:
+交付物：
 
-- store config management
-- service management
-- staff, skill, schedule management
-- booking management
-- product management
-- content moderation management
-- operation logs
+- 门店配置管理
+- 服务管理
+- 员工、技能、排班管理
+- 预约管理
+- 商品管理
+- 内容审核管理
+- 操作日志
 
-Exit criteria:
+退出标准：
 
-- admin endpoints require role permissions
-- important admin operations write operation logs
-- pagination exists for list endpoints
-- Git commit exists
+- 后台接口需要角色权限。
+- 重要后台操作写入操作日志。
+- 列表接口支持分页。
+- 已提交 Git。
 
-## Phase 10: Frontend Integration
+## 阶段 10：前端集成
 
-Owner: future frontend implementer
+负责人：后续前端实现者
 
-Deliverables:
+交付物：
 
-- mini program user flows
-- admin dashboard flows
-- API integration
-- browser or mini-program emulator verification
+- 小程序用户流程
+- 管理后台流程
+- API 接入
+- 浏览器或小程序模拟器验证
 
-Exit criteria:
+退出标准：
 
-- critical flows have E2E evidence
-- UI handles loading, empty, and error states
-- Git commit exists
+- 关键流程有 E2E 证据。
+- UI 覆盖加载、空数据、错误和成功状态。
+- 已提交 Git。

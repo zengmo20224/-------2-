@@ -1,73 +1,73 @@
-# GLM5.1 Implementation Plan
+# GLM5.1 实施计划
 
-Date: 2026-06-08
+日期：2026-06-08
 
-This is the execution brief for GLM5.1.
+本文档是给 GLM5.1 的执行说明。
 
-## Role
+## 角色分工
 
-GLM5.1 is responsible for concrete code and SQL implementation. Codex owns planning, task boundaries, quality gates, and review criteria.
+GLM5.1 负责具体 SQL 和代码实现。Codex 负责规划、任务边界、质量门禁和审查标准。
 
-Do not skip phases. Do not integrate a phase into the main project until its exit criteria pass.
+不要跳阶段。某个阶段没有通过退出标准前，不允许把它接入主项目。
 
-## Current Repository State
+## 当前仓库状态
 
-- The repository starts as a planning baseline.
-- There is no application code yet.
-- Use Git for every safe checkpoint.
-- Start implementation from `schema.sql`; do not build frontend first.
+- 仓库当前是规划基线。
+- 还没有应用代码。
+- 每个安全节点都要用 Git 保存。
+- 实现必须从 `schema.sql` 开始，不要先写前端。
 
-## Required Git Setup Before Coding
+## 编码前必须做的 Git 操作
 
-Run:
+先运行：
 
 ```powershell
 git status --short --branch
 git branch
 ```
 
-Then create a dedicated branch for the current phase:
+然后为当前阶段创建独立分支：
 
 ```powershell
 git switch -c phase-1-schema
 ```
 
-If the branch already exists:
+如果分支已经存在：
 
 ```powershell
 git switch phase-1-schema
 ```
 
-Never work for a phase directly on `main` unless the user explicitly asks.
+除非用户明确要求，否则不要直接在 `main` 上做阶段实现。
 
-## Phase 1 Mandatory Task: schema.sql
+## 阶段 1 强制任务：schema.sql
 
-Create:
+创建：
 
 ```text
 schema.sql
 ```
 
-Requirements:
+要求：
 
-- Use MySQL 8 compatible SQL.
-- Use `CREATE DATABASE IF NOT EXISTS petcare_o2o DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`.
-- Use InnoDB for every table.
-- Use `BIGINT` primary keys.
-- Use `DECIMAL(10,2)` for money.
-- Use `DECIMAL(10,6)` for longitude and latitude.
-- Use `VARCHAR(32)` for status fields.
-- Add `COMMENT` to every table.
-- Add `COMMENT` to important fields.
-- Add `create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`.
-- Add `update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP` where the table has update time.
-- Add `deleted TINYINT NOT NULL DEFAULT 0` where the table has logical deletion.
-- Add unique indexes exactly where the requirement says unique.
-- Add useful indexes for user id, store id, staff id, status, date, create time, and relation lookups.
+- 使用 MySQL 8 兼容 SQL。
+- 使用 `CREATE DATABASE IF NOT EXISTS petcare_o2o DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`。
+- 每张表使用 InnoDB。
+- 主键使用 `BIGINT`。
+- 金额使用 `DECIMAL(10,2)`。
+- 经纬度使用 `DECIMAL(10,6)`。
+- 状态字段使用 `VARCHAR(32)`。
+- 每张表添加 `COMMENT`。
+- 重要字段添加 `COMMENT`。
+- `create_time` 使用 `DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`。
+- 有 `update_time` 的表使用 `DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`。
+- 有逻辑删除的表使用 `deleted TINYINT NOT NULL DEFAULT 0`。
+- 按需求添加唯一索引。
+- 为 `user_id`、`store_id`、`staff_id`、`status`、日期、创建时间和关系查询字段添加必要索引。
 
-Do not omit tables.
+不允许省略表。
 
-Tables required:
+必须包含的表：
 
 - `user`
 - `pet`
@@ -108,22 +108,22 @@ Tables required:
 - `admin_user`
 - `admin_operation_log`
 
-## Allowed Field Adjustments
+## 允许的字段微调
 
-Do not change the business design casually.
+不要随意改变业务设计。
 
-Allowed corrections if documented in comments or `docs/schema-notes.md`:
+如果确实需要，可在 SQL 注释或 `docs/schema-notes.md` 中说明以下修正：
 
-- escape reserved table names with backticks, especially `user`
-- use explicit `NOT NULL` only where safe
-- add `store_id` indexes and foreign-key-style indexes even if no physical foreign key is declared
-- add `created_by` or `updated_by` only if the user approves later; do not add in Phase 1
+- 对保留字表名使用反引号，例如 `user`。
+- 只在安全的字段上添加明确 `NOT NULL`。
+- 即使不声明物理外键，也要给 `store_id` 等逻辑外键字段添加索引。
+- `created_by`、`updated_by` 这类审计字段只有用户后续批准时才能添加；阶段 1 不主动添加。
 
-Do not add physical foreign keys in Phase 1 unless explicitly approved. Prefer indexed logical relationships for simpler iteration and easier test data setup.
+阶段 1 默认不添加物理外键，除非用户明确批准。优先使用“逻辑关系 + 索引”，便于迭代和测试数据构造。
 
-## Schema Validation Commands
+## Schema 验证命令
 
-Preferred with Docker:
+优先使用 Docker：
 
 ```powershell
 $env:PETCARE_MYSQL_ROOT_PASSWORD = "replace-with-local-test-password"
@@ -132,14 +132,14 @@ Get-Content -Raw .\schema.sql | docker exec -i petcare-mysql mysql -uroot "-p$en
 docker exec -i petcare-mysql mysql -uroot "-p$env:PETCARE_MYSQL_ROOT_PASSWORD" -e "USE petcare_o2o; SHOW TABLES;"
 ```
 
-If Docker is unavailable, use local MySQL 8:
+如果 Docker 不可用，使用本地 MySQL 8：
 
 ```powershell
 Get-Content -Raw .\schema.sql | mysql -uroot -p
 mysql -uroot -p -e "USE petcare_o2o; SHOW TABLES;"
 ```
 
-Spot-check:
+抽查：
 
 ```powershell
 mysql -uroot -p -e "USE petcare_o2o; SHOW CREATE TABLE service_booking;"
@@ -147,35 +147,33 @@ mysql -uroot -p -e "USE petcare_o2o; SHOW CREATE TABLE post;"
 mysql -uroot -p -e "USE petcare_o2o; SHOW CREATE TABLE admin_user;"
 ```
 
-## Phase 1 Commit Requirement
+## 阶段 1 提交要求
 
-After validation:
+验证通过后：
 
 ```powershell
 git status --short
 git add schema.sql
-# Run only when the optional notes file exists:
+# 只有可选说明文件存在时才运行：
 git add docs/schema-notes.md
 git commit -m "feat: add validated mysql schema"
 git status --short --branch
 ```
 
-If no `docs/schema-notes.md` exists, do not add it.
+## 阶段 2 后端规则
 
-## Phase 2 Backend Rules
+只有阶段 1 通过后才能开始。
 
-Only start after Phase 1 passes.
-
-Backend must use:
+后端必须使用：
 
 - Spring Boot 3
 - MyBatis-Plus
-- Java 17 or newer
-- Maven unless there is a strong reason to choose Gradle
-- environment variables for database and AI configuration
-- module/package layout from `docs/01-architecture-design.md`
+- Java 17 或更高版本
+- 默认使用 Maven，除非有充分理由选择 Gradle
+- 通过环境变量配置数据库和 AI
+- 使用 `docs/01-architecture-design.md` 中的模块包结构
 
-Minimum package sketch:
+最小包结构：
 
 ```text
 src/main/java/.../petcare/
@@ -193,49 +191,49 @@ src/main/java/.../petcare/
   admin/
 ```
 
-## TDD Rule For Business Logic
+## 业务逻辑 TDD 规则
 
-For each non-trivial module:
+每个非平凡模块都要按以下流程做：
 
-1. Write tests first.
-2. Run tests and confirm the expected RED failure.
-3. Implement minimal code.
-4. Rerun tests and confirm GREEN.
-5. Refactor only while tests stay green.
-6. Commit the stage.
+1. 先写测试。
+2. 运行测试并确认出现预期的 RED 失败。
+3. 实现最小代码。
+4. 再次运行测试并确认 GREEN。
+5. 只在测试保持绿色时重构。
+6. 提交当前阶段。
 
-Required early tests:
+早期必须覆盖的测试：
 
-- distance calculation
-- interval overlap detection
-- available slot generation
-- booking state transition
-- sensitive word risk classification
-- order amount calculation
-- AI provider missing-key behavior
+- 距离计算
+- 时间段重叠判断
+- 可预约时间槽生成
+- 预约状态流转
+- 敏感词风险分级
+- 订单金额计算
+- AI Provider 缺少 API Key 时的行为
 
-## Integration Rule
+## 集成规则
 
-A phase is not considered integrated until:
+一个阶段只有满足以下条件后才算接入完成：
 
-- relevant tests pass
-- build passes
-- lint or formatting check passes if configured
-- security checks pass
-- Git commit exists
-- `docs/07-integration-gates.md` checklist is satisfied
+- 相关测试通过。
+- 构建通过。
+- 如果配置了 lint 或格式化检查，也必须通过。
+- 安全检查通过。
+- 存在 Git 提交。
+- 满足 `docs/07-integration-gates.md` 对应清单。
 
-## Handoff Report Format
+## 阶段交接报告格式
 
-At the end of each phase, report:
+每个阶段结束时按以下格式汇报：
 
 ```text
-Phase:
-Branch:
-Commit:
-Files changed:
-Validation commands:
-Validation result:
-Known limitations:
-Next phase recommendation:
+阶段：
+分支：
+提交：
+变更文件：
+验证命令：
+验证结果：
+已知限制：
+下一阶段建议：
 ```

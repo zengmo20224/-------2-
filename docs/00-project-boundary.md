@@ -1,79 +1,79 @@
-# Project Boundary
+# 项目边界
 
-Date: 2026-06-08
+日期：2026-06-08
 
-## Product Positioning
+## 产品定位
 
-The project is an AI-enhanced pet store O2O service booking and customer operations platform for a single real pet store.
+本项目是面向单体真实宠物门店的 AI 增强型 O2O 服务预约与客户运营平台。
 
-It must look stronger than a CRUD demo by showing:
+它不能做成简单 CRUD Demo，而要体现以下能力：
 
-- real service booking and staff scheduling
-- merchant confirmation and manual reassignment
-- pet profiles and user addresses
-- community content operations and moderation
-- light product pickup orders
-- AI features with business data grounding and safety boundaries
-- PC admin operations
+- 真实服务预约和员工排班
+- 商家确认预约和人工改派
+- 宠物档案与用户地址
+- 社区内容运营和内容审核
+- 商品展示与到店自提订单
+- 有业务数据支撑、有安全边界的 AI 功能
+- PC 管理后台运营能力
 
-## V1 In Scope
+## V1 范围
 
-V1 must complete the minimum business loop:
+V1 必须完成最小业务闭环：
 
-1. User and admin authentication model.
-2. Store, service, staff, staff skill, staff schedule, unavailable time.
-3. Service booking with merchant confirmation.
-4. Available time calculation based on service duration, staff skills, work schedule, unavailable time, and occupied bookings.
-5. Home service distance validation using store and address coordinates.
-6. Pet profile and address management.
-7. Community post, comment, like, favorite, report, sensitive word review.
-8. Product display, cart, pickup order, offline payment confirmation.
-9. Unified AI provider client with no hardcoded provider secrets.
-10. AI customer service, pet companion, post assistant, and admin analysis API foundations.
-11. Admin APIs for core business management.
-12. Docker Compose for backend, MySQL, and optional admin frontend deployment.
+1. 用户和管理员认证模型。
+2. 门店、服务、员工、员工技能、员工排班、员工不可用时间。
+3. 需要商家确认的服务预约。
+4. 根据服务时长、员工技能、工作时间、不可用时间和已有预约计算可预约时间。
+5. 基于门店和用户地址经纬度的上门服务距离校验。
+6. 宠物档案和用户地址管理。
+7. 社区帖子、评论、点赞、收藏、举报、敏感词审核。
+8. 商品展示、购物车、到店自提订单、线下付款确认。
+9. 不硬编码 Provider 密钥的统一 AI Provider Client。
+10. AI 客服、AI 宠物陪伴、AI 发帖辅助、AI 管理端分析的 API 基础。
+11. 核心后台管理 API。
+12. 用于后端、MySQL 和可选后台前端部署的 Docker Compose。
 
-## V1 Out Of Scope
+## V1 不做的内容
 
-Do not implement these in V1 unless all P0 and P1 gates are already passed:
+除非 P0 和 P1 门禁全部通过，否则 V1 不实现以下内容：
 
-- WeChat Pay or any online payment settlement.
-- Multi-store chain support.
-- Independent employee mini program.
-- Real map routing distance or third-party map paid API.
-- Full membership, coupon, points, and complex marketing system.
-- Complex inventory warehouse management.
-- AI direct database access.
-- AI medical diagnosis, prescription, or treatment recommendation.
-- Production object storage migration to MinIO, Tencent COS, or Aliyun OSS.
+- 微信支付或任何线上支付结算。
+- 多门店连锁体系。
+- 独立员工端小程序。
+- 真实地图路线距离或付费第三方地图 API。
+- 完整会员、优惠券、积分和复杂营销体系。
+- 复杂仓库库存管理。
+- AI 直接访问数据库。
+- AI 疾病诊断、开药或治疗建议。
+- 生产级对象存储迁移，例如 MinIO、腾讯云 COS、阿里云 OSS。
 
-## Reserved For V2
+## V2 预留
 
-- Redis caching and rate-limit backing store.
-- Employee mobile workflow.
-- Online payment.
-- Object storage.
-- More detailed marketing activity ROI analysis.
-- Member levels, coupons, points.
-- Multi-store expansion.
+- Redis 缓存和限流存储。
+- 员工移动端工作流。
+- 在线支付。
+- 对象存储。
+- 更细的营销活动 ROI 分析。
+- 会员等级、优惠券、积分。
+- 多门店扩展。
 
-## Non-Negotiable Business Rules
+## 不可妥协的业务规则
 
-- User cannot choose staff directly.
-- Merchant must confirm service bookings unless a later accepted decision enables auto-confirmation.
-- `CANCELLED` and `REJECTED` bookings do not occupy staff time.
-- `PENDING_CONFIRM`, `CONFIRMED`, and `IN_SERVICE` bookings occupy staff time.
-- Home service must require address and distance validation.
-- AI customer service cannot invent price, stock, business hours, booking rules, or service scope.
-- AI pet companion cannot diagnose disease, prescribe medicine, replace a veterinarian, or promise treatment outcomes.
-- Admin AI analysis must receive backend aggregated data; it must not query the database directly.
+- 用户不能直接选择员工。
+- 除非后续通过明确的架构决策开启自动确认，否则预约必须由商家确认。
+- `CANCELLED` 和 `REJECTED` 预约不占用员工时间。
+- `PENDING_CONFIRM`、`CONFIRMED`、`IN_SERVICE` 预约占用员工时间。
+- 上门服务必须要求地址，并进行距离校验。
+- AI 客服不能编造价格、库存、营业时间、预约规则或服务范围。
+- AI 宠物陪伴不能诊断疾病、开药、替代兽医或承诺治疗效果。
+- 管理端 AI 分析必须接收后端聚合后的数据，不能让 AI 直接查询数据库。
 
-## Delivery Principle
+## 交付原则
 
-Each phase must finish with:
+每个阶段结束时必须满足：
 
-- code or SQL committed to Git
-- build or syntax validation evidence
-- relevant tests passing
-- no unresolved critical security issue
-- integration gate approval before the next phase depends on it
+- 代码或 SQL 已提交到 Git。
+- 有构建、语法或数据库验证证据。
+- 相关测试通过。
+- 没有未解决的严重安全问题。
+- 下一个阶段依赖当前阶段前，必须通过集成门禁。

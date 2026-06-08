@@ -1,63 +1,63 @@
-# Architecture Design
+# 架构设计
 
-Date: 2026-06-08
+日期：2026-06-08
 
-## System Shape
+## 系统形态
 
-Use a modular monolith for V1.
+V1 使用模块化单体架构。
 
-Recommended stack:
+推荐技术栈：
 
-- Mini program: uni-app + Vue 3 + Pinia
-- Admin frontend: Vue 3 + Vite + Element Plus
-- Backend: Spring Boot 3 + MyBatis-Plus
-- Auth: Sa-Token or Spring Security + JWT, chosen before backend coding starts
-- Database: MySQL 8
-- Cache: no Redis dependency in V1 core path; Redis is optional for V2
-- Deployment: Docker Compose + Nginx + MySQL
-- AI: backend-owned unified AI provider client
+- 小程序端：uni-app + Vue 3 + Pinia
+- 管理后台：Vue 3 + Vite + Element Plus
+- 后端：Spring Boot 3 + MyBatis-Plus
+- 认证：Sa-Token 或 Spring Security + JWT，后端编码前必须二选一并固定
+- 数据库：MySQL 8
+- 缓存：V1 核心路径不强依赖 Redis；Redis 作为 V2 可选能力
+- 部署：Docker Compose + Nginx + MySQL
+- AI：后端统一持有 AI Provider Client
 
-## Backend Module Boundaries
+## 后端模块边界
 
-Backend packages should be grouped by business capability, not by generic technical type alone.
+后端包结构按业务能力拆分，不按 Controller、Service、Mapper 这种纯技术类型堆在一起。
 
-Recommended modules:
+推荐模块：
 
-- `user`: user account, pet profile, user address
-- `store`: store and store configuration
-- `service`: service category and service item
-- `staff`: staff, skill, schedule, unavailable time
-- `booking`: booking lifecycle, status log, available slot calculation
-- `community`: topic, post, image, comment, like, favorite, report
-- `moderation`: sensitive word and content review record
-- `product`: category, product, image, cart, pickup order
-- `marketing`: activity, product relation, service relation
-- `ai`: conversation, message, usage log, analysis report, FAQ knowledge, AI provider client
-- `admin`: admin user and operation log
-- `common`: response envelope, exceptions, validation, security context, pagination
+- `user`：用户账号、宠物档案、用户地址
+- `store`：门店和门店配置
+- `service`：服务分类和服务项目
+- `staff`：员工、技能、排班、不可用时间
+- `booking`：预约生命周期、状态日志、可预约时间计算
+- `community`：话题、帖子、图片、评论、点赞、收藏、举报
+- `moderation`：敏感词和内容审核记录
+- `product`：商品分类、商品、图片、购物车、自提订单
+- `marketing`：营销活动、商品关联、服务关联
+- `ai`：会话、消息、用量日志、分析报告、FAQ 知识库、AI Provider Client
+- `admin`：后台管理员和操作日志
+- `common`：响应封装、异常、校验、安全上下文、分页
 
-## Layering
+## 分层规则
 
-Use this dependency direction:
+依赖方向如下：
 
 ```text
 Controller -> Application/Service -> Domain Rules -> Repository/Mapper -> Database
 ```
 
-Rules:
+规则：
 
-- Controllers validate request shape and delegate.
-- Services own business transactions and state transitions.
-- Domain helpers own pure calculations such as distance and available time.
-- Mappers only perform persistence operations.
-- No controller should directly call another controller.
-- No AI provider should be called from SQL or mapper code.
+- Controller 负责请求形状校验和调用 Service。
+- Service 负责业务事务和状态流转。
+- Domain helper 负责距离计算、可预约时间计算等纯规则。
+- Mapper 只负责持久化。
+- Controller 不能直接调用另一个 Controller。
+- AI Provider 不能从 SQL 或 Mapper 层直接调用。
 
-## API Contract
+## API 契约
 
-Use REST under `/api/v1`.
+REST API 统一放在 `/api/v1` 下。
 
-Response envelope:
+成功响应结构：
 
 ```json
 {
@@ -68,7 +68,7 @@ Response envelope:
 }
 ```
 
-Error response:
+错误响应结构：
 
 ```json
 {
@@ -83,88 +83,88 @@ Error response:
 }
 ```
 
-Status code rules:
+HTTP 状态码规则：
 
-- `200`: read or update success
-- `201`: create success
-- `204`: delete success with no body
-- `400`: malformed input
-- `401`: unauthenticated
-- `403`: unauthorized
-- `404`: resource not found
-- `409`: duplicate or state conflict
-- `422`: semantically invalid business request
-- `500`: unexpected server error without leaking stack trace
+- `200`：查询或更新成功
+- `201`：创建成功
+- `204`：删除成功且无响应体
+- `400`：请求格式错误
+- `401`：未认证
+- `403`：无权限
+- `404`：资源不存在
+- `409`：重复数据或状态冲突
+- `422`：业务语义不合法
+- `500`：未预期服务端错误，不能泄露堆栈
 
-## Data Model Direction
+## 数据模型方向
 
-Use MySQL 8 with:
+MySQL 8 规范：
 
-- InnoDB
-- `utf8mb4`
-- `BIGINT` primary keys
-- `DECIMAL(10,2)` for money
-- `DECIMAL(10,6)` for coordinates
-- `VARCHAR(32)` for readable status fields
-- `create_time`, `update_time`, `deleted` on normal business tables
-- high-frequency query indexes
-- unique indexes on business numbers and natural unique fields
+- 使用 InnoDB
+- 字符集使用 `utf8mb4`
+- 主键使用 `BIGINT`
+- 金额使用 `DECIMAL(10,2)`
+- 经纬度使用 `DECIMAL(10,6)`
+- 状态字段使用可读的 `VARCHAR(32)`
+- 普通业务表包含 `create_time`、`update_time`、`deleted`
+- 高频查询字段建立索引
+- 业务编号和自然唯一字段建立唯一索引
 
-The first implementation task is `schema.sql`; it is the foundation for generated entities and mapper work.
+第一项实现任务是 `schema.sql`，它是后续实体类和 Mapper 生成的基础。
 
-## Core Algorithms
+## 核心算法
 
-### Available Slot Calculation
+### 可预约时间计算
 
-Input:
+输入：
 
 - `service_item_id`
-- booking date
-- store id
+- 预约日期
+- 门店 id
 
-Process:
+过程：
 
-1. Read service duration, category, mode, and status.
-2. Find staff with matching service category skill.
-3. Load staff schedules for that date.
-4. Remove schedules marked unavailable.
-5. Subtract unavailable intervals such as lunch, leave, temporary block.
-6. Subtract occupied bookings in `PENDING_CONFIRM`, `CONFIRMED`, and `IN_SERVICE`.
-7. Generate start times by `store_config.time_slot_minutes`.
-8. Keep only slots where `start_time + duration_minutes <= available_interval.end_time`.
+1. 读取服务时长、分类、服务模式和状态。
+2. 找出具备该服务分类技能的员工。
+3. 加载这些员工当天的排班。
+4. 排除不可用排班。
+5. 扣除午休、请假、临时不可用等时间段。
+6. 扣除 `PENDING_CONFIRM`、`CONFIRMED`、`IN_SERVICE` 状态的已占用预约。
+7. 根据 `store_config.time_slot_minutes` 生成开始时间。
+8. 只保留 `start_time + duration_minutes <= available_interval.end_time` 的时间段。
 
-Output:
+输出：
 
-- list of available slots grouped by staff internally
-- user-facing available times without exposing staff choice
+- 内部可以按员工分组保存可用时间。
+- 用户侧只展示可预约时间，不暴露“用户选择员工”的能力。
 
-### Home Service Distance
+### 上门服务距离校验
 
-Use straight-line distance for V1.
+V1 使用经纬度直线距离。
 
-Required checks:
+必须校验：
 
-- service mode allows `HOME`
-- address exists and belongs to user
-- address and store both have longitude and latitude
-- distance is within `store_config.home_service_radius_km`
+- 服务模式允许 `HOME`。
+- 地址存在且属于当前用户。
+- 地址和门店都有经纬度。
+- 距离不超过 `store_config.home_service_radius_km`。
 
-### AI Data Grounding
+### AI 数据接地
 
-AI calls must receive explicit backend-curated context:
+AI 调用必须接收后端明确整理过的上下文：
 
-- customer service: store, config, services, products, FAQ
-- admin analysis: backend SQL aggregation results
-- content generation: user-provided facts only
+- AI 客服：门店、门店配置、服务、商品、FAQ。
+- 管理端分析：后端 SQL 聚合结果。
+- 发帖辅助：用户明确提供的事实。
 
-AI output must never be treated as authoritative system state.
+AI 输出不能被当成系统事实来源。
 
-## Security Design
+## 安全设计
 
-- Passwords must be hashed, never stored in plain text.
-- AI API keys must come from environment variables or secret management.
-- Admin APIs require role checks.
-- User APIs require ownership checks.
-- File uploads must validate extension, size, and content type.
-- Error responses must not expose SQL, stack traces, secrets, or provider raw errors.
-- Operation logs should capture admin-sensitive operations.
+- 密码必须哈希存储，不能明文保存。
+- AI API Key 必须来自环境变量或密钥管理。
+- 后台 API 必须有角色校验。
+- 用户 API 必须有资源归属校验。
+- 文件上传必须校验扩展名、大小和 Content-Type。
+- 错误响应不能暴露 SQL、堆栈、密钥或 Provider 原始错误。
+- 管理员关键操作需要写入操作日志。

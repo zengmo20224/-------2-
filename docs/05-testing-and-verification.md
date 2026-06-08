@@ -1,103 +1,103 @@
-# Testing And Verification
+# 测试与验证
 
-Date: 2026-06-08
+日期：2026-06-08
 
-## Coverage Target
+## 覆盖率目标
 
-Minimum target: 80% line coverage for backend business logic after implementation starts.
+后端业务逻辑开始实现后，最低目标是 80% 行覆盖率。
 
-Coverage is not a replacement for meaningful tests. Critical business rules must have direct tests even if coverage is already above 80%.
+覆盖率不能替代有意义的测试。关键业务规则即使覆盖率已经超过 80%，也必须有直接测试。
 
-## Test Layers
+## 测试层级
 
-### Unit Tests
+### 单元测试
 
-Required for:
+必须覆盖：
 
-- distance calculation
-- interval overlap and subtraction
-- available slot generation
-- booking state transition rules
-- sensitive word matching and risk level classification
-- product order amount calculation
-- AI safety guardrail classification
+- 距离计算
+- 时间段重叠和扣减
+- 可预约时间槽生成
+- 预约状态流转规则
+- 敏感词匹配和风险等级判定
+- 商品订单金额计算
+- AI 安全边界分类
 
-### Integration Tests
+### 集成测试
 
-Required for:
+必须覆盖：
 
-- mapper/database access
-- booking creation with conflict detection
-- booking status log persistence
-- content review record creation
-- product order creation with order items
-- admin authorization checks
-- AI provider adapter using mocked provider
+- Mapper 和数据库访问
+- 带冲突检测的预约创建
+- 预约状态日志持久化
+- 内容审核记录创建
+- 商品订单及订单项创建
+- 后台授权检查
+- 使用 Mock Provider 的 AI 适配器
 
-### E2E Tests
+### E2E 测试
 
-Required before frontend integration is considered complete:
+前端集成完成前必须覆盖：
 
-- user books a store service
-- user attempts home service outside service radius and gets rejected
-- merchant confirms booking
-- user publishes normal post
-- risky post enters review or is rejected
-- user creates pickup order
-- admin completes pickup order
-- AI customer service answers from seeded store/service/FAQ data
+- 用户预约到店服务
+- 用户尝试预约超出服务半径的上门服务并被拒绝
+- 商家确认预约
+- 用户发布正常帖子
+- 风险帖子进入审核或被拒绝
+- 用户创建到店自提订单
+- 管理员完成自提订单
+- AI 客服基于种子门店、服务、FAQ 数据回答
 
-## Phase 1 SQL Verification
+## 阶段 1 SQL 验证
 
-For `schema.sql`, test coverage is replaced by database validation:
+对于 `schema.sql`，用数据库验证替代代码覆盖率：
 
-- import SQL into clean MySQL 8 database
-- verify all required tables exist
-- inspect representative table DDL
-- verify unique indexes exist
-- verify default status, time, and deleted values exist
+- 将 SQL 导入干净的 MySQL 8 数据库。
+- 确认所有必需表存在。
+- 检查代表性表的 DDL。
+- 确认唯一索引存在。
+- 确认状态、时间和 deleted 字段默认值存在。
 
-## Backend Verification Commands
+## 后端验证命令
 
-These commands should exist once backend is created:
+后端创建后应具备这些命令：
 
 ```powershell
 mvn test
 mvn clean package
 ```
 
-If formatting or linting is configured:
+如果配置了格式化或 lint：
 
 ```powershell
 mvn spotless:check
 ```
 
-If dependency audit tooling is configured:
+如果配置了依赖安全扫描：
 
 ```powershell
 mvn org.owasp:dependency-check-maven:check
 ```
 
-## Verification Report Template
+## 验证报告模板
 
-Every phase handoff must include:
+每个阶段交接必须包含：
 
 ```text
-Build: PASS/FAIL
-Tests: PASS/FAIL
-Coverage: percentage or not applicable
-Security check: PASS/FAIL
-Database validation: PASS/FAIL/not applicable
-Git state: clean/dirty
-Commit: commit hash
-Known risks:
+构建：PASS/FAIL
+测试：PASS/FAIL
+覆盖率：百分比或不适用
+安全检查：PASS/FAIL
+数据库验证：PASS/FAIL/不适用
+Git 状态：干净/有未提交变更
+提交：commit hash
+已知风险：
 ```
 
-## Failure Policy
+## 失败策略
 
-- Build failure blocks integration.
-- SQL import failure blocks Phase 1 completion.
-- Critical security issue blocks integration.
-- Booking conflict test failure blocks booking module integration.
-- AI safety guardrail failure blocks AI module integration.
-- Dirty Git state blocks handoff unless the dirty files are explicitly listed and justified.
+- 构建失败会阻塞集成。
+- SQL 导入失败会阻塞阶段 1 完成。
+- 严重安全问题会阻塞集成。
+- 预约冲突测试失败会阻塞预约模块集成。
+- AI 安全边界测试失败会阻塞 AI 模块集成。
+- Git 工作区不干净会阻塞交接，除非明确列出未提交文件并说明原因。

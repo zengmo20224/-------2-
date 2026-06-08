@@ -1,18 +1,18 @@
-# PetCare O2O Project Planning
+# PetCare O2O 项目规划
 
-This repository is the planning and implementation workspace for the AI-enhanced pet store O2O booking and customer operations platform.
+本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-Current status: planning baseline only. Do not add application code until the Phase 1 database task is started on a dedicated Git branch.
+当前状态：仅完成规划基线。不要在 `main` 分支直接加入业务代码；第一阶段数据库任务开始时，应先创建独立 Git 分支。
 
-Primary handoff document for GLM5.1:
+## 给 GLM5.1 的主要交接文档
 
 - [docs/03-glm5-implementation-plan.md](docs/03-glm5-implementation-plan.md)
 
-Original requirement baseline:
+## 原始需求基线
 
 - [docs/requirements-source.md](docs/requirements-source.md)
 
-Core planning documents:
+## 核心规划文档
 
 - [docs/00-project-boundary.md](docs/00-project-boundary.md)
 - [docs/01-architecture-design.md](docs/01-architecture-design.md)
@@ -22,23 +22,23 @@ Core planning documents:
 - [docs/06-git-safety-workflow.md](docs/06-git-safety-workflow.md)
 - [docs/07-integration-gates.md](docs/07-integration-gates.md)
 
-## Project Goal
+## 项目目标
 
-Build a resume-grade but realistic single-store pet service platform:
+构建一个简历展示价值较高，同时具备真实单体宠物店试运营潜力的平台：
 
-- WeChat mini program for users
-- PC admin system for the merchant
+- 用户端微信小程序
+- 商家 PC 管理后台
 - Spring Boot 3 REST API
-- MySQL 8 primary database
-- Optional Redis in V2
-- Unified AI provider adapter for customer service, pet companion, content generation, and business analysis
+- MySQL 8 主数据库
+- V2 可选引入 Redis
+- 统一 AI Provider 适配层，用于 AI 客服、AI 宠物陪伴、AI 发帖辅助和 AI 经营分析
 
-## Immediate Next Step
+## 当前最近一步
 
-Phase 1 is database initialization only:
+第一阶段只做数据库初始化：
 
-1. Create `schema.sql`.
-2. Cover all tables from the pasted requirement without omission.
-3. Add comments, defaults, indexes, unique constraints, and MySQL 8 compatible DDL.
-4. Validate SQL in a local MySQL 8 container or instance.
-5. Commit the validated result using the Git workflow in [docs/06-git-safety-workflow.md](docs/06-git-safety-workflow.md).
+1. 创建 `schema.sql`。
+2. 覆盖原始需求中的全部数据表，不允许省略。
+3. 添加表注释、字段注释、默认值、索引、唯一约束，并保证兼容 MySQL 8。
+4. 在本地 MySQL 8 或 Docker MySQL 8 中验证 SQL 可导入。
+5. 按 [docs/06-git-safety-workflow.md](docs/06-git-safety-workflow.md) 的流程提交验证后的结果。
