@@ -13,8 +13,10 @@ public interface StaffBookingLockMapper extends BaseMapper<StaffBookingLock> {
     /**
      * Inserts a lock row or updates the existing one (upsert).
      * Ensures a stable lock point exists for (staffId, bookingDate).
+     * Uses a deterministic id derived from staffId and bookingDate.
      */
-    int upsertStaffBookingLock(@Param("staffId") Long staffId,
+    int upsertStaffBookingLock(@Param("id") Long id,
+                               @Param("staffId") Long staffId,
                                @Param("bookingDate") LocalDate bookingDate);
 
     /**

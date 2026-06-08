@@ -46,8 +46,9 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
         Long staffId = booking.getStaffId();
         LocalDate bookingDate = booking.getBookingDate();
 
-        // Step 1: Ensure lock point exists
-        staffBookingLockMapper.upsertStaffBookingLock(staffId, bookingDate);
+        // Step 1: Ensure lock point exists with a unique id
+        long lockId = generateLockId(staffId, bookingDate);
+        staffBookingLockMapper.upsertStaffBookingLock(lockId, staffId, bookingDate);
 
         // Step 2: Lock the staff-date row
         StaffBookingLock lock = staffBookingLockMapper.selectStaffBookingLockForUpdate(staffId, bookingDate);
@@ -82,7 +83,8 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
                                               LocalTime startTime, LocalTime endTime,
                                               Long operatorId) {
         // Step 1: Ensure lock point for new staff
-        staffBookingLockMapper.upsertStaffBookingLock(newStaffId, bookingDate);
+        long lockId = generateLockId(newStaffId, bookingDate);
+        staffBookingLockMapper.upsertStaffBookingLock(lockId, newStaffId, bookingDate);
 
         // Step 2: Lock new staff-date row
         StaffBookingLock lock = staffBookingLockMapper.selectStaffBookingLockForUpdate(newStaffId, bookingDate);
@@ -126,5 +128,13 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
         statusLog.setOperatorId(operatorId);
         statusLog.setRemark(remark);
         bookingStatusLogService.save(statusLog);
+    }
+
+    /**
+     * Generates a deterministic unique ID for the lock row.
+     * Uses staffId * 100000 + dayOfYear to avoid collisions across dates.
+     */
+    private long generateLockId(Long staffId, LocalDate bookingDate) {
+        return Math.abs(staffId * 100000L + bookingDate.getDayOfYear());
     }
 }
