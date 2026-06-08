@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 3 核心实体、Mapper 与基础 CRUD Service 已完成，当前启动阶段 4 认证与授权。不要在 `main` 分支直接加入业务代码；阶段 4 应在 `phase-4-auth-authorization` 分支执行。
+当前状态：阶段 4 认证与授权已完成，当前启动阶段 5 服务预约与排班。不要在 `main` 分支直接加入业务代码；阶段 5 应在 `phase-5-booking-scheduling` 分支执行。
 
 ## AI Agent 强制入口
 
@@ -19,6 +19,7 @@
 - [docs/11-phase-2-backend-skeleton-brief.md](docs/11-phase-2-backend-skeleton-brief.md)
 - [docs/12-phase-3-entities-mappers-plan.md](docs/12-phase-3-entities-mappers-plan.md)
 - [docs/13-phase-4-auth-authorization-plan.md](docs/13-phase-4-auth-authorization-plan.md)
+- [docs/14-phase-5-booking-scheduling-plan.md](docs/14-phase-5-booking-scheduling-plan.md)
 
 ## 原始需求基线
 
@@ -50,11 +51,12 @@
 
 ## 当前最近一步
 
-第四阶段只做认证与授权安全基线：
+第五阶段只做服务预约与排班核心闭环：
 
-1. 实现管理员登录、BCrypt 密码校验和 JWT 签发。
-2. 实现 JWT 认证过滤器和 Spring Security 无状态配置。
-3. 从 `admin_role`、`admin_permission`、`admin_role_permission` 加载权限码。
-4. 使用 `hasAuthority(...)` 验证后台细粒度授权。
-5. 保留微信登录接口和 Provider 边界，但返回未启用。
-6. 通过认证、授权、Token、密码和微信占位测试验证。
+1. 实现服务目录查询。
+2. 实现可预约时间计算。
+3. 实现预约创建、员工自动分配和状态日志。
+4. 实现上门服务距离校验。
+5. 实现后台确认、拒绝、取消、开始、完成和改派。
+6. 使用数据库事务和 `staff_booking_lock` 防止并发预约冲突。
+7. 通过单元测试、集成测试和真实 MySQL 并发测试验证。
