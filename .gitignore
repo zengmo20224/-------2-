@@ -1,0 +1,43 @@
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / Vue / uni-app
+node_modules/
+dist/
+build/
+.output/
+.vite/
+coverage/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+
+# Database and uploaded runtime files
+*.db
+*.sqlite
+uploads/
+data/
+
+# Docker local state
+docker-compose.override.yml
