@@ -4,6 +4,15 @@
 
 当前状态：仅完成规划基线。不要在 `main` 分支直接加入业务代码；第一阶段数据库任务开始时，应先创建独立 Git 分支。
 
+## AI Agent 强制入口
+
+任何 AI Agent 接手本项目时，必须先完整阅读并遵守：
+
+- [AGENTS.md](AGENTS.md)
+- [docs/08-pending-decisions.md](docs/08-pending-decisions.md)
+
+未完成强制阅读、Git 状态检查和开工前汇报前，不允许修改项目文件。
+
 ## 给 GLM5.1 的主要交接文档
 
 - [docs/03-glm5-implementation-plan.md](docs/03-glm5-implementation-plan.md)
@@ -21,6 +30,7 @@
 - [docs/05-testing-and-verification.md](docs/05-testing-and-verification.md)
 - [docs/06-git-safety-workflow.md](docs/06-git-safety-workflow.md)
 - [docs/07-integration-gates.md](docs/07-integration-gates.md)
+- [docs/08-pending-decisions.md](docs/08-pending-decisions.md)
 
 ## 项目目标
 
