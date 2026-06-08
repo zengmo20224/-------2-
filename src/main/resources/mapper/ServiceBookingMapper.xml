@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petcare.booking.mapper.ServiceBookingMapper">
+
+    <select id="selectConflictingBookings" resultType="com.petcare.booking.entity.ServiceBooking">
+        SELECT id, staff_id, booking_date, start_time, end_time, status
+        FROM service_booking
+        WHERE staff_id = #{staffId}
+          AND booking_date = #{bookingDate}
+          AND status IN ('PENDING_CONFIRM', 'CONFIRMED', 'IN_SERVICE')
+          AND deleted = 0
+          AND start_time &lt; #{endTime}
+          AND end_time &gt; #{startTime}
+          <if test="excludeBookingId != null">
+              AND id != #{excludeBookingId}
+          </if>
+    </select>
+
+</mapper>

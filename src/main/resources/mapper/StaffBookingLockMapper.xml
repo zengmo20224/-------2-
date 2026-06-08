@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.petcare.booking.mapper.StaffBookingLockMapper">
+
+    <insert id="upsertStaffBookingLock" parameterType="map">
+        INSERT INTO staff_booking_lock (id, staff_id, booking_date, create_time, update_time)
+        VALUES (#{staffId}, #{staffId}, #{bookingDate}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE update_time = CURRENT_TIMESTAMP
+    </insert>
+
+    <select id="selectStaffBookingLockForUpdate" resultType="com.petcare.booking.entity.StaffBookingLock">
+        SELECT id, staff_id, booking_date, create_time, update_time
+        FROM staff_booking_lock
+        WHERE staff_id = #{staffId} AND booking_date = #{bookingDate}
+        FOR UPDATE
+    </select>
+
+</mapper>
