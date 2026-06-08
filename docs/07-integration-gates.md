@@ -31,6 +31,7 @@
 
 ## 门禁 2：后端骨架
 
+- [ ] 已按 `docs/11-phase-2-backend-skeleton-brief.md` 执行。
 - [ ] Spring Boot 应用可以启动。
 - [ ] 健康检查接口可用。
 - [ ] 数据库连接通过环境配置。

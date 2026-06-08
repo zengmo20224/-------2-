@@ -173,6 +173,8 @@ git status --short --branch
 
 只有阶段 1 通过后才能开始。
 
+阶段 2 具体执行说明见 `docs/11-phase-2-backend-skeleton-brief.md`。
+
 后端必须使用：
 
 - Spring Boot 3

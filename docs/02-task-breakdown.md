@@ -62,6 +62,8 @@
 
 负责人：GLM5.1
 
+启动说明：`docs/11-phase-2-backend-skeleton-brief.md`
+
 交付物：
 
 - Spring Boot 3 项目
