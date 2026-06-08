@@ -16,6 +16,8 @@
 - Git 防护流程
 - AI Agent 强制规则
 - 前期待决策事项清单
+- 预约并发防冲突研究
+- 管理员细粒度权限设计
 
 退出标准：
 
@@ -23,6 +25,7 @@
 - GLM5.1 可以在不猜测项目范围的情况下开始阶段 1。
 - 所有执行 Agent 在修改文件前阅读根目录 `AGENTS.md`。
 - 涉及未决事项时，必须先获得用户决策。
+- 涉及预约并发和后台权限时，必须遵守对应研究和设计文档。
 
 ## 阶段 1：数据库 Schema
 
@@ -44,7 +47,8 @@
 7. 添加 `deleted TINYINT DEFAULT 0`。
 8. 为 `openid`、`username`、`booking_no`、`order_no` 和关系唯一性添加唯一索引。
 9. 为高频查询添加索引。
-10. 导入 MySQL 8 验证。
+10. 根据细粒度 RBAC 决策新增 `admin_role`、`admin_permission`、`admin_role_permission`。
+11. 导入 MySQL 8 验证。
 
 退出标准：
 

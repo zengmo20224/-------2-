@@ -106,7 +106,12 @@ schema.sql
 - `ai_analysis_report`
 - `faq_knowledge`
 - `admin_user`
+- `admin_role`
+- `admin_permission`
+- `admin_role_permission`
 - `admin_operation_log`
+
+其中 `admin_role`、`admin_permission`、`admin_role_permission` 是用户确认细粒度 RBAC 后新增的必需表，设计依据见 `docs/10-admin-permission-design.md`。
 
 ## 允许的字段微调
 
@@ -168,10 +173,14 @@ git status --short --branch
 
 - Spring Boot 3
 - MyBatis-Plus
+- Spring Security + JWT
 - Java 17 或更高版本
 - 默认使用 Maven，除非有充分理由选择 Gradle
 - 通过环境变量配置数据库和 AI
 - 使用 `docs/01-architecture-design.md` 中的模块包结构
+- 使用 MyBatis-Plus 雪花 ID，数据库不使用 `AUTO_INCREMENT`
+- 当前仅维护 `schema.sql`，不引入 Flyway 或 Liquibase
+- V1 不启用 Redis
 
 最小包结构：
 
@@ -211,6 +220,7 @@ src/main/java/.../petcare/
 - 敏感词风险分级
 - 订单金额计算
 - AI Provider 缺少 API Key 时的行为
+- 并发预约只允许一个请求成功
 
 ## 集成规则
 

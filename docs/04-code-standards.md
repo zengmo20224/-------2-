@@ -67,10 +67,27 @@ booking/
 
 - AI Provider 调用必须经过一个统一后端适配层。
 - Provider 凭据必须来自环境变量。
+- Provider Client 按 OpenAI 兼容协议抽象，为 DeepSeek 接入预留。
+- DeepSeek API Key 环境变量名使用 `DEEPSEEK_API_KEY`。
 - Prompt 必须由经过批准的上下文对象构造。
 - AI 客服不能编造业务事实。
 - AI 管理端分析必须使用后端聚合数据，不能让 AI 直接执行 SQL。
 - 对高风险宠物症状，安全拒答和建议就医必须是确定性规则，不完全依赖模型自由发挥。
+
+依据：
+
+- DeepSeek 官方文档说明其 API 使用 OpenAI 兼容格式，兼容 base URL 为 `https://api.deepseek.com`。
+  https://api-docs.deepseek.com/
+- DeepSeek Chat Completions 接口路径为 `/chat/completions`，支持 `messages`、`model`、`stream`、`max_tokens` 等字段。
+  https://api-docs.deepseek.com/api/create-chat-completion
+
+## 认证与权限规则
+
+- 使用 Spring Security + JWT。
+- 后台使用细粒度权限码，不允许只判断 `SUPER_ADMIN`、`MANAGER`、`STAFF` 后直接放行整个模块。
+- 关键后台动作使用 `@PreAuthorize` 或等效方法级授权。
+- 权限清单和初始角色矩阵见 `docs/10-admin-permission-design.md`。
+- 微信登录 V1 当前只保留接口和适配器边界，不接入真实 AppID。
 
 ## 后续前端规则
 

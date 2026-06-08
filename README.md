@@ -31,6 +31,8 @@
 - [docs/06-git-safety-workflow.md](docs/06-git-safety-workflow.md)
 - [docs/07-integration-gates.md](docs/07-integration-gates.md)
 - [docs/08-pending-decisions.md](docs/08-pending-decisions.md)
+- [docs/09-booking-concurrency-control.md](docs/09-booking-concurrency-control.md)
+- [docs/10-admin-permission-design.md](docs/10-admin-permission-design.md)
 
 ## 项目目标
 

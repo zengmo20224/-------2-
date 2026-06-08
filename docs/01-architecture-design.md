@@ -11,11 +11,13 @@ V1 使用模块化单体架构。
 - 小程序端：uni-app + Vue 3 + Pinia
 - 管理后台：Vue 3 + Vite + Element Plus
 - 后端：Spring Boot 3 + MyBatis-Plus
-- 认证：Sa-Token 或 Spring Security + JWT，后端编码前必须二选一并固定
+- 认证：Spring Security + JWT
 - 数据库：MySQL 8
-- 缓存：V1 核心路径不强依赖 Redis；Redis 作为 V2 可选能力
+- 主键：MyBatis-Plus 雪花 ID，数据库不使用 `AUTO_INCREMENT`
+- 数据库初始化：仅维护 `schema.sql`
+- 缓存：V1 不启用 Redis；Redis 作为 V2 可选能力
 - 部署：Docker Compose + Nginx + MySQL
-- AI：后端统一持有 AI Provider Client
+- AI：后端统一持有 AI Provider Client，按 OpenAI 兼容协议为 DeepSeek 接入预留
 
 ## 后端模块边界
 
@@ -159,6 +161,18 @@ AI 调用必须接收后端明确整理过的上下文：
 
 AI 输出不能被当成系统事实来源。
 
+### 预约并发控制
+
+V1 不使用 Redis 分布式锁。推荐采用“员工日期锁定点 + 数据库事务 + 冲突二次检查 + 死锁有限重试”。
+
+详细方案见 `docs/09-booking-concurrency-control.md`。在用户最终批准新增 `staff_booking_lock` 表前，不允许写入 `schema.sql`。
+
+### 后台权限
+
+后台使用 Spring Security + JWT 和细粒度 RBAC 权限码。
+
+权限设计见 `docs/10-admin-permission-design.md`。
+
 ## 安全设计
 
 - 密码必须哈希存储，不能明文保存。
@@ -166,5 +180,6 @@ AI 输出不能被当成系统事实来源。
 - 后台 API 必须有角色校验。
 - 用户 API 必须有资源归属校验。
 - 文件上传必须校验扩展名、大小和 Content-Type。
+- 单文件大小上限为 10 MB。
 - 错误响应不能暴露 SQL、堆栈、密钥或 Provider 原始错误。
 - 管理员关键操作需要写入操作日志。

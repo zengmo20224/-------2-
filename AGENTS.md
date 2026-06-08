@@ -20,8 +20,10 @@
 10. `docs/06-git-safety-workflow.md`
 11. `docs/07-integration-gates.md`
 12. `docs/08-pending-decisions.md`
+13. `docs/09-booking-concurrency-control.md`
+14. `docs/10-admin-permission-design.md`
 
-如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。
+如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
 
 ## 2. 开工前强制检查
 
