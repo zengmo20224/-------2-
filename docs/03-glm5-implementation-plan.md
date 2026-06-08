@@ -188,6 +188,12 @@ git status --short --branch
 - 当前仅维护 `schema.sql`，不引入 Flyway 或 Liquibase
 - V1 不启用 Redis
 
+## 阶段 3 实体与 Mapper 规则
+
+只有阶段 2 通过后才能开始。
+
+阶段 3 具体执行说明见 `docs/12-phase-3-entities-mappers-plan.md`。
+
 最小包结构：
 
 ```text

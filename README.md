@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 1 数据库 Schema 已完成并通过用户 review，当前启动阶段 2 后端骨架。不要在 `main` 分支直接加入业务代码；阶段 2 应在 `phase-2-backend-skeleton` 分支执行。
+当前状态：阶段 2 后端骨架已完成，当前启动阶段 3 核心实体、Mapper 与基础 CRUD Service。不要在 `main` 分支直接加入业务代码；阶段 3 应在 `phase-3-entities-mappers` 分支执行。
 
 ## AI Agent 强制入口
 
@@ -17,6 +17,7 @@
 
 - [docs/03-glm5-implementation-plan.md](docs/03-glm5-implementation-plan.md)
 - [docs/11-phase-2-backend-skeleton-brief.md](docs/11-phase-2-backend-skeleton-brief.md)
+- [docs/12-phase-3-entities-mappers-plan.md](docs/12-phase-3-entities-mappers-plan.md)
 
 ## 原始需求基线
 
@@ -48,10 +49,10 @@
 
 ## 当前最近一步
 
-第二阶段只做 Spring Boot 后端骨架：
+第三阶段只做核心实体、Mapper 与基础 CRUD Service：
 
-1. 创建 Maven Spring Boot 3 后端工程。
-2. 配置 MyBatis-Plus、MySQL 数据源和环境变量。
-3. 建立统一响应、统一异常处理和健康检查接口。
-4. 引入 Spring Security + JWT 依赖并建立最小安全骨架，不实现完整登录。
-5. 通过 `mvn test` 和 `mvn clean package` 验证。
+1. 根据 `schema.sql` 创建实体类。
+2. 创建 MyBatis-Plus Mapper。
+3. 创建基础 `IService` 和 `ServiceImpl`。
+4. 创建状态常量或枚举。
+5. 通过 Mapper 集成测试、`mvn test` 和 `mvn clean package` 验证。

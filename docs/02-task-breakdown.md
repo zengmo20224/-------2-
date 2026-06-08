@@ -86,6 +86,8 @@
 
 负责人：GLM5.1
 
+启动说明：`docs/12-phase-3-entities-mappers-plan.md`
+
 交付物：
 
 - 与 `schema.sql` 匹配的实体类

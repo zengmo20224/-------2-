@@ -42,6 +42,12 @@
 
 ## 门禁 3：核心业务逻辑
 
+- [ ] 已按 `docs/12-phase-3-entities-mappers-plan.md` 执行。
+- [ ] 所有 `schema.sql` 表都有实体类。
+- [ ] 所有实体都有 MyBatis-Plus Mapper。
+- [ ] 基础 CRUD Service 和 ServiceImpl 存在。
+- [ ] 状态常量或枚举与数据库默认值一致。
+- [ ] Mapper 集成测试在 MySQL 8 上通过，或未验证风险已明确记录。
 - [ ] 单元测试覆盖纯计算逻辑。
 - [ ] 集成测试覆盖数据库业务流。
 - [ ] 预约冲突规则通过。
