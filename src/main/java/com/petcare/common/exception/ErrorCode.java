@@ -20,4 +20,16 @@ public final class ErrorCode {
     public static final String INVALID_TOKEN = "invalid_token";
     public static final String EXPIRED_TOKEN = "expired_token";
     public static final String INTERNAL_ERROR = "internal_error";
+
+    // Booking error codes
+    public static final String BOOKING_TIME_CONFLICT = "booking_time_conflict";
+    public static final String BOOKING_SLOT_UNAVAILABLE = "booking_slot_unavailable";
+    public static final String BOOKING_STATUS_INVALID = "booking_status_invalid";
+    public static final String BOOKING_SERVICE_UNAVAILABLE = "booking_service_unavailable";
+    public static final String BOOKING_DATE_OUT_OF_RANGE = "booking_date_out_of_range";
+    public static final String BOOKING_HOME_DISTANCE_EXCEEDED = "booking_home_distance_exceeded";
+    public static final String BOOKING_ADDRESS_REQUIRED = "booking_address_required";
+    public static final String BOOKING_ADDRESS_NOT_FOUND = "booking_address_not_found";
+    public static final String BOOKING_STAFF_UNAVAILABLE = "booking_staff_unavailable";
+    public static final String BOOKING_RETRY_EXHAUSTED = "booking_retry_exhausted";
 }
