@@ -18,6 +18,8 @@ import com.petcare.common.config.SecurityConfig;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -76,9 +78,11 @@ class GlobalExceptionHandlerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").value(nullValue()))
                 .andExpect(jsonPath("$.error.code").value("validation_error"))
                 .andExpect(jsonPath("$.error.message").value("请求参数不合法"))
-                .andExpect(jsonPath("$.error.details").isArray());
+                .andExpect(jsonPath("$.error.details").isArray())
+                .andExpect(jsonPath("$.meta").value(nullValue()));
     }
 
     @Test
@@ -89,8 +93,11 @@ class GlobalExceptionHandlerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").value(nullValue()))
                 .andExpect(jsonPath("$.error.code").value("business_rule_violation"))
-                .andExpect(jsonPath("$.error.message").value("测试业务异常"));
+                .andExpect(jsonPath("$.error.message").value("测试业务异常"))
+                .andExpect(jsonPath("$.error.details").isArray())
+                .andExpect(jsonPath("$.meta").value(nullValue()));
     }
 
     @Test
@@ -101,7 +108,22 @@ class GlobalExceptionHandlerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").value(nullValue()))
                 .andExpect(jsonPath("$.error.code").value("internal_error"))
-                .andExpect(jsonPath("$.error.message").value("服务内部错误，请稍后重试"));
+                .andExpect(jsonPath("$.error.message").value("服务内部错误，请稍后重试"))
+                .andExpect(jsonPath("$.error.details").isArray())
+                .andExpect(jsonPath("$.meta").value(nullValue()));
+    }
+
+    @Test
+    void unauthenticatedRequest_shouldReturnUnified401Response() throws Exception {
+        mockMvc.perform(get("/api/v1/test/protected"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data").value(nullValue()))
+                .andExpect(jsonPath("$.error.code").value("unauthorized"))
+                .andExpect(jsonPath("$.error.message").value("请先登录"))
+                .andExpect(jsonPath("$.error.details").isArray())
+                .andExpect(jsonPath("$.meta").value(nullValue()));
     }
 }
