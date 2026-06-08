@@ -2,7 +2,9 @@
 
 日期：2026-06-08
 
-状态：推荐方案待用户最终确认
+状态：已批准采用
+
+批准日期：2026-06-08
 
 ## 问题定义
 
@@ -76,7 +78,7 @@
 
 ### 方案 E：员工日期锁定点 + 数据库事务
 
-结论：V1 推荐方案。
+结论：V1 已批准方案。
 
 新增辅助表：
 
@@ -186,6 +188,8 @@ V1 暂不采用，原因：
 - Spring `@Transactional` 默认通过代理生效，同类内部调用可能导致事务注解被忽略。
   https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html
 
-## 需要用户确认
+## 实施结论
 
-是否批准在 `schema.sql` 中新增 `staff_booking_lock` 表，并采用本文推荐事务流程。
+用户已批准在 `schema.sql` 中新增 `staff_booking_lock` 表，并采用本文事务流程。
+
+阶段 1 必须创建该表；阶段 5 必须实现事务锁定流程并完成本文列出的并发测试。

@@ -163,9 +163,9 @@ AI 输出不能被当成系统事实来源。
 
 ### 预约并发控制
 
-V1 不使用 Redis 分布式锁。推荐采用“员工日期锁定点 + 数据库事务 + 冲突二次检查 + 死锁有限重试”。
+V1 不使用 Redis 分布式锁，采用“员工日期锁定点 + 数据库事务 + 冲突二次检查 + 死锁有限重试”。
 
-详细方案见 `docs/09-booking-concurrency-control.md`。在用户最终批准新增 `staff_booking_lock` 表前，不允许写入 `schema.sql`。
+用户已批准新增 `staff_booking_lock` 表，阶段 1 必须将其写入 `schema.sql`。详细方案见 `docs/09-booking-concurrency-control.md`。
 
 ### 后台权限
 

@@ -48,7 +48,8 @@
 8. 为 `openid`、`username`、`booking_no`、`order_no` 和关系唯一性添加唯一索引。
 9. 为高频查询添加索引。
 10. 根据细粒度 RBAC 决策新增 `admin_role`、`admin_permission`、`admin_role_permission`。
-11. 导入 MySQL 8 验证。
+11. 根据预约并发方案新增 `staff_booking_lock`，并添加 `(staff_id, booking_date)` 唯一索引。
+12. 导入 MySQL 8 验证。
 
 退出标准：
 

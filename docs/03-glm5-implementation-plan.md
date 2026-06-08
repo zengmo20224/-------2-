@@ -80,6 +80,7 @@ schema.sql
 - `staff_skill`
 - `staff_schedule`
 - `staff_unavailable_time`
+- `staff_booking_lock`
 - `service_booking`
 - `booking_status_log`
 - `topic`
@@ -111,7 +112,10 @@ schema.sql
 - `admin_role_permission`
 - `admin_operation_log`
 
-其中 `admin_role`、`admin_permission`、`admin_role_permission` 是用户确认细粒度 RBAC 后新增的必需表，设计依据见 `docs/10-admin-permission-design.md`。
+其中：
+
+- `staff_booking_lock` 是用户批准预约并发防冲突方案后新增的必需表，设计依据见 `docs/09-booking-concurrency-control.md`。
+- `admin_role`、`admin_permission`、`admin_role_permission` 是用户确认细粒度 RBAC 后新增的必需表，设计依据见 `docs/10-admin-permission-design.md`。
 
 ## 允许的字段微调
 

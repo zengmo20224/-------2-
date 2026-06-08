@@ -26,7 +26,7 @@
 - [ ] 状态、创建时间、更新时间、deleted 字段默认值存在。
 - [ ] 主键不使用 `AUTO_INCREMENT`，符合 MyBatis-Plus 雪花 ID 决策。
 - [ ] 没有引入 Flyway、Liquibase 或 Redis。
-- [ ] 预约锁定辅助表是否新增已获得用户最终确认。
+- [ ] `staff_booking_lock` 表存在，且 `(staff_id, booking_date)` 唯一索引存在。
 - [ ] Git 提交存在。
 
 ## 门禁 2：后端骨架
