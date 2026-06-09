@@ -27,6 +27,7 @@
 - [docs/20-phase-10-frontend-integration-design.md](docs/20-phase-10-frontend-integration-design.md)
 - [docs/21-remaining-development-roadmap.md](docs/21-remaining-development-roadmap.md)
 - [docs/22-continuous-agent-development-rules.md](docs/22-continuous-agent-development-rules.md)
+- [docs/23-phase-10f-review-fix-and-10g-quality-plan.md](docs/23-phase-10f-review-fix-and-10g-quality-plan.md)
 
 ## 原始需求基线
 
@@ -60,7 +61,7 @@
 
 第十阶段当前执行“管理后台优先”：
 
-1. 按 [剩余开发阶段路线图](docs/21-remaining-development-roadmap.md) 完成阶段 10F，保护并收口当前未提交管理后台代码。
-2. 建立管理后台测试、类型检查、构建和 E2E 门禁。
+1. 按 [阶段 10F-R 验收修复与 10G 质量基建代码计划](docs/23-phase-10f-review-fix-and-10g-quality-plan.md) 先修复状态和接口契约问题。
+2. 完成 10F-R 验收后，建立管理后台测试、类型检查、覆盖率和 E2E 门禁。
 3. 完成管理后台核心流程后，再补齐小程序依赖的后端能力。
 4. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。
