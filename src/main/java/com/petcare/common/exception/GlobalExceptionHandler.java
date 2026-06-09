@@ -1,5 +1,7 @@
 package com.petcare.common.exception;
 
+import com.petcare.ai.provider.AiProviderException;
+import com.petcare.ai.provider.AiProviderUnavailableException;
 import com.petcare.common.api.ApiError;
 import com.petcare.common.api.ApiResponse;
 import java.util.List;
@@ -71,6 +73,28 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
         ApiResponse<Void> body = ApiResponse.error(ErrorCode.UNAUTHORIZED, "认证失败，请先登录");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    /**
+     * Handles AI Provider unavailability (503).
+     * Returns a safe error without leaking provider details.
+     */
+    @ExceptionHandler(AiProviderUnavailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProviderUnavailable(AiProviderUnavailableException ex) {
+        log.warn("AI Provider unavailable: {}", ex.getMessage());
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.AI_PROVIDER_NOT_ENABLED, "AI 服务暂未启用");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+    }
+
+    /**
+     * Handles general AI Provider errors (503).
+     * Logs internally but returns a safe, generic message.
+     */
+    @ExceptionHandler(AiProviderException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProviderError(AiProviderException ex) {
+        log.error("AI Provider error [{}]: {}", ex.getInternalCode(), ex.getMessage());
+        ApiResponse<Void> body = ApiResponse.error(ErrorCode.AI_PROVIDER_UNAVAILABLE, "AI 服务暂时不可用，请稍后重试");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
     }
 
     /**

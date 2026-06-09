@@ -62,4 +62,19 @@ public final class ErrorCode {
     public static final String PRODUCT_ORDER_PAYMENT_REQUIRED = "product_order_payment_required";
     public static final String PRODUCT_ORDER_PICKUP_REQUIRED = "product_order_pickup_required";
     public static final String PRODUCT_ORDER_AMOUNT_INVALID = "product_order_amount_invalid";
+
+    // AI error codes
+    public static final String AI_PROVIDER_NOT_ENABLED = "ai_provider_not_enabled";
+    public static final String AI_PROVIDER_CONFIGURATION_INVALID = "ai_provider_configuration_invalid";
+    public static final String AI_PROVIDER_UNAVAILABLE = "ai_provider_unavailable";
+    public static final String AI_PROVIDER_TIMEOUT = "ai_provider_timeout";
+    public static final String AI_REQUEST_INVALID = "ai_request_invalid";
+    public static final String AI_CONVERSATION_NOT_FOUND = "ai_conversation_not_found";
+    public static final String AI_CONVERSATION_FORBIDDEN = "ai_conversation_forbidden";
+    public static final String AI_CONVERSATION_TYPE_INVALID = "ai_conversation_type_invalid";
+    public static final String AI_OUTPUT_REJECTED = "ai_output_rejected";
+    public static final String AI_MEDICAL_SAFETY_BLOCKED = "ai_medical_safety_blocked";
+    public static final String AI_GROUNDING_CONTEXT_MISSING = "ai_grounding_context_missing";
+    public static final String AI_ANALYSIS_RANGE_INVALID = "ai_analysis_range_invalid";
+    public static final String AI_ANALYSIS_DATA_INSUFFICIENT = "ai_analysis_data_insufficient";
 }
