@@ -19,9 +19,25 @@ phase-7-product-orders
 phase-8-ai
 phase-9-admin-api
 phase-10-frontend
+phase-11-user-prerequisites
+phase-12-miniapp-foundation
+phase-13-miniapp-core-flows
+phase-14-decision-gated-extensions
+phase-15-integration-verification
+phase-16-release-candidate
 ```
 
 不要把无关阶段混在一个分支里。
+
+阶段 10 内部的 10F、10G、10H 可以继续使用 `phase-10-frontend`，但每个子阶段必须形成独立验证提交。详细任务包见 `docs/21-remaining-development-roadmap.md`。
+
+当工作区存在其他 Agent 的未提交变更时，必须使用路径限定的暂存命令：
+
+```powershell
+git add -- docs/21-remaining-development-roadmap.md docs/22-continuous-agent-development-rules.md
+```
+
+禁止使用无路径限制的 `git add .` 将其他 Agent 的工作混入提交。
 
 ## 开始工作前
 

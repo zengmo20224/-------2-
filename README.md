@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 9 后台 API 已形成代码提交，阶段 10 前端集成设计文档已编写，等待 D-010 前端实施顺序决策。不要在 `main` 分支直接加入业务代码；阶段 10 代码只能在 `phase-10-frontend` 分支执行。
+当前状态：D-010 已决定先完成管理后台再开发小程序。阶段 10 管理后台骨架和门店页面已提交，当前正在收口其余管理后台核心页面。不要在 `main` 分支直接加入业务代码；当前阶段代码只能在 `phase-10-frontend` 分支执行。
 
 ## AI Agent 强制入口
 
@@ -25,6 +25,8 @@
 - [docs/17-phase-8-ai-provider-functions-plan.md](docs/17-phase-8-ai-provider-functions-plan.md)
 - [docs/19-phase-9-admin-api-handoff.md](docs/19-phase-9-admin-api-handoff.md)
 - [docs/20-phase-10-frontend-integration-design.md](docs/20-phase-10-frontend-integration-design.md)
+- [docs/21-remaining-development-roadmap.md](docs/21-remaining-development-roadmap.md)
+- [docs/22-continuous-agent-development-rules.md](docs/22-continuous-agent-development-rules.md)
 
 ## 原始需求基线
 
@@ -56,10 +58,9 @@
 
 ## 当前最近一步
 
-第十阶段进入前端集成设计与决策门禁：
+第十阶段当前执行“管理后台优先”：
 
-1. 审核 [docs/20-phase-10-frontend-integration-design.md](docs/20-phase-10-frontend-integration-design.md)。
-2. 用户决定 D-010：先管理后台、先小程序，或两端并行。
-3. 明确前端包管理器、Node.js 基线和用户端 E2E 认证方案。
-4. 补齐首个前端子阶段依赖的后端接口和演示数据。
-5. D-010 未决定前，不创建实际前端工程或开始页面编码。
+1. 按 [剩余开发阶段路线图](docs/21-remaining-development-roadmap.md) 完成阶段 10F，保护并收口当前未提交管理后台代码。
+2. 建立管理后台测试、类型检查、构建和 E2E 门禁。
+3. 完成管理后台核心流程后，再补齐小程序依赖的后端能力。
+4. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。

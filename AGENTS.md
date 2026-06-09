@@ -31,6 +31,8 @@
 21. `docs/17-phase-8-ai-provider-functions-plan.md`
 22. `docs/19-phase-9-admin-api-handoff.md`
 23. `docs/20-phase-10-frontend-integration-design.md`
+24. `docs/21-remaining-development-roadmap.md`
+25. `docs/22-continuous-agent-development-rules.md`
 
 如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
 
@@ -162,3 +164,11 @@ git log --oneline -5
 ```
 
 任何无法确定的冲突都必须停止相关实现并请求用户决策。
+
+## 12. 可持续编程强制规则
+
+- 后续阶段必须按 `docs/21-remaining-development-roadmap.md` 执行。
+- 每个 Agent 一次只能领取一个可独立验收的任务包。
+- 当前工作区存在其他 Agent 的未提交变更时，必须按 `docs/22-continuous-agent-development-rules.md` 保护和交接。
+- 禁止跳过当前阶段门禁直接开始后续阶段。
+- 没有测试、Review、验证和 Git 提交证据时，禁止声明任务包完成。
