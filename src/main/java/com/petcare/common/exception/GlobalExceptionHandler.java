@@ -106,7 +106,10 @@ public class GlobalExceptionHandler {
                  ErrorCode.BOOKING_ADDRESS_NOT_FOUND,
                  ErrorCode.COMMUNITY_POST_NOT_FOUND,
                  ErrorCode.COMMUNITY_TOPIC_NOT_FOUND,
-                 ErrorCode.COMMUNITY_COMMENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                 ErrorCode.COMMUNITY_COMMENT_NOT_FOUND,
+                 ErrorCode.PRODUCT_NOT_FOUND,
+                 ErrorCode.CART_ITEM_NOT_FOUND,
+                 ErrorCode.PRODUCT_ORDER_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case ErrorCode.STATE_CONFLICT,
                  ErrorCode.BOOKING_TIME_CONFLICT,
                  ErrorCode.BOOKING_STATUS_INVALID,
@@ -115,9 +118,13 @@ public class GlobalExceptionHandler {
                  ErrorCode.COMMUNITY_DUPLICATE_FAVORITE,
                  ErrorCode.COMMUNITY_DUPLICATE_REPORT,
                  ErrorCode.COMMUNITY_REVIEW_STATUS_INVALID,
-                 ErrorCode.COMMUNITY_SENSITIVE_WORD_DUPLICATE -> HttpStatus.CONFLICT;
+                 ErrorCode.COMMUNITY_SENSITIVE_WORD_DUPLICATE,
+                 ErrorCode.PRODUCT_STOCK_INSUFFICIENT,
+                 ErrorCode.PRODUCT_ORDER_STATUS_INVALID -> HttpStatus.CONFLICT;
             case ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
-            case ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN;
+            case ErrorCode.FORBIDDEN,
+                 ErrorCode.CART_ITEM_FORBIDDEN,
+                 ErrorCode.PRODUCT_ORDER_FORBIDDEN -> HttpStatus.FORBIDDEN;
             case ErrorCode.WECHAT_LOGIN_NOT_ENABLED -> HttpStatus.UNPROCESSABLE_ENTITY;
             case ErrorCode.BOOKING_SLOT_UNAVAILABLE,
                  ErrorCode.BOOKING_SERVICE_UNAVAILABLE,
@@ -129,7 +136,14 @@ public class GlobalExceptionHandler {
                  ErrorCode.COMMUNITY_CONTENT_REJECTED,
                  ErrorCode.COMMUNITY_CONTENT_PENDING_REVIEW,
                  ErrorCode.COMMUNITY_POST_NOT_VISIBLE,
-                 ErrorCode.COMMUNITY_FILE_UPLOAD_NOT_DECIDED -> HttpStatus.UNPROCESSABLE_ENTITY;
+                 ErrorCode.COMMUNITY_FILE_UPLOAD_NOT_DECIDED,
+                 ErrorCode.PRODUCT_NOT_ON_SALE,
+                 ErrorCode.PRODUCT_NOT_PICKUP_ONLY,
+                 ErrorCode.CART_EMPTY,
+                 ErrorCode.CART_NO_CHECKED_ITEMS,
+                 ErrorCode.PRODUCT_ORDER_PAYMENT_REQUIRED,
+                 ErrorCode.PRODUCT_ORDER_PICKUP_REQUIRED,
+                 ErrorCode.PRODUCT_ORDER_AMOUNT_INVALID -> HttpStatus.UNPROCESSABLE_ENTITY;
             default -> HttpStatus.UNPROCESSABLE_ENTITY;
         };
     }

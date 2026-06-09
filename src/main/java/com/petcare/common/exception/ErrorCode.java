@@ -46,4 +46,20 @@ public final class ErrorCode {
     public static final String COMMUNITY_REVIEW_STATUS_INVALID = "community_review_status_invalid";
     public static final String COMMUNITY_SENSITIVE_WORD_DUPLICATE = "community_sensitive_word_duplicate";
     public static final String COMMUNITY_FILE_UPLOAD_NOT_DECIDED = "community_file_upload_not_decided";
+
+    // Product / Cart / Order error codes
+    public static final String PRODUCT_NOT_FOUND = "product_not_found";
+    public static final String PRODUCT_NOT_ON_SALE = "product_not_on_sale";
+    public static final String PRODUCT_NOT_PICKUP_ONLY = "product_not_pickup_only";
+    public static final String PRODUCT_STOCK_INSUFFICIENT = "product_stock_insufficient";
+    public static final String CART_ITEM_NOT_FOUND = "cart_item_not_found";
+    public static final String CART_ITEM_FORBIDDEN = "cart_item_forbidden";
+    public static final String CART_EMPTY = "cart_empty";
+    public static final String CART_NO_CHECKED_ITEMS = "cart_no_checked_items";
+    public static final String PRODUCT_ORDER_NOT_FOUND = "product_order_not_found";
+    public static final String PRODUCT_ORDER_FORBIDDEN = "product_order_forbidden";
+    public static final String PRODUCT_ORDER_STATUS_INVALID = "product_order_status_invalid";
+    public static final String PRODUCT_ORDER_PAYMENT_REQUIRED = "product_order_payment_required";
+    public static final String PRODUCT_ORDER_PICKUP_REQUIRED = "product_order_pickup_required";
+    public static final String PRODUCT_ORDER_AMOUNT_INVALID = "product_order_amount_invalid";
 }
