@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 5 服务预约与排班已形成核心代码提交，当前启动阶段 6 社区与内容审核文档和代码计划。不要在 `main` 分支直接加入业务代码；阶段 6 应在 `phase-6-community-moderation` 分支执行。
+当前状态：阶段 6 社区与内容审核已形成代码提交，当前启动阶段 7 商品到店自提订单文档和代码计划。不要在 `main` 分支直接加入业务代码；阶段 7 应在 `phase-7-product-orders` 分支执行。
 
 ## AI Agent 强制入口
 
@@ -21,6 +21,7 @@
 - [docs/13-phase-4-auth-authorization-plan.md](docs/13-phase-4-auth-authorization-plan.md)
 - [docs/14-phase-5-booking-scheduling-plan.md](docs/14-phase-5-booking-scheduling-plan.md)
 - [docs/15-phase-6-community-moderation-plan.md](docs/15-phase-6-community-moderation-plan.md)
+- [docs/16-phase-7-product-orders-plan.md](docs/16-phase-7-product-orders-plan.md)
 
 ## 原始需求基线
 
@@ -52,12 +53,12 @@
 
 ## 当前最近一步
 
-第六阶段只做社区与内容审核闭环：
+第七阶段只做商品到店自提订单闭环：
 
-1. 实现话题、帖子、评论基础 API。
-2. 实现点赞、收藏、举报业务。
-3. 实现敏感词匹配和内容审核记录。
-4. 实现后台帖子、评论、举报和敏感词管理。
-5. 使用权限码保护后台审核操作。
-6. 明确图片上传未决边界，不擅自实现真实上传。
-7. 通过内容风控、状态流转、权限和事务测试验证。
+1. 实现商品目录和购物车。
+2. 实现从购物车创建到店自提订单。
+3. 使用服务端价格计算金额并保存订单项快照。
+4. 使用数据库事务和原子更新防止库存超卖。
+5. 实现后台确认、备货、线下收款、完成、取消和缺货取消。
+6. 使用权限码保护后台订单操作。
+7. 通过金额、状态流转、事务和真实 MySQL 库存并发测试验证。

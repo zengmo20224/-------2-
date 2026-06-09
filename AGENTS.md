@@ -27,6 +27,7 @@
 17. `docs/13-phase-4-auth-authorization-plan.md`
 18. `docs/14-phase-5-booking-scheduling-plan.md`
 19. `docs/15-phase-6-community-moderation-plan.md`
+20. `docs/16-phase-7-product-orders-plan.md`
 
 如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
 
