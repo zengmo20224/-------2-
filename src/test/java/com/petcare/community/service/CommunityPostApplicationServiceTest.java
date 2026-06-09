@@ -23,10 +23,13 @@ import com.petcare.community.mapper.TopicMapper;
 import com.petcare.moderation.domain.MatchedSensitiveWord;
 import com.petcare.moderation.dto.ContentReviewResult;
 import com.petcare.moderation.service.ContentModerationService;
+import com.petcare.user.entity.Pet;
+import com.petcare.user.mapper.PetMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -61,6 +64,9 @@ class CommunityPostApplicationServiceTest {
 
     @Mock
     private TopicMapper topicMapper;
+
+    @Mock
+    private PetMapper petMapper;
 
     @Mock
     private ContentModerationService moderationService;
@@ -150,6 +156,7 @@ class CommunityPostApplicationServiceTest {
             PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "我家猫咪", "今天天气真好");
             Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
+            when(petMapper.selectById(PET_ID)).thenReturn(buildPet(PET_ID, USER_ID));
 
             ContentReviewResult cleanResult = new ContentReviewResult(0, "PUBLISHED", "APPROVED", List.of());
             when(moderationService.moderateAndRecord(
@@ -168,6 +175,11 @@ class CommunityPostApplicationServiceTest {
             assertThat(result.title()).isEqualTo("我家猫咪");
             assertThat(result.content()).isEqualTo("今天天气真好");
             verify(postMapper).insert(any(Post.class));
+            ArgumentCaptor<Long> contentIdCaptor = ArgumentCaptor.forClass(Long.class);
+            verify(moderationService).moderateAndRecord(
+                    eq(CommunityContentType.POST), contentIdCaptor.capture(), eq(USER_ID),
+                    eq("我家猫咪 今天天气真好"));
+            assertThat(contentIdCaptor.getValue()).isNotNull();
         }
 
         @Test
@@ -177,6 +189,7 @@ class CommunityPostApplicationServiceTest {
             PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "敏感标题", "敏感内容");
             Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
+            when(petMapper.selectById(PET_ID)).thenReturn(buildPet(PET_ID, USER_ID));
 
             MatchedSensitiveWord matchedWord = mock(MatchedSensitiveWord.class);
             ContentReviewResult level1Result = new ContentReviewResult(1, "PENDING_REVIEW", "PENDING",
@@ -201,6 +214,7 @@ class CommunityPostApplicationServiceTest {
             PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "严重违规", "严重违规内容");
             Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
+            when(petMapper.selectById(PET_ID)).thenReturn(buildPet(PET_ID, USER_ID));
 
             MatchedSensitiveWord matchedWord = mock(MatchedSensitiveWord.class);
             ContentReviewResult level3Result = new ContentReviewResult(3, "REJECTED", "REJECTED",
@@ -230,6 +244,25 @@ class CommunityPostApplicationServiceTest {
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.COMMUNITY_TOPIC_NOT_FOUND);
             verify(postMapper, never()).insert(any(Post.class));
+        }
+
+        @Test
+        @DisplayName("With petId not owned by current user -> throws FORBIDDEN")
+        void throwsWhenPetDoesNotBelongToCurrentUser() {
+            PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "标题", "内容");
+            Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
+            when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
+
+            Pet pet = new Pet();
+            pet.setId(PET_ID);
+            pet.setUserId(9999L);
+            when(petMapper.selectById(PET_ID)).thenReturn(pet);
+
+            assertThatThrownBy(() -> service.createPost(USER_ID, request))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("code").isEqualTo(ErrorCode.FORBIDDEN);
+            verify(postMapper, never()).insert(any(Post.class));
+            verify(moderationService, never()).moderateAndRecord(any(), any(), any(), any());
         }
     }
 
@@ -356,6 +389,11 @@ class CommunityPostApplicationServiceTest {
             verify(commentMapper).insert(any(PostComment.class));
             verify(postMapper).updateById(any(Post.class));
             assertThat(post.getCommentCount()).isEqualTo(4);
+            ArgumentCaptor<Long> contentIdCaptor = ArgumentCaptor.forClass(Long.class);
+            verify(moderationService).moderateAndRecord(
+                    eq(CommunityContentType.COMMENT), contentIdCaptor.capture(), eq(USER_ID),
+                    eq("好可爱啊"));
+            assertThat(contentIdCaptor.getValue()).isNotNull();
         }
 
         @Test
@@ -463,6 +501,14 @@ class CommunityPostApplicationServiceTest {
         topic.setSort(sort);
         topic.setStatus(status);
         return topic;
+    }
+
+    private Pet buildPet(Long id, Long userId) {
+        Pet pet = new Pet();
+        pet.setId(id);
+        pet.setUserId(userId);
+        pet.setDeleted(0);
+        return pet;
     }
 
     private Post buildPost(Long id, Long userId, Long petId, Long topicId,

@@ -308,7 +308,7 @@ public class CommunityAdminService {
         report.setStatus(request.handleResult());
         report.setHandlerId(adminId);
         report.setHandleTime(LocalDateTime.now());
-        report.setHandleResult(request.handleResult());
+        report.setHandleResult(request.handleRemark());
         reportMapper.updateById(report);
 
         // Optionally hide the post

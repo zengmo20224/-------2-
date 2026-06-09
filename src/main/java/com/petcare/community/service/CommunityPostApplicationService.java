@@ -1,5 +1,6 @@
 package com.petcare.community.service;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.petcare.common.exception.BusinessException;
@@ -22,6 +23,8 @@ import com.petcare.community.mapper.PostMapper;
 import com.petcare.community.mapper.TopicMapper;
 import com.petcare.moderation.dto.ContentReviewResult;
 import com.petcare.moderation.service.ContentModerationService;
+import com.petcare.user.entity.Pet;
+import com.petcare.user.mapper.PetMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -38,17 +41,20 @@ public class CommunityPostApplicationService {
     private final PostCommentMapper commentMapper;
     private final PostImageMapper imageMapper;
     private final TopicMapper topicMapper;
+    private final PetMapper petMapper;
     private final ContentModerationService moderationService;
 
     public CommunityPostApplicationService(PostMapper postMapper,
                                             PostCommentMapper commentMapper,
                                             PostImageMapper imageMapper,
                                             TopicMapper topicMapper,
+                                            PetMapper petMapper,
                                             ContentModerationService moderationService) {
         this.postMapper = postMapper;
         this.commentMapper = commentMapper;
         this.imageMapper = imageMapper;
         this.topicMapper = topicMapper;
+        this.petMapper = petMapper;
         this.moderationService = moderationService;
     }
 
@@ -108,8 +114,10 @@ public class CommunityPostApplicationService {
                 throw new BusinessException(ErrorCode.COMMUNITY_TOPIC_NOT_FOUND, "话题不存在或已禁用");
             }
         }
+        validatePetOwnership(currentUserId, request.petId());
 
         Post post = new Post();
+        post.setId(IdWorker.getId());
         post.setUserId(currentUserId);
         post.setPetId(request.petId());
         post.setTopicId(request.topicId());
@@ -225,6 +233,7 @@ public class CommunityPostApplicationService {
         }
 
         PostComment comment = new PostComment();
+        comment.setId(IdWorker.getId());
         comment.setPostId(postId);
         comment.setUserId(currentUserId);
         comment.setParentId(request.parentId());
@@ -293,5 +302,19 @@ public class CommunityPostApplicationService {
                 comment.getParentId(), comment.getContent(), comment.getStatus(),
                 comment.getLikeCount(), comment.getCreateTime()
         );
+    }
+
+    private void validatePetOwnership(Long currentUserId, Long petId) {
+        if (petId == null) {
+            return;
+        }
+
+        Pet pet = petMapper.selectById(petId);
+        if (pet == null || pet.getDeleted() != null && pet.getDeleted() == 1) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "关联宠物不存在");
+        }
+        if (!currentUserId.equals(pet.getUserId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "不能关联其他用户的宠物");
+        }
     }
 }

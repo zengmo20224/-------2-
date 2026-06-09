@@ -421,7 +421,7 @@ class CommunityAdminServiceTest {
             assertThat(updated.getStatus()).isEqualTo("PROCESSED");
             assertThat(updated.getHandlerId()).isEqualTo(ADMIN_ID);
             assertThat(updated.getHandleTime()).isNotNull();
-            assertThat(updated.getHandleResult()).isEqualTo("PROCESSED");
+            assertThat(updated.getHandleResult()).isEqualTo("已处理");
         }
 
         @Test

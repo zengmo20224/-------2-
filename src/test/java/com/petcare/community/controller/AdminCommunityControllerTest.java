@@ -269,6 +269,17 @@ class AdminCommunityControllerTest {
                             .content("{\"handleResult\":\"PROCESSED\",\"hidePost\":false,\"handleRemark\":\"已处理\"}"))
                     .andExpect(status().isForbidden());
         }
+
+        @Test
+        @DisplayName("POST /reports/{id}/handle with invalid handleResult returns 400")
+        void handleReportWithInvalidResult() throws Exception {
+            mockMvc.perform(post("/api/v1/admin/community/reports/" + testReportId + "/handle")
+                            .header("Authorization", "Bearer " + adminToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"handleResult\":\"INVALID\",\"hidePost\":false,\"handleRemark\":\"已处理\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.code").value("validation_error"));
+        }
     }
 
     // ==================== Helper Methods ====================

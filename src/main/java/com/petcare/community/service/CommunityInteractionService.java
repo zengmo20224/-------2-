@@ -12,6 +12,7 @@ import com.petcare.community.mapper.PostFavoriteMapper;
 import com.petcare.community.mapper.PostLikeMapper;
 import com.petcare.community.mapper.PostMapper;
 import com.petcare.community.mapper.PostReportMapper;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +48,7 @@ public class CommunityInteractionService {
      */
     @Transactional
     public void likePost(Long currentUserId, Long postId) {
-        Post post = getPublishedPost(postId);
+        Post post = getPublishedPost(postId, true);
 
         boolean alreadyLiked = likeMapper.exists(
                 new LambdaQueryWrapper<PostLike>()
@@ -61,7 +62,11 @@ public class CommunityInteractionService {
         PostLike like = new PostLike();
         like.setPostId(postId);
         like.setUserId(currentUserId);
-        likeMapper.insert(like);
+        try {
+            likeMapper.insert(like);
+        } catch (DuplicateKeyException ex) {
+            return;
+        }
 
         post.setLikeCount(post.getLikeCount() + 1);
         postMapper.updateById(post);
@@ -72,7 +77,7 @@ public class CommunityInteractionService {
      */
     @Transactional
     public void unlikePost(Long currentUserId, Long postId) {
-        Post post = getPublishedPost(postId);
+        Post post = getPublishedPost(postId, true);
 
         PostLike existing = likeMapper.selectOne(
                 new LambdaQueryWrapper<PostLike>()
@@ -95,7 +100,7 @@ public class CommunityInteractionService {
      */
     @Transactional
     public void favoritePost(Long currentUserId, Long postId) {
-        Post post = getPublishedPost(postId);
+        Post post = getPublishedPost(postId, true);
 
         boolean alreadyFavorited = favoriteMapper.exists(
                 new LambdaQueryWrapper<PostFavorite>()
@@ -109,7 +114,11 @@ public class CommunityInteractionService {
         PostFavorite favorite = new PostFavorite();
         favorite.setPostId(postId);
         favorite.setUserId(currentUserId);
-        favoriteMapper.insert(favorite);
+        try {
+            favoriteMapper.insert(favorite);
+        } catch (DuplicateKeyException ex) {
+            return;
+        }
 
         post.setFavoriteCount(post.getFavoriteCount() + 1);
         postMapper.updateById(post);
@@ -120,7 +129,7 @@ public class CommunityInteractionService {
      */
     @Transactional
     public void unfavoritePost(Long currentUserId, Long postId) {
-        Post post = getPublishedPost(postId);
+        Post post = getPublishedPost(postId, true);
 
         PostFavorite existing = favoriteMapper.selectOne(
                 new LambdaQueryWrapper<PostFavorite>()
@@ -143,11 +152,12 @@ public class CommunityInteractionService {
      */
     @Transactional
     public void reportPost(Long currentUserId, Long postId, ReportPostRequest request) {
-        // Verify post exists and not deleted
+        // Lock the post row so duplicate reports for the same post serialize safely.
         Post post = postMapper.selectOne(
                 new LambdaQueryWrapper<Post>()
                         .eq(Post::getId, postId)
                         .eq(Post::getDeleted, 0)
+                        .last("FOR UPDATE")
         );
         if (post == null) {
             throw new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND, "帖子不存在");
@@ -169,18 +179,24 @@ public class CommunityInteractionService {
         report.setReasonType(request.reasonType());
         report.setReason(request.reason());
         report.setStatus("PENDING");
-        reportMapper.insert(report);
+        try {
+            reportMapper.insert(report);
+        } catch (DuplicateKeyException ex) {
+            throw new BusinessException(ErrorCode.COMMUNITY_DUPLICATE_REPORT, "你已经举报过该帖子");
+        }
     }
 
     // ==================== Private Helpers ====================
 
-    private Post getPublishedPost(Long postId) {
-        Post post = postMapper.selectOne(
-                new LambdaQueryWrapper<Post>()
-                        .eq(Post::getId, postId)
-                        .eq(Post::getStatus, "PUBLISHED")
-                        .eq(Post::getDeleted, 0)
-        );
+    private Post getPublishedPost(Long postId, boolean forUpdate) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
+                .eq(Post::getId, postId)
+                .eq(Post::getStatus, "PUBLISHED")
+                .eq(Post::getDeleted, 0);
+        if (forUpdate) {
+            wrapper.last("FOR UPDATE");
+        }
+        Post post = postMapper.selectOne(wrapper);
         if (post == null) {
             throw new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND, "帖子不存在或不可操作");
         }

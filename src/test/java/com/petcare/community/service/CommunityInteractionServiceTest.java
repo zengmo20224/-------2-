@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -93,6 +94,22 @@ class CommunityInteractionServiceTest {
 
             // Assert
             verify(likeMapper, never()).insert(any(PostLike.class));
+            verify(postMapper, never()).updateById(any(Post.class));
+            assertThat(post.getLikeCount()).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("Concurrent duplicate like on insert remains idempotent")
+        void duplicateLikeOnInsertIsIdempotent() {
+            Post post = buildPublishedPost(POST_ID);
+            post.setLikeCount(5);
+            when(postMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(post);
+            when(likeMapper.exists(any(LambdaQueryWrapper.class))).thenReturn(false);
+            when(likeMapper.insert(any(PostLike.class)))
+                    .thenThrow(new DuplicateKeyException("uk_post_user"));
+
+            service.likePost(USER_ID, POST_ID);
+
             verify(postMapper, never()).updateById(any(Post.class));
             assertThat(post.getLikeCount()).isEqualTo(5);
         }
@@ -222,6 +239,22 @@ class CommunityInteractionServiceTest {
             verify(postMapper, never()).updateById(any(Post.class));
             assertThat(post.getFavoriteCount()).isEqualTo(3);
         }
+
+        @Test
+        @DisplayName("Concurrent duplicate favorite on insert remains idempotent")
+        void duplicateFavoriteOnInsertIsIdempotent() {
+            Post post = buildPublishedPost(POST_ID);
+            post.setFavoriteCount(3);
+            when(postMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(post);
+            when(favoriteMapper.exists(any(LambdaQueryWrapper.class))).thenReturn(false);
+            when(favoriteMapper.insert(any(PostFavorite.class)))
+                    .thenThrow(new DuplicateKeyException("uk_post_user"));
+
+            service.favoritePost(USER_ID, POST_ID);
+
+            verify(postMapper, never()).updateById(any(Post.class));
+            assertThat(post.getFavoriteCount()).isEqualTo(3);
+        }
     }
 
     @Nested
@@ -310,6 +343,22 @@ class CommunityInteractionServiceTest {
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.COMMUNITY_DUPLICATE_REPORT);
             verify(reportMapper, never()).insert(any(PostReport.class));
+        }
+
+        @Test
+        @DisplayName("Concurrent duplicate report on insert maps to COMMUNITY_DUPLICATE_REPORT")
+        void duplicateReportOnInsertMapsToConflict() {
+            Post post = buildPublishedPost(POST_ID);
+            when(postMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(post);
+            when(reportMapper.exists(any(LambdaQueryWrapper.class))).thenReturn(false);
+            when(reportMapper.insert(any(PostReport.class)))
+                    .thenThrow(new DuplicateKeyException("uk_post_report_user"));
+
+            ReportPostRequest request = new ReportPostRequest("SPAM", "垃圾内容");
+
+            assertThatThrownBy(() -> service.reportPost(USER_ID, POST_ID, request))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("code").isEqualTo(ErrorCode.COMMUNITY_DUPLICATE_REPORT);
         }
 
         @Test
