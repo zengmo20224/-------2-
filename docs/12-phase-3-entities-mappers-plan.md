@@ -371,14 +371,16 @@ Get-Content -Raw .\schema.sql | docker exec -i petcare-mysql mysql -uroot "-p$en
 mvn test
 ```
 
-测试 profile 通过环境变量连接：
+真实 MySQL Mapper 集成测试通过独立 `mysql-test` profile 和显式 IT 类运行：
 
 ```powershell
 $env:DB_URL="jdbc:mysql://localhost:3306/petcare_o2o?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai"
 $env:DB_USERNAME="root"
 $env:DB_PASSWORD="你的本地密码"
-mvn test
+mvn "-Dtest=MySqlMapperIntegrationIT" test
 ```
+
+普通 `mvn test` 继续使用 H2，以便本地和 CI 在没有 MySQL 时运行；它不能替代上述 MySQL 8 门禁验证。
 
 ## 实施顺序
 

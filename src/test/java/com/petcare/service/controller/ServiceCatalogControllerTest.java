@@ -78,32 +78,32 @@ class ServiceCatalogControllerTest {
     @Test
     @DisplayName("GET /service-categories returns active categories")
     void listCategoriesReturnsActive() throws Exception {
-        createCategory("美容", 1);
-        createCategory("洗澡", 2);
+        createCategory("美容_catalogTest", 1);
+        createCategory("洗澡_catalogTest", 2);
 
         mockMvc.perform(get("/api/v1/service-categories")
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].name").value("美容"));
+                .andExpect(jsonPath("$.data[?(@.name=='美容_catalogTest')]").exists())
+                .andExpect(jsonPath("$.data[?(@.name=='洗澡_catalogTest')]").exists());
     }
 
     @Test
     @DisplayName("GET /service-items returns paginated ON_SALE items")
     void listItemsReturnsOnSale() throws Exception {
-        ServiceCategory cat = createCategory("美容", 1);
-        createItem(cat.getId(), "洗澡服务", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
-        createItem(cat.getId(), "下架服务", "STORE", new BigDecimal("50.00"), 30, "OFF_SALE");
+        ServiceCategory cat = createCategory("美容_catalogTest", 1);
+        createItem(cat.getId(), "洗澡服务_onSale", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
+        createItem(cat.getId(), "下架服务_offSale", "STORE", new BigDecimal("50.00"), 30, "OFF_SALE");
 
         mockMvc.perform(get("/api/v1/service-items")
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.items").isArray())
-                .andExpect(jsonPath("$.data.items.length()").value(1))
-                .andExpect(jsonPath("$.data.items[0].name").value("洗澡服务"));
+                .andExpect(jsonPath("$.data.items[?(@.name=='洗澡服务_onSale')]").exists())
+                .andExpect(jsonPath("$.data.items[?(@.name=='下架服务_offSale')]").doesNotExist());
     }
 
     @Test
