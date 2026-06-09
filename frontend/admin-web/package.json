@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:contract": "vitest run src/__tests__/status-contract.test.ts"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
