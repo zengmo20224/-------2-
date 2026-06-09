@@ -102,16 +102,34 @@ public class GlobalExceptionHandler {
     private HttpStatus resolveHttpStatus(String code) {
         return switch (code) {
             case ErrorCode.VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
-            case ErrorCode.RESOURCE_NOT_FOUND, ErrorCode.BOOKING_ADDRESS_NOT_FOUND -> HttpStatus.NOT_FOUND;
-            case ErrorCode.STATE_CONFLICT, ErrorCode.BOOKING_TIME_CONFLICT,
-                 ErrorCode.BOOKING_STATUS_INVALID, ErrorCode.BOOKING_RETRY_EXHAUSTED -> HttpStatus.CONFLICT;
+            case ErrorCode.RESOURCE_NOT_FOUND,
+                 ErrorCode.BOOKING_ADDRESS_NOT_FOUND,
+                 ErrorCode.COMMUNITY_POST_NOT_FOUND,
+                 ErrorCode.COMMUNITY_TOPIC_NOT_FOUND,
+                 ErrorCode.COMMUNITY_COMMENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case ErrorCode.STATE_CONFLICT,
+                 ErrorCode.BOOKING_TIME_CONFLICT,
+                 ErrorCode.BOOKING_STATUS_INVALID,
+                 ErrorCode.BOOKING_RETRY_EXHAUSTED,
+                 ErrorCode.COMMUNITY_DUPLICATE_LIKE,
+                 ErrorCode.COMMUNITY_DUPLICATE_FAVORITE,
+                 ErrorCode.COMMUNITY_DUPLICATE_REPORT,
+                 ErrorCode.COMMUNITY_REVIEW_STATUS_INVALID,
+                 ErrorCode.COMMUNITY_SENSITIVE_WORD_DUPLICATE -> HttpStatus.CONFLICT;
             case ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
             case ErrorCode.FORBIDDEN -> HttpStatus.FORBIDDEN;
             case ErrorCode.WECHAT_LOGIN_NOT_ENABLED -> HttpStatus.UNPROCESSABLE_ENTITY;
-            case ErrorCode.BOOKING_SLOT_UNAVAILABLE, ErrorCode.BOOKING_SERVICE_UNAVAILABLE,
-                 ErrorCode.BOOKING_DATE_OUT_OF_RANGE, ErrorCode.BOOKING_HOME_DISTANCE_EXCEEDED,
-                 ErrorCode.BOOKING_ADDRESS_REQUIRED, ErrorCode.BOOKING_STAFF_UNAVAILABLE,
-                 ErrorCode.BUSINESS_RULE_VIOLATION -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case ErrorCode.BOOKING_SLOT_UNAVAILABLE,
+                 ErrorCode.BOOKING_SERVICE_UNAVAILABLE,
+                 ErrorCode.BOOKING_DATE_OUT_OF_RANGE,
+                 ErrorCode.BOOKING_HOME_DISTANCE_EXCEEDED,
+                 ErrorCode.BOOKING_ADDRESS_REQUIRED,
+                 ErrorCode.BOOKING_STAFF_UNAVAILABLE,
+                 ErrorCode.BUSINESS_RULE_VIOLATION,
+                 ErrorCode.COMMUNITY_CONTENT_REJECTED,
+                 ErrorCode.COMMUNITY_CONTENT_PENDING_REVIEW,
+                 ErrorCode.COMMUNITY_POST_NOT_VISIBLE,
+                 ErrorCode.COMMUNITY_FILE_UPLOAD_NOT_DECIDED -> HttpStatus.UNPROCESSABLE_ENTITY;
             default -> HttpStatus.UNPROCESSABLE_ENTITY;
         };
     }
