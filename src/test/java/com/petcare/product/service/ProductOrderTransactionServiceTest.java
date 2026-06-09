@@ -507,6 +507,42 @@ class ProductOrderTransactionServiceTest {
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_ORDER_STATUS_INVALID);
         }
+
+        @Test
+        @DisplayName("confirmPayment on already OFFLINE_PAID order should throw — prevents duplicate")
+        void confirmPayment_alreadyPaid() {
+            // Arrange
+            defaultOrder.setStatus(ProductOrderStatus.READY_FOR_PICKUP.getCode());
+            defaultOrder.setPaymentStatus("OFFLINE_PAID");
+            defaultOrder.setPickupStatus(PickupStatus.PICKED_UP.getCode());
+            doReturn(defaultOrder).when(orderMapper).selectForUpdate(ORDER_ID);
+
+            // Act & Assert
+            assertThatThrownBy(() -> orderService.confirmPayment(ORDER_ID, OPERATOR_ID))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("code").isEqualTo(ErrorCode.PRODUCT_ORDER_STATUS_INVALID);
+
+            // Must not update the order again
+            verify(orderMapper, never()).updateById((ProductOrder) any());
+        }
+
+        @Test
+        @DisplayName("confirmPayment on already PICKED_UP order should throw — prevents duplicate")
+        void confirmPayment_alreadyPickedUp() {
+            // Arrange
+            defaultOrder.setStatus(ProductOrderStatus.READY_FOR_PICKUP.getCode());
+            defaultOrder.setPaymentStatus("UNPAID");
+            defaultOrder.setPickupStatus(PickupStatus.PICKED_UP.getCode());
+            doReturn(defaultOrder).when(orderMapper).selectForUpdate(ORDER_ID);
+
+            // Act & Assert
+            assertThatThrownBy(() -> orderService.confirmPayment(ORDER_ID, OPERATOR_ID))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("code").isEqualTo(ErrorCode.PRODUCT_ORDER_STATUS_INVALID);
+
+            // Must not update the order again
+            verify(orderMapper, never()).updateById((ProductOrder) any());
+        }
     }
 
     // ==================== completeOrder ====================

@@ -223,7 +223,8 @@ public class ProductOrderTransactionServiceImpl implements ProductOrderTransacti
     public ProductOrder confirmPayment(Long orderId, Long operatorId) {
         ProductOrder order = lockAndValidate(orderId);
 
-        ProductOrderStateMachine.validateCanConfirmPayment(order.getStatus());
+        ProductOrderStateMachine.validateCanConfirmPayment(
+                order.getStatus(), order.getPaymentStatus(), order.getPickupStatus());
 
         order.setPaymentStatus("OFFLINE_PAID");
         order.setPickupStatus(PickupStatus.PICKED_UP.getCode());

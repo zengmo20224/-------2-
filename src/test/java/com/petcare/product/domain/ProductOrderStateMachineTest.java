@@ -254,10 +254,10 @@ class ProductOrderStateMachineTest {
     class ValidateCanConfirmPayment {
 
         @Test
-        @DisplayName("succeeds when READY_FOR_PICKUP")
-        void succeedsWhenReady() {
+        @DisplayName("succeeds when READY_FOR_PICKUP + UNPAID + not picked up")
+        void succeedsWhenReadyAndUnpaid() {
             assertThatCode(() -> ProductOrderStateMachine.validateCanConfirmPayment(
-                    "READY_FOR_PICKUP"))
+                    "READY_FOR_PICKUP", "UNPAID", "READY_FOR_PICKUP"))
                     .doesNotThrowAnyException();
         }
 
@@ -265,7 +265,7 @@ class ProductOrderStateMachineTest {
         @DisplayName("fails when PREPARING")
         void failsWhenPreparing() {
             assertThatThrownBy(() -> ProductOrderStateMachine.validateCanConfirmPayment(
-                    "PREPARING"))
+                    "PREPARING", "UNPAID", "READY_FOR_PICKUP"))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_ORDER_STATUS_INVALID);
         }
@@ -274,7 +274,25 @@ class ProductOrderStateMachineTest {
         @DisplayName("fails when PENDING_CONFIRM")
         void failsWhenPendingConfirm() {
             assertThatThrownBy(() -> ProductOrderStateMachine.validateCanConfirmPayment(
-                    "PENDING_CONFIRM"))
+                    "PENDING_CONFIRM", "UNPAID", "WAIT_PREPARE"))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("code").isEqualTo(ErrorCode.PRODUCT_ORDER_STATUS_INVALID);
+        }
+
+        @Test
+        @DisplayName("fails when already OFFLINE_PAID — prevents duplicate confirmation")
+        void failsWhenAlreadyPaid() {
+            assertThatThrownBy(() -> ProductOrderStateMachine.validateCanConfirmPayment(
+                    "READY_FOR_PICKUP", "OFFLINE_PAID", "PICKED_UP"))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("code").isEqualTo(ErrorCode.PRODUCT_ORDER_STATUS_INVALID);
+        }
+
+        @Test
+        @DisplayName("fails when already PICKED_UP — prevents duplicate after pickup")
+        void failsWhenAlreadyPickedUp() {
+            assertThatThrownBy(() -> ProductOrderStateMachine.validateCanConfirmPayment(
+                    "READY_FOR_PICKUP", "UNPAID", "PICKED_UP"))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_ORDER_STATUS_INVALID);
         }

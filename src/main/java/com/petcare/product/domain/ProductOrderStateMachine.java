@@ -94,13 +94,26 @@ public final class ProductOrderStateMachine {
 
     /**
      * Validates that a READY_FOR_PICKUP order can have its payment confirmed.
-     * Only READY_FOR_PICKUP orders can confirm payment.
+     * Prevents duplicate payment confirmation by checking:
+     * - Order status must be READY_FOR_PICKUP
+     * - Payment status must still be UNPAID
+     * - Pickup status must not already be PICKED_UP
      */
-    public static void validateCanConfirmPayment(String status) {
+    public static void validateCanConfirmPayment(String status, String paymentStatus, String pickupStatus) {
         if (!ProductOrderStatus.READY_FOR_PICKUP.getCode().equals(status)) {
             throw new BusinessException(
                     ErrorCode.PRODUCT_ORDER_STATUS_INVALID,
                     "只有待自提状态的订单才能确认收款");
+        }
+        if ("OFFLINE_PAID".equals(paymentStatus)) {
+            throw new BusinessException(
+                    ErrorCode.PRODUCT_ORDER_STATUS_INVALID,
+                    "订单已确认收款，不能重复确认");
+        }
+        if (PickupStatus.PICKED_UP.getCode().equals(pickupStatus)) {
+            throw new BusinessException(
+                    ErrorCode.PRODUCT_ORDER_STATUS_INVALID,
+                    "订单已自提，不能重复确认收款");
         }
     }
 
