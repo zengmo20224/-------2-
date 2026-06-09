@@ -29,6 +29,7 @@
 19. `docs/15-phase-6-community-moderation-plan.md`
 20. `docs/16-phase-7-product-orders-plan.md`
 21. `docs/17-phase-8-ai-provider-functions-plan.md`
+22. `docs/19-phase-9-admin-api-handoff.md`
 
 如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
 
