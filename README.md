@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 7 商品到店自提订单已形成代码提交，当前启动阶段 8 AI Provider 与 AI 功能文档和代码计划。不要在 `main` 分支直接加入业务代码；阶段 8 应在 `phase-8-ai` 分支执行。
+当前状态：阶段 9 后台 API 已形成代码提交，阶段 10 前端集成设计文档已编写，等待 D-010 前端实施顺序决策。不要在 `main` 分支直接加入业务代码；阶段 10 代码只能在 `phase-10-frontend` 分支执行。
 
 ## AI Agent 强制入口
 
@@ -23,6 +23,8 @@
 - [docs/15-phase-6-community-moderation-plan.md](docs/15-phase-6-community-moderation-plan.md)
 - [docs/16-phase-7-product-orders-plan.md](docs/16-phase-7-product-orders-plan.md)
 - [docs/17-phase-8-ai-provider-functions-plan.md](docs/17-phase-8-ai-provider-functions-plan.md)
+- [docs/19-phase-9-admin-api-handoff.md](docs/19-phase-9-admin-api-handoff.md)
+- [docs/20-phase-10-frontend-integration-design.md](docs/20-phase-10-frontend-integration-design.md)
 
 ## 原始需求基线
 
@@ -54,12 +56,10 @@
 
 ## 当前最近一步
 
-第八阶段建立安全、可替换、可测试的 AI 能力基础：
+第十阶段进入前端集成设计与决策门禁：
 
-1. 实现统一 AI Provider 端口、禁用实现和 Mock Provider。
-2. 实现会话、消息和用量日志业务。
-3. 实现基于后端可信数据的 AI 客服上下文。
-4. 实现宠物高风险症状确定性安全规则。
-5. 实现不编造用户事实的发帖辅助。
-6. 实现基于后端聚合数据的管理端 AI 分析报告。
-7. D-008 未决项确定前，不接入真实 DeepSeek HTTP Client，不开放生产 AI 调用。
+1. 审核 [docs/20-phase-10-frontend-integration-design.md](docs/20-phase-10-frontend-integration-design.md)。
+2. 用户决定 D-010：先管理后台、先小程序，或两端并行。
+3. 明确前端包管理器、Node.js 基线和用户端 E2E 认证方案。
+4. 补齐首个前端子阶段依赖的后端接口和演示数据。
+5. D-010 未决定前，不创建实际前端工程或开始页面编码。
