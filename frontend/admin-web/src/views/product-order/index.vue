@@ -43,11 +43,11 @@
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
-            <el-button size="small" type="success" v-if="row.status === 'PENDING'" @click="handleAction(row.id, 'confirm')" :disabled="!userStore.hasPermission('product:order:confirm')">确认</el-button>
-            <el-button size="small" v-if="row.status === 'CONFIRMED'" @click="handleAction(row.id, 'confirm-payment')" :disabled="!userStore.hasPermission('product:order:confirm-payment')">确认支付</el-button>
-            <el-button size="small" type="primary" v-if="row.status === 'CONFIRMED'" @click="handleAction(row.id, 'ready')" :disabled="!userStore.hasPermission('product:order:ready')">备货完成</el-button>
-            <el-button size="small" type="success" v-if="row.status === 'READY'" @click="handleAction(row.id, 'complete')" :disabled="!userStore.hasPermission('product:order:complete')">完成</el-button>
-            <el-button size="small" type="danger" v-if="['PENDING','CONFIRMED'].includes(row.status)" @click="handleAction(row.id, 'cancel')" :disabled="!userStore.hasPermission('product:order:cancel')">取消</el-button>
+            <el-button size="small" type="success" v-if="getProductOrderActions(row.status).includes('confirm')" @click="handleAction(row.id, 'confirm')" :disabled="!userStore.hasPermission('product:order:confirm')">确认</el-button>
+            <el-button size="small" v-if="getProductOrderActions(row.status).includes('confirm-payment')" @click="handleAction(row.id, 'confirm-payment')" :disabled="!userStore.hasPermission('product:order:confirm-payment')">确认支付</el-button>
+            <el-button size="small" type="primary" v-if="getProductOrderActions(row.status).includes('ready')" @click="handleAction(row.id, 'ready')" :disabled="!userStore.hasPermission('product:order:ready')">备货完成</el-button>
+            <el-button size="small" type="success" v-if="getProductOrderActions(row.status).includes('complete')" @click="handleAction(row.id, 'complete')" :disabled="!userStore.hasPermission('product:order:complete')">完成</el-button>
+            <el-button size="small" type="danger" v-if="getProductOrderActions(row.status).includes('cancel')" @click="handleAction(row.id, 'cancel')" :disabled="!userStore.hasPermission('product:order:cancel')">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -99,7 +99,7 @@ import { getProductOrderList, getProductOrderDetail, confirmProductOrder, readyP
 import type { ProductOrder, ProductOrderDetail } from '../../api/product-order'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '../../store/user'
-import { PRODUCT_ORDER_STATUS, PAYMENT_STATUS } from '../../types/status'
+import { PRODUCT_ORDER_STATUS, PAYMENT_STATUS, getProductOrderActions } from '../../types/status'
 import type { ProductOrderStatus as ProductOrderStatusType, PaymentStatus } from '../../types/status'
 
 const userStore = useUserStore()

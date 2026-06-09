@@ -1,6 +1,18 @@
 /**
  * Centralized status dictionaries for display labels, colors, and allowed actions.
  * These values MUST match backend enum constants exactly.
+ *
+ * Backend source of truth:
+ *   - BookingStatus:     com.petcare.booking.enums.BookingStatus
+ *   - PaymentStatus:     com.petcare.booking.enums.PaymentStatus
+ *   - ServiceItemStatus: com.petcare.common.enums.ServiceItemStatus
+ *   - StaffStatus:       com.petcare.common.enums.StaffStatus
+ *   - StoreStatus:       com.petcare.common.enums.StoreStatus
+ *   - ScheduleStatus:    com.petcare.booking.enums.ScheduleStatus
+ *   - ProductOrderStatus: com.petcare.product.enums.ProductOrderStatus
+ *   - PickupStatus:      com.petcare.product.enums.PickupStatus
+ *   - ContentStatus:     com.petcare.community.enums.ContentStatus
+ *
  * Frontend only controls display; backend controls actual state transitions.
  */
 
@@ -24,8 +36,8 @@ export const SERVICE_MODE = {
 export type ServiceMode = keyof typeof SERVICE_MODE
 
 export const SERVICE_STATUS = {
-  ACTIVE: { label: '启用', color: 'success' },
-  DISABLED: { label: '已禁用', color: 'info' },
+  ON_SALE: { label: '启用', color: 'success' },
+  OFF_SALE: { label: '已禁用', color: 'info' },
 } as const
 
 export type ServiceStatus = keyof typeof SERVICE_STATUS
@@ -60,7 +72,7 @@ export type StaffRole = keyof typeof STAFF_ROLE
 
 export const STAFF_STATUS = {
   ACTIVE: { label: '在职', color: 'success' },
-  DISABLED: { label: '已停用', color: 'info' },
+  INACTIVE: { label: '已停用', color: 'info' },
 } as const
 
 export type StaffStatus = keyof typeof STAFF_STATUS
@@ -73,11 +85,16 @@ export const SCHEDULE_STATUS = {
 export type ScheduleStatus = keyof typeof SCHEDULE_STATUS
 
 // ─── Booking ───
+// Backend: BookingStateMachine transitions:
+//   PENDING_CONFIRM → CONFIRMED, REJECTED, CANCELLED
+//   CONFIRMED → IN_SERVICE, CANCELLED
+//   IN_SERVICE → COMPLETED
+//   COMPLETED / CANCELLED / REJECTED → terminal
 
 export const BOOKING_STATUS = {
-  PENDING: { label: '待确认', color: 'warning' },
+  PENDING_CONFIRM: { label: '待确认', color: 'warning' },
   CONFIRMED: { label: '已确认', color: 'primary' },
-  IN_PROGRESS: { label: '进行中', color: 'success' },
+  IN_SERVICE: { label: '进行中', color: 'success' },
   COMPLETED: { label: '已完成', color: 'info' },
   CANCELLED: { label: '已取消', color: 'danger' },
   REJECTED: { label: '已拒绝', color: 'danger' },
@@ -85,11 +102,11 @@ export const BOOKING_STATUS = {
 
 export type BookingStatus = keyof typeof BOOKING_STATUS
 
+// Backend: PaymentStatus enum
 export const PAYMENT_STATUS = {
-  PENDING: { label: '待支付', color: 'warning' },
-  PAID: { label: '已支付', color: 'success' },
+  UNPAID: { label: '待支付', color: 'warning' },
+  OFFLINE_PAID: { label: '已支付', color: 'success' },
   REFUNDED: { label: '已退款', color: 'info' },
-  CANCELLED: { label: '已取消', color: 'danger' },
 } as const
 
 export type PaymentStatus = keyof typeof PAYMENT_STATUS
@@ -97,33 +114,40 @@ export type PaymentStatus = keyof typeof PAYMENT_STATUS
 // ─── Product ───
 
 export const PRODUCT_STATUS = {
-  ACTIVE: { label: '上架', color: 'success' },
-  DISABLED: { label: '已下架', color: 'info' },
+  ON_SALE: { label: '上架', color: 'success' },
+  OFF_SALE: { label: '已下架', color: 'info' },
 } as const
 
 export type ProductStatus = keyof typeof PRODUCT_STATUS
 
+// Backend: ProductOrderStateMachine transitions:
+//   PENDING_CONFIRM → PREPARING, CANCELLED, OUT_OF_STOCK
+//   PREPARING → READY_FOR_PICKUP, CANCELLED
+//   READY_FOR_PICKUP → CANCELLED, COMPLETED
+//   COMPLETED / CANCELLED / OUT_OF_STOCK → terminal
 export const PRODUCT_ORDER_STATUS = {
-  PENDING: { label: '待确认', color: 'warning' },
-  CONFIRMED: { label: '已确认', color: 'primary' },
-  READY: { label: '待自提', color: 'success' },
+  PENDING_CONFIRM: { label: '待确认', color: 'warning' },
+  PREPARING: { label: '备货中', color: 'primary' },
+  READY_FOR_PICKUP: { label: '待自提', color: 'success' },
   COMPLETED: { label: '已完成', color: 'info' },
   CANCELLED: { label: '已取消', color: 'danger' },
+  OUT_OF_STOCK: { label: '已缺货', color: 'warning' },
 } as const
 
 export type ProductOrderStatus = keyof typeof PRODUCT_ORDER_STATUS
 
 export const PICKUP_STATUS = {
-  PENDING: { label: '待自提', color: 'warning' },
+  WAIT_PREPARE: { label: '待备货', color: 'warning' },
+  READY_FOR_PICKUP: { label: '待自提', color: 'primary' },
   PICKED_UP: { label: '已自提', color: 'success' },
 } as const
 
 export type PickupStatus = keyof typeof PICKUP_STATUS
 
 // ─── Community ───
+// Backend: ContentStatus enum (no DRAFT in backend)
 
 export const POST_STATUS = {
-  DRAFT: { label: '草稿', color: 'info' },
   PENDING_REVIEW: { label: '待审核', color: 'warning' },
   PUBLISHED: { label: '已发布', color: 'success' },
   REJECTED: { label: '已拒绝', color: 'danger' },
@@ -148,3 +172,64 @@ export const SENSITIVE_WORD_STATUS = {
 } as const
 
 export type SensitiveWordStatus = keyof typeof SENSITIVE_WORD_STATUS
+
+// ─── Action Guard Functions ───
+// Pure functions that determine which operations are available for a given status.
+// These must match the backend state machines exactly.
+// Unknown status returns empty array (safe: no write operations enabled).
+
+/**
+ * Returns available booking actions for the given status.
+ * Backend: BookingStateMachine
+ */
+export function getBookingActions(status: string): string[] {
+  const actions: Record<string, string[]> = {
+    PENDING_CONFIRM: ['confirm', 'reject', 'cancel'],
+    CONFIRMED: ['start', 'cancel'],
+    IN_SERVICE: ['complete'],
+    COMPLETED: [],
+    CANCELLED: [],
+    REJECTED: [],
+  }
+  return actions[status] ?? []
+}
+
+/**
+ * Returns available product order actions for the given status.
+ * Backend: ProductOrderStateMachine
+ */
+export function getProductOrderActions(status: string): string[] {
+  const actions: Record<string, string[]> = {
+    PENDING_CONFIRM: ['confirm', 'cancel'],
+    PREPARING: ['ready', 'cancel'],
+    READY_FOR_PICKUP: ['confirm-payment', 'complete', 'cancel'],
+    COMPLETED: [],
+    CANCELLED: [],
+    OUT_OF_STOCK: [],
+  }
+  return actions[status] ?? []
+}
+
+/**
+ * Returns true if the service is currently on sale (ON_SALE).
+ * Backend: ServiceItemStatus.ON_SALE
+ */
+export function isServiceOnSale(status: string): boolean {
+  return status === 'ON_SALE'
+}
+
+/**
+ * Returns true if the product is currently on sale (ON_SALE).
+ * Backend: Product status uses ON_SALE / OFF_SALE (schema.sql)
+ */
+export function isProductOnSale(status: string): boolean {
+  return status === 'ON_SALE'
+}
+
+/**
+ * Returns true if the staff member can be disabled (currently ACTIVE).
+ * Backend: StaffStatus.ACTIVE → INACTIVE
+ */
+export function canDisableStaff(status: string): boolean {
+  return status === 'ACTIVE'
+}

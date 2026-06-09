@@ -17,8 +17,8 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="状态" clearable style="width: 130px">
-            <el-option label="启用" value="ACTIVE" />
-            <el-option label="已禁用" value="DISABLED" />
+            <el-option label="启用" value="ON_SALE" />
+            <el-option label="已禁用" value="OFF_SALE" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -62,7 +62,7 @@
             <el-button
               size="small"
               type="danger"
-              v-if="row.status === 'ACTIVE'"
+              v-if="isServiceOnSale(row.status)"
               @click="handleDisable(row.id)"
               :disabled="!userStore.hasPermission('service:item:disable')"
             >
@@ -157,7 +157,7 @@ import type { ServiceItem, ServiceItemCreateParams } from '../../api/service'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useUserStore } from '../../store/user'
-import { SERVICE_MODE, SERVICE_STATUS, PET_TYPE } from '../../types/status'
+import { SERVICE_MODE, SERVICE_STATUS, PET_TYPE, isServiceOnSale } from '../../types/status'
 import type { ServiceMode, ServiceStatus, PetType } from '../../types/status'
 
 const userStore = useUserStore()

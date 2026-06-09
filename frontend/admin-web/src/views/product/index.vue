@@ -44,7 +44,7 @@
           <template #default="{ row }">
             <el-button size="small" @click="openEditDialog(row)" :disabled="!userStore.hasPermission('product:item:update')">编辑</el-button>
             <el-button size="small" @click="openStockDialog(row)" :disabled="!userStore.hasPermission('product:stock:update')">库存</el-button>
-            <el-button size="small" type="danger" v-if="row.status === 'ACTIVE'" @click="handleDisable(row.id)" :disabled="!userStore.hasPermission('product:item:disable')">下架</el-button>
+            <el-button size="small" type="danger" v-if="isProductOnSale(row.status)" @click="handleDisable(row.id)" :disabled="!userStore.hasPermission('product:item:disable')">下架</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -112,7 +112,7 @@ import type { Product, ProductCreateParams } from '../../api/product'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useUserStore } from '../../store/user'
-import { PRODUCT_STATUS } from '../../types/status'
+import { PRODUCT_STATUS, isProductOnSale } from '../../types/status'
 import type { ProductStatus as ProductStatusType } from '../../types/status'
 
 const userStore = useUserStore()

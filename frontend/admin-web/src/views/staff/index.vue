@@ -44,7 +44,7 @@
             <el-button size="small" @click="openScheduleDialog(row)" :disabled="!userStore.hasPermission('staff:schedule:read')">排班</el-button>
             <el-button
               size="small" type="danger"
-              v-if="row.status === 'ACTIVE'"
+              v-if="canDisableStaff(row.status)"
               @click="handleDisable(row.id)"
               :disabled="!userStore.hasPermission('staff:profile:disable')"
             >禁用</el-button>
@@ -148,7 +148,7 @@ import type { StaffMember, StaffCreateParams, StaffSchedule, StaffScheduleCreate
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useUserStore } from '../../store/user'
-import { STAFF_ROLE, STAFF_STATUS, SCHEDULE_STATUS } from '../../types/status'
+import { STAFF_ROLE, STAFF_STATUS, SCHEDULE_STATUS, canDisableStaff } from '../../types/status'
 import type { StaffRole, StaffStatus as StaffStatusType, ScheduleStatus } from '../../types/status'
 
 const userStore = useUserStore()

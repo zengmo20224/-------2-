@@ -55,11 +55,11 @@
         <el-table-column label="操作" width="260" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
-            <el-button size="small" type="success" v-if="row.status === 'PENDING'" @click="handleConfirm(row.id)" :disabled="!userStore.hasPermission('booking:booking:confirm')">确认</el-button>
-            <el-button size="small" type="danger" v-if="row.status === 'PENDING'" @click="openRejectDialog(row.id)" :disabled="!userStore.hasPermission('booking:booking:reject')">拒绝</el-button>
-            <el-button size="small" type="primary" v-if="row.status === 'CONFIRMED'" @click="handleStart(row.id)" :disabled="!userStore.hasPermission('booking:booking:start')">开始</el-button>
-            <el-button size="small" type="success" v-if="row.status === 'IN_PROGRESS'" @click="handleComplete(row.id)" :disabled="!userStore.hasPermission('booking:booking:complete')">完成</el-button>
-            <el-button size="small" v-if="['PENDING', 'CONFIRMED'].includes(row.status)" @click="handleCancel(row.id)" :disabled="!userStore.hasPermission('booking:booking:cancel')">取消</el-button>
+            <el-button size="small" type="success" v-if="getBookingActions(row.status).includes('confirm')" @click="handleConfirm(row.id)" :disabled="!userStore.hasPermission('booking:booking:confirm')">确认</el-button>
+            <el-button size="small" type="danger" v-if="getBookingActions(row.status).includes('reject')" @click="openRejectDialog(row.id)" :disabled="!userStore.hasPermission('booking:booking:reject')">拒绝</el-button>
+            <el-button size="small" type="primary" v-if="getBookingActions(row.status).includes('start')" @click="handleStart(row.id)" :disabled="!userStore.hasPermission('booking:booking:start')">开始</el-button>
+            <el-button size="small" type="success" v-if="getBookingActions(row.status).includes('complete')" @click="handleComplete(row.id)" :disabled="!userStore.hasPermission('booking:booking:complete')">完成</el-button>
+            <el-button size="small" v-if="getBookingActions(row.status).includes('cancel')" @click="handleCancel(row.id)" :disabled="!userStore.hasPermission('booking:booking:cancel')">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -115,7 +115,7 @@ import type { Booking } from '../../api/booking'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useUserStore } from '../../store/user'
-import { BOOKING_STATUS, PAYMENT_STATUS } from '../../types/status'
+import { BOOKING_STATUS, PAYMENT_STATUS, getBookingActions } from '../../types/status'
 import type { BookingStatus as BookingStatusType, PaymentStatus } from '../../types/status'
 
 const userStore = useUserStore()
