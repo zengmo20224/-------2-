@@ -55,7 +55,7 @@ public class CustomerServiceContextBuilder {
 
         List<ServiceItem> activeServices = serviceItemMapper.selectList(
                 new QueryWrapper<ServiceItem>()
-                        .eq("status", "ACTIVE")
+                        .eq("status", "ON_SALE")
                         .eq("deleted", 0));
 
         List<Product> activeProducts = productMapper.selectList(
@@ -65,7 +65,7 @@ public class CustomerServiceContextBuilder {
 
         List<FaqKnowledge> activeFaqs = faqKnowledgeMapper.selectList(
                 new QueryWrapper<FaqKnowledge>()
-                        .eq("status", "ENABLED")
+                        .eq("status", "ACTIVE")
                         .eq("deleted", 0));
 
         String storeName = store.getStoreName();
@@ -129,7 +129,7 @@ public class CustomerServiceContextBuilder {
     private Store findFirstActiveStore() {
         return storeMapper.selectOne(
                 new QueryWrapper<Store>()
-                        .eq("status", "ACTIVE")
+                        .eq("status", "OPEN")
                         .eq("deleted", 0)
                         .last("LIMIT 1"));
     }

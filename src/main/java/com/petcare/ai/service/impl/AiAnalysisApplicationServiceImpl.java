@@ -18,6 +18,8 @@ import com.petcare.ai.mapper.AiAnalysisReportMapper;
 import com.petcare.ai.mapper.AiUsageLogMapper;
 import com.petcare.ai.provider.*;
 import com.petcare.ai.service.AiAnalysisApplicationService;
+import com.petcare.admin.entity.AdminOperationLog;
+import com.petcare.admin.service.AdminOperationLogService;
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
 import com.petcare.common.pagination.PageResponse;
@@ -28,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Implementation of admin AI analysis application service.
@@ -38,8 +42,18 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalysisApplicationServiceImpl.class);
 
+    /**
+     * Pattern to extract a "suggestions" or "recommendations" section from the AI response text.
+     * Looks for headings like "## 建议", "### 建议", "## 建议/改进", "Recommendations:", etc.
+     */
+    private static final Pattern SUGGESTIONS_PATTERN = Pattern.compile(
+            "(?:^|\\n)(?:#{1,4}\\s*(?:建议|改进|建议/改进|建议与改进|recommendations?|suggestions?)[:\\s]*)\\s*\\n([\\s\\S]+)",
+            Pattern.CASE_INSENSITIVE
+    );
+
     private final AiAnalysisReportMapper reportMapper;
     private final AiUsageLogMapper usageLogMapper;
+    private final AdminOperationLogService adminOperationLogService;
     private final AiProviderClient providerClient;
     private final BusinessAnalyticsAggregator businessAnalyticsAggregator;
     private final CommunityAnalyticsAggregator communityAnalyticsAggregator;
@@ -50,6 +64,7 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
     public AiAnalysisApplicationServiceImpl(
             AiAnalysisReportMapper reportMapper,
             AiUsageLogMapper usageLogMapper,
+            AdminOperationLogService adminOperationLogService,
             AiProviderClient providerClient,
             BusinessAnalyticsAggregator businessAnalyticsAggregator,
             CommunityAnalyticsAggregator communityAnalyticsAggregator,
@@ -58,6 +73,7 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
             ObjectMapper objectMapper) {
         this.reportMapper = reportMapper;
         this.usageLogMapper = usageLogMapper;
+        this.adminOperationLogService = adminOperationLogService;
         this.providerClient = providerClient;
         this.businessAnalyticsAggregator = businessAnalyticsAggregator;
         this.communityAnalyticsAggregator = communityAnalyticsAggregator;
@@ -67,18 +83,18 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
     }
 
     @Override
-    @Transactional
     public AiAnalysisReportResponse generateReport(Long adminId, AiAnalysisCreateRequest request) {
         validateDateRange(request.startDate(), request.endDate());
 
-        // Step 1: Aggregate data from backend (read-only parameterized queries)
+        // Step 1: Aggregate data from backend (read-only parameterized queries, no transaction needed)
         String aggregatedDataJson = aggregateData(request.reportType(), request.startDate(), request.endDate());
 
         if (aggregatedDataJson == null) {
             throw new BusinessException(ErrorCode.AI_ANALYSIS_DATA_INSUFFICIENT, "数据不足，无法生成分析报告");
         }
 
-        // Step 2: Call AI Provider with aggregated data only
+        // Step 2: Call AI Provider OUTSIDE any transaction boundary
+        // Provider calls are slow external operations — must not hold a DB transaction open
         List<AiProviderMessage> messages = PromptFactory.buildAnalysisMessages(
                 request.reportType(), aggregatedDataJson);
 
@@ -87,10 +103,12 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
             response = providerClient.complete(
                     new AiProviderRequest(AiApiType.ANALYSIS, messages, null));
         } catch (AiProviderUnavailableException e) {
-            logFailedUsage("provider_unavailable");
+            logFailedUsage(adminId, "provider_unavailable");
+            logAdminOperation(adminId, "AI分析", "生成报告", "FAIL", e.getMessage());
             throw e;
         } catch (AiProviderException e) {
-            logFailedUsage(e.getInternalCode());
+            logFailedUsage(adminId, e.getInternalCode());
+            logAdminOperation(adminId, "AI分析", "生成报告", "FAIL", e.getInternalCode());
             throw e;
         }
 
@@ -98,25 +116,22 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
 
         // Step 3: Output safety check
         if (AiOutputSafetyPolicy.isUnsafe(output)) {
-            logFailedUsage("output_unsafe");
+            logFailedUsage(adminId, "output_unsafe");
+            logAdminOperation(adminId, "AI分析", "生成报告", "FAIL", "AI输出未通过安全检查");
             throw new BusinessException(ErrorCode.AI_OUTPUT_REJECTED, "AI 输出未通过安全检查");
         }
 
-        // Step 4: Save report in a short transaction
-        AiAnalysisReport report = new AiAnalysisReport();
-        report.setReportType(request.reportType());
-        report.setStartDate(request.startDate());
-        report.setEndDate(request.endDate());
-        report.setRawDataJson(aggregatedDataJson);
-        report.setAiSummary(output);
-        report.setSuggestions(""); // AI summary includes suggestions in the response
-        report.setCreatedBy(adminId);
-        reportMapper.insert(report);
+        // Step 4: Extract suggestions from AI response and persist report in a short transaction
+        String suggestions = extractSuggestions(output);
+        AiAnalysisReportResponse reportResponse = saveReport(adminId, request, aggregatedDataJson, output, suggestions);
 
-        // Step 5: Log successful usage
-        logSuccessUsage(response);
+        // Step 5: Log successful usage with admin attribution
+        logSuccessUsage(adminId, response);
 
-        return toReportResponse(report);
+        // Step 6: Log admin operation for audit trail
+        logAdminOperation(adminId, "AI分析", "生成报告", "SUCCESS", null);
+
+        return reportResponse;
     }
 
     @Override
@@ -144,6 +159,25 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
         if (report == null) {
             throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "报告不存在");
         }
+        return toReportResponse(report);
+    }
+
+    /**
+     * Saves the analysis report in a short, focused transaction.
+     * Only the DB write is transactional — the slow provider call has already completed.
+     */
+    @Transactional
+    protected AiAnalysisReportResponse saveReport(Long adminId, AiAnalysisCreateRequest request,
+                                                   String aggregatedDataJson, String aiSummary, String suggestions) {
+        AiAnalysisReport report = new AiAnalysisReport();
+        report.setReportType(request.reportType());
+        report.setStartDate(request.startDate());
+        report.setEndDate(request.endDate());
+        report.setRawDataJson(aggregatedDataJson);
+        report.setAiSummary(aiSummary);
+        report.setSuggestions(suggestions);
+        report.setCreatedBy(adminId);
+        reportMapper.insert(report);
         return toReportResponse(report);
     }
 
@@ -178,28 +212,69 @@ public class AiAnalysisApplicationServiceImpl implements AiAnalysisApplicationSe
         }
     }
 
-    private void logSuccessUsage(AiProviderResponse response) {
-        AiUsageLog usageLog = new AiUsageLog();
-        usageLog.setApiType(AiApiType.ANALYSIS.name());
-        usageLog.setModelName(response.modelName());
-        if (response.usage() != null) {
-            usageLog.setPromptTokens(response.usage().promptTokens());
-            usageLog.setCompletionTokens(response.usage().completionTokens());
-            usageLog.setTotalTokens(response.usage().totalTokens());
+    /**
+     * Extracts the suggestions/recommendations section from the AI response text.
+     * Returns the full AI summary text if no distinct suggestions section is found,
+     * so that recommendation content is never discarded.
+     */
+    private String extractSuggestions(String aiSummary) {
+        if (aiSummary == null || aiSummary.isBlank()) {
+            return "";
         }
-        usageLog.setSuccess(1);
-        usageLogMapper.insert(usageLog);
+        Matcher matcher = SUGGESTIONS_PATTERN.matcher(aiSummary);
+        if (matcher.find()) {
+            String extracted = matcher.group(1).trim();
+            return extracted.isBlank() ? aiSummary : extracted;
+        }
+        // No dedicated suggestions section — the entire summary contains recommendations
+        return aiSummary;
     }
 
-    private void logFailedUsage(String errorCode) {
+    private void logSuccessUsage(Long adminId, AiProviderResponse response) {
         try {
             AiUsageLog usageLog = new AiUsageLog();
+            usageLog.setAdminId(adminId);
+            usageLog.setApiType(AiApiType.ANALYSIS.name());
+            usageLog.setModelName(response.modelName());
+            if (response.usage() != null) {
+                usageLog.setPromptTokens(response.usage().promptTokens());
+                usageLog.setCompletionTokens(response.usage().completionTokens());
+                usageLog.setTotalTokens(response.usage().totalTokens());
+            }
+            usageLog.setSuccess(1);
+            usageLogMapper.insert(usageLog);
+        } catch (Exception e) {
+            log.warn("Failed to log AI usage: {}", e.getMessage());
+        }
+    }
+
+    private void logFailedUsage(Long adminId, String errorCode) {
+        try {
+            AiUsageLog usageLog = new AiUsageLog();
+            usageLog.setAdminId(adminId);
             usageLog.setApiType(AiApiType.ANALYSIS.name());
             usageLog.setSuccess(0);
             usageLog.setErrorMessage(errorCode);
             usageLogMapper.insert(usageLog);
         } catch (Exception e) {
             log.warn("Failed to log AI usage: {}", e.getMessage());
+        }
+    }
+
+    private void logAdminOperation(Long adminId, String module, String operation,
+                                    String result, String errorMessage) {
+        try {
+            AdminOperationLog opLog = new AdminOperationLog();
+            opLog.setAdminId(adminId);
+            opLog.setModule(module);
+            opLog.setOperation(operation);
+            opLog.setRequestMethod("POST");
+            opLog.setRequestUrl("/api/v1/admin/ai/analysis/reports");
+            opLog.setResult(result);
+            opLog.setErrorMessage(errorMessage);
+            adminOperationLogService.save(opLog);
+        } catch (Exception e) {
+            log.warn("Failed to log admin operation: {}", e.getMessage());
         }
     }
 

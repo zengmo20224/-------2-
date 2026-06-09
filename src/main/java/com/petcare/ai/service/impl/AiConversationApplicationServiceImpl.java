@@ -115,10 +115,10 @@ public class AiConversationApplicationServiceImpl implements AiConversationAppli
         AiApiType apiType;
 
         if (AiConversationType.CUSTOMER_SERVICE.getCode().equals(type)) {
-            assistantText = handleCustomerService(request.content());
+            assistantText = handleCustomerService(currentUserId, request.content());
             apiType = AiApiType.CUSTOMER_SERVICE;
         } else if (AiConversationType.PET_CHAT.getCode().equals(type)) {
-            assistantText = handlePetChat(request.content());
+            assistantText = handlePetChat(currentUserId, request.content());
             apiType = AiApiType.CHAT;
         } else {
             throw new BusinessException(ErrorCode.AI_CONVERSATION_TYPE_INVALID, "不支持的会话类型");
@@ -154,7 +154,7 @@ public class AiConversationApplicationServiceImpl implements AiConversationAppli
     /**
      * Handles customer service message with context grounding.
      */
-    private String handleCustomerService(String userQuestion) {
+    private String handleCustomerService(Long currentUserId, String userQuestion) {
         CustomerServiceContext context = contextBuilder.build();
 
         // If no trusted context and question requires grounding, return fallback
@@ -181,14 +181,14 @@ public class AiConversationApplicationServiceImpl implements AiConversationAppli
             }
 
             // Log successful usage
-            logSuccessUsage(AiApiType.CUSTOMER_SERVICE, response);
+            logSuccessUsage(currentUserId, AiApiType.CUSTOMER_SERVICE, response);
 
             return output;
         } catch (AiProviderUnavailableException e) {
-            logFailedUsage(AiApiType.CUSTOMER_SERVICE, "provider_unavailable");
+            logFailedUsage(currentUserId, AiApiType.CUSTOMER_SERVICE, "provider_unavailable");
             throw e;
         } catch (AiProviderException e) {
-            logFailedUsage(AiApiType.CUSTOMER_SERVICE, e.getInternalCode());
+            logFailedUsage(currentUserId, AiApiType.CUSTOMER_SERVICE, e.getInternalCode());
             throw e;
         }
     }
@@ -196,7 +196,7 @@ public class AiConversationApplicationServiceImpl implements AiConversationAppli
     /**
      * Handles pet chat message with medical safety checks.
      */
-    private String handlePetChat(String userMessage) {
+    private String handlePetChat(Long currentUserId, String userMessage) {
         // Step 1: Check high-risk symptoms BEFORE calling Provider
         if (HighRiskSymptomDetector.isHighRisk(userMessage)) {
             return HighRiskSymptomDetector.getFixedSafetyResponse();
@@ -220,34 +220,40 @@ public class AiConversationApplicationServiceImpl implements AiConversationAppli
                 return "抱歉，无法生成回复。";
             }
 
-            logSuccessUsage(AiApiType.CHAT, response);
+            logSuccessUsage(currentUserId, AiApiType.CHAT, response);
 
             return output;
         } catch (AiProviderUnavailableException e) {
-            logFailedUsage(AiApiType.CHAT, "provider_unavailable");
+            logFailedUsage(currentUserId, AiApiType.CHAT, "provider_unavailable");
             throw e;
         } catch (AiProviderException e) {
-            logFailedUsage(AiApiType.CHAT, e.getInternalCode());
+            logFailedUsage(currentUserId, AiApiType.CHAT, e.getInternalCode());
             throw e;
         }
     }
 
-    private void logSuccessUsage(AiApiType apiType, AiProviderResponse response) {
-        AiUsageLog usageLog = new AiUsageLog();
-        usageLog.setApiType(apiType.name());
-        usageLog.setModelName(response.modelName());
-        if (response.usage() != null) {
-            usageLog.setPromptTokens(response.usage().promptTokens());
-            usageLog.setCompletionTokens(response.usage().completionTokens());
-            usageLog.setTotalTokens(response.usage().totalTokens());
-        }
-        usageLog.setSuccess(1);
-        usageLogMapper.insert(usageLog);
-    }
-
-    private void logFailedUsage(AiApiType apiType, String errorCode) {
+    private void logSuccessUsage(Long userId, AiApiType apiType, AiProviderResponse response) {
         try {
             AiUsageLog usageLog = new AiUsageLog();
+            usageLog.setUserId(userId);
+            usageLog.setApiType(apiType.name());
+            usageLog.setModelName(response.modelName());
+            if (response.usage() != null) {
+                usageLog.setPromptTokens(response.usage().promptTokens());
+                usageLog.setCompletionTokens(response.usage().completionTokens());
+                usageLog.setTotalTokens(response.usage().totalTokens());
+            }
+            usageLog.setSuccess(1);
+            usageLogMapper.insert(usageLog);
+        } catch (Exception e) {
+            log.warn("Failed to log AI usage: {}", e.getMessage());
+        }
+    }
+
+    private void logFailedUsage(Long userId, AiApiType apiType, String errorCode) {
+        try {
+            AiUsageLog usageLog = new AiUsageLog();
+            usageLog.setUserId(userId);
             usageLog.setApiType(apiType.name());
             usageLog.setSuccess(0);
             usageLog.setErrorMessage(errorCode);

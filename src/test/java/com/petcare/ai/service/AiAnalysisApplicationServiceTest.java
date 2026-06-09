@@ -15,6 +15,7 @@ import com.petcare.ai.mapper.AiUsageLogMapper;
 import com.petcare.ai.provider.AiProviderUnavailableException;
 import com.petcare.ai.provider.MockAiProviderClient;
 import com.petcare.ai.service.impl.AiAnalysisApplicationServiceImpl;
+import com.petcare.admin.service.AdminOperationLogService;
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ class AiAnalysisApplicationServiceTest {
 
     private AiAnalysisReportMapper reportMapper;
     private AiUsageLogMapper usageLogMapper;
+    private AdminOperationLogService adminOperationLogService;
     private MockAiProviderClient mockProvider;
     private BusinessAnalyticsAggregator businessAggregator;
     private CommunityAnalyticsAggregator communityAggregator;
@@ -47,6 +49,7 @@ class AiAnalysisApplicationServiceTest {
     void setUp() {
         reportMapper = mock(AiAnalysisReportMapper.class);
         usageLogMapper = mock(AiUsageLogMapper.class);
+        adminOperationLogService = mock(AdminOperationLogService.class);
         mockProvider = new MockAiProviderClient();
         businessAggregator = mock(BusinessAnalyticsAggregator.class);
         communityAggregator = mock(CommunityAnalyticsAggregator.class);
@@ -55,7 +58,7 @@ class AiAnalysisApplicationServiceTest {
         objectMapper = new ObjectMapper();
 
         service = new AiAnalysisApplicationServiceImpl(
-                reportMapper, usageLogMapper, mockProvider,
+                reportMapper, usageLogMapper, adminOperationLogService, mockProvider,
                 businessAggregator, communityAggregator, salesAggregator,
                 activityAggregator, objectMapper
         );

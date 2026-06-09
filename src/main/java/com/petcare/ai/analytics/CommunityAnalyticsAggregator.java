@@ -51,12 +51,12 @@ public class CommunityAnalyticsAggregator {
 
         long pendingReviewCount = postMapper.selectCount(
                 new QueryWrapper<Post>()
-                        .eq("review_status", "PENDING")
+                        .eq("status", "PENDING_REVIEW")
                         .eq("deleted", 0));
 
         long rejectedCount = postMapper.selectCount(
                 new QueryWrapper<Post>()
-                        .eq("review_status", "REJECTED")
+                        .eq("status", "REJECTED")
                         .eq("deleted", 0));
 
         return new CommunityAnalytics(

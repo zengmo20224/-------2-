@@ -62,35 +62,41 @@ public class AiPostAssistantServiceImpl implements AiPostAssistantService {
             }
 
             // Log successful usage
-            logSuccessUsage(response);
+            logSuccessUsage(currentUserId, response);
 
             // Always return as draft
             return new PostAssistantResponse(output);
         } catch (AiProviderUnavailableException e) {
-            logFailedUsage("provider_unavailable");
+            logFailedUsage(currentUserId, "provider_unavailable");
             throw e;
         } catch (AiProviderException e) {
-            logFailedUsage(e.getInternalCode());
+            logFailedUsage(currentUserId, e.getInternalCode());
             throw e;
         }
     }
 
-    private void logSuccessUsage(AiProviderResponse response) {
-        AiUsageLog usageLog = new AiUsageLog();
-        usageLog.setApiType(AiApiType.CONTENT_GENERATE.name());
-        usageLog.setModelName(response.modelName());
-        if (response.usage() != null) {
-            usageLog.setPromptTokens(response.usage().promptTokens());
-            usageLog.setCompletionTokens(response.usage().completionTokens());
-            usageLog.setTotalTokens(response.usage().totalTokens());
-        }
-        usageLog.setSuccess(1);
-        usageLogMapper.insert(usageLog);
-    }
-
-    private void logFailedUsage(String errorCode) {
+    private void logSuccessUsage(Long userId, AiProviderResponse response) {
         try {
             AiUsageLog usageLog = new AiUsageLog();
+            usageLog.setUserId(userId);
+            usageLog.setApiType(AiApiType.CONTENT_GENERATE.name());
+            usageLog.setModelName(response.modelName());
+            if (response.usage() != null) {
+                usageLog.setPromptTokens(response.usage().promptTokens());
+                usageLog.setCompletionTokens(response.usage().completionTokens());
+                usageLog.setTotalTokens(response.usage().totalTokens());
+            }
+            usageLog.setSuccess(1);
+            usageLogMapper.insert(usageLog);
+        } catch (Exception e) {
+            log.warn("Failed to log AI usage: {}", e.getMessage());
+        }
+    }
+
+    private void logFailedUsage(Long userId, String errorCode) {
+        try {
+            AiUsageLog usageLog = new AiUsageLog();
+            usageLog.setUserId(userId);
             usageLog.setApiType(AiApiType.CONTENT_GENERATE.name());
             usageLog.setSuccess(0);
             usageLog.setErrorMessage(errorCode);
