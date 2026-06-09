@@ -13,6 +13,15 @@
           <el-icon><Menu /></el-icon>
           <span>Dashboard</span>
         </el-menu-item>
+        
+        <el-sub-menu index="/store">
+          <template #title>
+            <el-icon><Location /></el-icon>
+            <span>Store</span>
+          </template>
+          <el-menu-item index="/store/info" v-if="hasMenuPermission('store:info:read')">Store Info</el-menu-item>
+          <el-menu-item index="/store/config" v-if="hasMenuPermission('store:config:read')">Store Config</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <el-container class="main-container">
@@ -32,10 +41,15 @@
 <script setup lang="ts">
 import { useUserStore } from '../store/user';
 import { useRouter } from 'vue-router';
-import { Menu } from '@element-plus/icons-vue';
+import { Menu, Location } from '@element-plus/icons-vue';
 
 const userStore = useUserStore();
 const router = useRouter();
+
+const hasMenuPermission = (perm: string) => {
+  if (!userStore.userInfo?.permissions) return false;
+  return userStore.userInfo.permissions.includes(perm);
+};
 
 const handleLogout = () => {
   userStore.logoutAction();

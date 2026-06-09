@@ -18,6 +18,18 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Dashboard',
         component: () => import('../views/dashboard/index.vue'),
         meta: { title: 'Dashboard', requiresAuth: true }
+      },
+      {
+        path: 'store/info',
+        name: 'StoreInfo',
+        component: () => import('../views/store/info.vue'),
+        meta: { title: 'Store Info', requiresAuth: true }
+      },
+      {
+        path: 'store/config',
+        name: 'StoreConfig',
+        component: () => import('../views/store/config.vue'),
+        meta: { title: 'Store Config', requiresAuth: true }
       }
     ]
   },
