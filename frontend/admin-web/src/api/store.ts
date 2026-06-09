@@ -1,43 +1,72 @@
-import request from '../utils/request';
+import request from '../utils/request'
+// Types from api.ts used indirectly through request wrapper return types
+
+// ─── Types (match backend DTOs exactly) ───
 
 export interface StoreInfo {
-  id?: number;
-  storeName: string;
-  phone: string;
-  address: string;
-  longitude?: number;
-  latitude?: number;
-  businessHours?: string;
-  status: string; // e.g. open, closed
-  description?: string;
+  id: number
+  storeName: string
+  phone: string
+  address: string
+  longitude: number
+  latitude: number
+  businessHours: string
+  status: string // OPEN | CLOSED
+  description: string
+}
+
+export interface StoreUpdateParams {
+  storeName?: string
+  phone?: string
+  address?: string
+  longitude?: number
+  latitude?: number
+  businessHours?: string
+  status?: string
+  description?: string
 }
 
 export interface StoreConfig {
-  id?: number;
-  storeId?: number;
-  homeServiceRadiusKm: number;
-  bookingAdvanceDays: number;
-  bookingCancelHours: number;
-  timeSlotMinutes: number;
-  autoConfirmBooking: number; // 0 or 1
-  contentAutoPublish: number; // 0 or 1
+  id: number
+  storeId: number
+  homeServiceRadiusKm: number
+  bookingAdvanceDays: number
+  bookingCancelHours: number
+  timeSlotMinutes: number
+  autoConfirmBooking: boolean
+  contentAutoPublish: boolean
 }
 
-// Fixed store ID for V1 single store
-const defaultStoreId = 1;
+export interface StoreConfigUpdateParams {
+  homeServiceRadiusKm: number
+  bookingAdvanceDays: number
+  bookingCancelHours: number
+  timeSlotMinutes: number
+  autoConfirmBooking: boolean
+  contentAutoPublish: boolean
+}
 
+// V1 single store — fixed store ID
+const STORE_ID = 1
+
+// ─── API Functions ───
+
+/** GET /api/v1/admin/stores/{id} */
 export const getStoreInfo = () => {
-  return request.get<any, { data: StoreInfo }>(`/v1/admin/stores/${defaultStoreId}`);
-};
+  return request.get<StoreInfo>(`/v1/admin/stores/${STORE_ID}`)
+}
 
-export const updateStoreInfo = (data: Partial<StoreInfo>) => {
-  return request.patch<any, { data: StoreInfo }>(`/v1/admin/stores/${defaultStoreId}`, data);
-};
+/** PATCH /api/v1/admin/stores/{id} */
+export const updateStoreInfo = (data: StoreUpdateParams) => {
+  return request.patch<StoreInfo>(`/v1/admin/stores/${STORE_ID}`, data)
+}
 
+/** GET /api/v1/admin/stores/{id}/config */
 export const getStoreConfig = () => {
-  return request.get<any, { data: StoreConfig }>(`/v1/admin/stores/${defaultStoreId}/config`);
-};
+  return request.get<StoreConfig>(`/v1/admin/stores/${STORE_ID}/config`)
+}
 
-export const updateStoreConfig = (data: Partial<StoreConfig>) => {
-  return request.put<any, { data: StoreConfig }>(`/v1/admin/stores/${defaultStoreId}/config`, data);
-};
+/** PUT /api/v1/admin/stores/{id}/config */
+export const updateStoreConfig = (data: StoreConfigUpdateParams) => {
+  return request.put<StoreConfig>(`/v1/admin/stores/${STORE_ID}/config`, data)
+}

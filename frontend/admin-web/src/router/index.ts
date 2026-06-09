@@ -1,12 +1,13 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import { useUserStore } from '../store/user';
+import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+import { useUserStore } from '../store/user'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'Login',
     component: () => import('../views/login/index.vue'),
-    meta: { hidden: true }
+    meta: { hidden: true },
   },
   {
     path: '/',
@@ -17,77 +18,132 @@ const routes: Array<RouteRecordRaw> = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('../views/dashboard/index.vue'),
-        meta: { title: 'Dashboard', requiresAuth: true }
+        meta: { title: 'Dashboard', icon: 'Menu' },
       },
       {
         path: 'store/info',
         name: 'StoreInfo',
         component: () => import('../views/store/info.vue'),
-        meta: { title: 'Store Info', requiresAuth: true }
+        meta: { title: '门店信息', icon: 'OfficeBuilding', permission: 'store:info:read' },
       },
       {
         path: 'store/config',
         name: 'StoreConfig',
         component: () => import('../views/store/config.vue'),
-        meta: { title: 'Store Config', requiresAuth: true }
-      }
-    ]
+        meta: { title: '门店配置', icon: 'Setting', permission: 'store:config:read' },
+      },
+      {
+        path: 'services',
+        name: 'ServiceItems',
+        component: () => import('../views/service/index.vue'),
+        meta: { title: '服务项目', icon: 'Briefcase', permission: 'service:item:read' },
+      },
+      {
+        path: 'staff',
+        name: 'Staff',
+        component: () => import('../views/staff/index.vue'),
+        meta: { title: '员工管理', icon: 'User', permission: 'staff:profile:read' },
+      },
+      {
+        path: 'bookings',
+        name: 'Bookings',
+        component: () => import('../views/booking/index.vue'),
+        meta: { title: '预约管理', icon: 'Calendar', permission: 'booking:booking:read' },
+      },
+      {
+        path: 'products',
+        name: 'Products',
+        component: () => import('../views/product/index.vue'),
+        meta: { title: '商品管理', icon: 'ShoppingBag', permission: 'product:item:read' },
+      },
+      {
+        path: 'product-orders',
+        name: 'ProductOrders',
+        component: () => import('../views/product-order/index.vue'),
+        meta: { title: '自提订单', icon: 'Box', permission: 'product:order:read' },
+      },
+      {
+        path: 'community/posts',
+        name: 'CommunityPosts',
+        component: () => import('../views/community/posts.vue'),
+        meta: { title: '帖子管理', icon: 'ChatDotRound', permission: 'community:post:read' },
+      },
+      {
+        path: 'community/reports',
+        name: 'CommunityReports',
+        component: () => import('../views/community/reports.vue'),
+        meta: { title: '举报处理', icon: 'Warning', permission: 'community:report:handle' },
+      },
+      {
+        path: 'moderation/sensitive-words',
+        name: 'SensitiveWords',
+        component: () => import('../views/moderation/sensitive-words.vue'),
+        meta: { title: '敏感词', icon: 'Filter', permission: 'community:sensitive-word:manage' },
+      },
+      {
+        path: 'operation-logs',
+        name: 'OperationLogs',
+        component: () => import('../views/operation-logs/index.vue'),
+        meta: { title: '操作日志', icon: 'Document', permission: 'admin:operation-log:read' },
+      },
+    ],
   },
   {
     path: '/403',
     name: 'Forbidden',
     component: () => import('../views/error/403.vue'),
-    meta: { hidden: true }
+    meta: { hidden: true },
   },
   {
     path: '/404',
     name: 'NotFound',
     component: () => import('../views/error/404.vue'),
-    meta: { hidden: true }
+    meta: { hidden: true },
   },
   {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
-    meta: { hidden: true }
-  }
-];
+    meta: { hidden: true },
+  },
+]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-});
+  routes,
+})
 
-router.beforeEach(async (to, from, next) => {
-  const userStore = useUserStore();
-  const token = userStore.token;
+router.beforeEach(async (to, _from, next) => {
+  const userStore = useUserStore()
+  const token = userStore.token
 
   if (to.path === '/login') {
     if (token) {
-      next({ path: '/' });
+      next({ path: '/' })
     } else {
-      next();
+      next()
     }
   } else {
     if (token) {
       if (!userStore.userInfo) {
         try {
-          await userStore.getInfoAction();
-          next();
-        } catch (error) {
-          userStore.logoutAction();
-          next(`/login?redirect=${to.path}`);
+          await userStore.getInfoAction()
+        } catch {
+          userStore.logoutAction()
+          next(`/login?redirect=${to.path}`)
+          return
         }
-      } else {
-        next();
       }
+      // Enforce route-level permission — defense in depth (backend is authoritative)
+      const requiredPermission = to.meta.permission as string | undefined
+      if (requiredPermission && !userStore.hasPermission(requiredPermission)) {
+        next('/403')
+        return
+      }
+      next()
     } else {
-      if (to.meta.requiresAuth) {
-        next(`/login?redirect=${to.path}`);
-      } else {
-        next();
-      }
+      next(`/login?redirect=${to.path}`)
     }
   }
-});
+})
 
-export default router;
+export default router
