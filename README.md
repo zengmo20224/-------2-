@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 6 社区与内容审核已形成代码提交，当前启动阶段 7 商品到店自提订单文档和代码计划。不要在 `main` 分支直接加入业务代码；阶段 7 应在 `phase-7-product-orders` 分支执行。
+当前状态：阶段 7 商品到店自提订单已形成代码提交，当前启动阶段 8 AI Provider 与 AI 功能文档和代码计划。不要在 `main` 分支直接加入业务代码；阶段 8 应在 `phase-8-ai` 分支执行。
 
 ## AI Agent 强制入口
 
@@ -22,6 +22,7 @@
 - [docs/14-phase-5-booking-scheduling-plan.md](docs/14-phase-5-booking-scheduling-plan.md)
 - [docs/15-phase-6-community-moderation-plan.md](docs/15-phase-6-community-moderation-plan.md)
 - [docs/16-phase-7-product-orders-plan.md](docs/16-phase-7-product-orders-plan.md)
+- [docs/17-phase-8-ai-provider-functions-plan.md](docs/17-phase-8-ai-provider-functions-plan.md)
 
 ## 原始需求基线
 
@@ -53,12 +54,12 @@
 
 ## 当前最近一步
 
-第七阶段只做商品到店自提订单闭环：
+第八阶段建立安全、可替换、可测试的 AI 能力基础：
 
-1. 实现商品目录和购物车。
-2. 实现从购物车创建到店自提订单。
-3. 使用服务端价格计算金额并保存订单项快照。
-4. 使用数据库事务和原子更新防止库存超卖。
-5. 实现后台确认、备货、线下收款、完成、取消和缺货取消。
-6. 使用权限码保护后台订单操作。
-7. 通过金额、状态流转、事务和真实 MySQL 库存并发测试验证。
+1. 实现统一 AI Provider 端口、禁用实现和 Mock Provider。
+2. 实现会话、消息和用量日志业务。
+3. 实现基于后端可信数据的 AI 客服上下文。
+4. 实现宠物高风险症状确定性安全规则。
+5. 实现不编造用户事实的发帖辅助。
+6. 实现基于后端聚合数据的管理端 AI 分析报告。
+7. D-008 未决项确定前，不接入真实 DeepSeek HTTP Client，不开放生产 AI 调用。

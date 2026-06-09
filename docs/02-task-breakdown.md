@@ -207,6 +207,8 @@
 
 负责人：GLM5.1
 
+启动说明：`docs/17-phase-8-ai-provider-functions-plan.md`
+
 交付物：
 
 - 统一 AI Provider Client
@@ -220,10 +222,15 @@
 退出标准：
 
 - AI Provider 可以在测试中 Mock。
-- API Key 缺失时快速失败，并返回安全错误。
+- 启用真实 Provider 时，API Key 或其他必填 Provider 配置缺失会快速失败；Provider 默认关闭时不阻塞非 AI 业务启动。
 - AI 客服回答基于传入上下文。
 - 高风险宠物症状会触发建议就医。
 - AI 不能直接查询数据库。
+- Provider 层不能依赖 Mapper、DataSource 或数据库连接。
+- AI 不生成并执行 SQL，不直接修改核心业务状态。
+- Provider 原始错误、Prompt 和 API Key 不会泄露。
+- 使用 Mock Provider 的自动化测试通过。
+- D-008 未决项未决定前，不声称真实 DeepSeek 已接入。
 - 已提交 Git。
 
 ## 阶段 9：后台 API 完成

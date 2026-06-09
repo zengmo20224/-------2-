@@ -134,6 +134,13 @@
 - 测试 Mock
 - 限流方案
 
+阶段 8 执行约束：
+
+- `docs/17-phase-8-ai-provider-functions-plan.md` 将阶段 8 拆分为可立即实施的 8A 和等待决策的 8B。
+- 8A 可以实现 Provider 端口、禁用实现、Mock Provider、上下文、安全规则、持久化和聚合分析。
+- 8B 的真实 DeepSeek HTTP Client、超时、重试、最大 Token、限流和流式输出必须等待本决策补全。
+- 在本决策补全前，不能声称真实 DeepSeek 已接入或生产 AI 调用已可用。
+
 ## D-009：V1 是否启用 Redis
 
 状态：已决定
