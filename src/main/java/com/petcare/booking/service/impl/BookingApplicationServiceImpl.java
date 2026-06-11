@@ -378,16 +378,9 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
 
     @Override
     public BookingResponse reassignBooking(Long bookingId, BookingReassignRequest request, Long operatorId) {
-        ServiceBooking booking = getBookingOrThrow(bookingId);
-
-        // Validate booking is in a reassignable state
-        if (!"PENDING_CONFIRM".equals(booking.getStatus()) && !"CONFIRMED".equals(booking.getStatus())) {
-            throw new BusinessException(ErrorCode.BOOKING_STATUS_INVALID,
-                    "只有待确认或已确认的预约可以改派员工");
-        }
-
-        // Validate new staff has the skill and is active
-        ServiceItem item = serviceItemService.getById(booking.getServiceItemId());
+        // Pre-validate staff skill and status (optimistic checks before transaction)
+        ServiceItem item = serviceItemService.getById(
+                getBookingOrThrow(bookingId).getServiceItemId());
         StaffSkill skill = staffSkillService.getOne(new LambdaQueryWrapper<StaffSkill>()
                 .eq(StaffSkill::getStaffId, request.newStaffId())
                 .eq(StaffSkill::getServiceCategoryId, item.getCategoryId()));
@@ -400,7 +393,9 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
             throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE, "该员工不存在或已停用");
         }
 
-        // Delegate to transaction service (handles locking and conflict check)
+        // Delegate to transaction service (locks booking, validates status, uses locked snapshot)
+        // Date/time params are passed but the transaction reads actual values from the locked booking
+        ServiceBooking booking = getBookingOrThrow(bookingId);
         bookingTransactionService.reassignBookingOnce(bookingId, request.newStaffId(),
                 booking.getBookingDate(), booking.getStartTime(), booking.getEndTime(), operatorId);
 

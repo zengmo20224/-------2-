@@ -85,36 +85,50 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
                                               LocalDate bookingDate,
                                               LocalTime startTime, LocalTime endTime,
                                               Long operatorId) {
-        // Step 1: Ensure lock point for new staff
-        long lockId = generateLockId();
-        staffBookingLockMapper.upsertStaffBookingLock(lockId, newStaffId, bookingDate);
+        // Step 1: Lock the booking row FIRST (fixed lock order: booking → staff-date)
+        ServiceBooking booking = serviceBookingMapper.selectBookingForUpdate(bookingId);
+        if (booking == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "预约不存在");
+        }
 
-        // Step 2: Lock new staff-date row
-        StaffBookingLock lock = staffBookingLockMapper.selectStaffBookingLockForUpdate(newStaffId, bookingDate);
+        // Step 2: Validate booking status is reassignable (using locked data)
+        String status = booking.getStatus();
+        if (!"PENDING_CONFIRM".equals(status) && !"CONFIRMED".equals(status)) {
+            throw new BusinessException(ErrorCode.BOOKING_STATUS_INVALID,
+                    "只有待确认或已确认的预约可以改派员工");
+        }
+
+        // Step 3: Read actual date/time from the locked booking (ignore stale parameters)
+        Long oldStaffId = booking.getStaffId();
+        LocalDate actualDate = booking.getBookingDate();
+        LocalTime actualStart = booking.getStartTime();
+        LocalTime actualEnd = booking.getEndTime();
+
+        // Step 4: Ensure lock point for new staff using actual date
+        long lockId = generateLockId();
+        staffBookingLockMapper.upsertStaffBookingLock(lockId, newStaffId, actualDate);
+
+        // Step 5: Lock new staff-date row
+        StaffBookingLock lock = staffBookingLockMapper.selectStaffBookingLockForUpdate(newStaffId, actualDate);
         if (lock == null) {
             throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE,
                     "无法锁定新员工排班，请重试");
         }
 
-        // Step 3: Check for conflicts with new staff (exclude current booking)
+        // Step 6: Check for conflicts with new staff using actual times (exclude current booking)
         List<ServiceBooking> conflicts = serviceBookingMapper.selectConflictingBookings(
-                newStaffId, bookingDate, startTime, endTime, bookingId);
+                newStaffId, actualDate, actualStart, actualEnd, bookingId);
         if (!conflicts.isEmpty()) {
             throw new BusinessException(ErrorCode.BOOKING_TIME_CONFLICT,
                     "新员工在该时间段已有预约冲突，请选择其他员工或时间");
         }
 
-        // Step 4: Update booking staff
-        ServiceBooking booking = serviceBookingMapper.selectById(bookingId);
-        if (booking == null) {
-            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "预约不存在");
-        }
-        Long oldStaffId = booking.getStaffId();
+        // Step 7: Update booking staff
         booking.setStaffId(newStaffId);
         serviceBookingMapper.updateById(booking);
 
-        // Step 5: Write status log
-        writeStatusLog(bookingId, booking.getStatus(), booking.getStatus(),
+        // Step 8: Write status log
+        writeStatusLog(bookingId, status, status,
                 "ADMIN", operatorId,
                 String.format("改派员工：从员工%d改派到员工%d", oldStaffId, newStaffId));
 

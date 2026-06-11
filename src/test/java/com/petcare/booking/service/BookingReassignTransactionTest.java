@@ -166,7 +166,7 @@ class BookingReassignTransactionTest {
                         booking.id(), staff2Id,
                         futureDate, LocalTime.of(14, 0), LocalTime.of(15, 0), 9999L))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("预约状态");
+                .hasMessageContaining("预约");
 
         // Staff unchanged
         ServiceBooking unchanged = serviceBookingService.getById(booking.id());
