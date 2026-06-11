@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：D-010 已决定先完成管理后台再开发小程序。阶段 10 管理后台骨架和门店页面已提交，当前正在收口其余管理后台核心页面。不要在 `main` 分支直接加入业务代码；当前阶段代码只能在 `phase-10-frontend` 分支执行。
+当前状态：D-010 已决定先完成管理后台再开发小程序。阶段 `10F-R1` 状态契约修复已完成，当前进入 `10F-R2` API 契约清理。D-011 雪花 ID JSON 传输策略和 D-012 当前门店上下文仍未决；不要在 `main` 分支直接加入业务代码，当前阶段代码只能在 `phase-10-frontend` 分支执行。
 
 ## AI Agent 强制入口
 
@@ -28,6 +28,7 @@
 - [docs/21-remaining-development-roadmap.md](docs/21-remaining-development-roadmap.md)
 - [docs/22-continuous-agent-development-rules.md](docs/22-continuous-agent-development-rules.md)
 - [docs/23-phase-10f-review-fix-and-10g-quality-plan.md](docs/23-phase-10f-review-fix-and-10g-quality-plan.md)
+- [docs/24-phase-10f-r2-api-contract-cleanup-plan.md](docs/24-phase-10f-r2-api-contract-cleanup-plan.md)
 
 ## 原始需求基线
 
@@ -61,7 +62,8 @@
 
 第十阶段当前执行“管理后台优先”：
 
-1. 按 [阶段 10F-R 验收修复与 10G 质量基建代码计划](docs/23-phase-10f-review-fix-and-10g-quality-plan.md) 先修复状态和接口契约问题。
-2. 完成 10F-R 验收后，建立管理后台测试、类型检查、覆盖率和 E2E 门禁。
-3. 完成管理后台核心流程后，再补齐小程序依赖的后端能力。
-4. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。
+1. 按 [阶段 10F-R2 管理后台 API 契约清理代码计划](docs/24-phase-10f-r2-api-contract-cleanup-plan.md) 先执行 `10F-R2A`，建立真实 API 契约清单。
+2. 执行不依赖决策的 `10F-R2B`，并等待用户决定 D-011、D-012 后再处理跨前后端契约。
+3. 完成阶段 10F-R 验收后，建立管理后台测试、类型检查、覆盖率和 E2E 门禁。
+4. 完成管理后台核心流程后，再补齐小程序依赖的后端能力。
+5. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。

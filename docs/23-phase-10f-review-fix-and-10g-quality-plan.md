@@ -10,6 +10,12 @@
 
 禁止直接开始小程序、后端新功能或发布工作。
 
+进度更新（2026-06-11）：
+
+- `10F-R1` 已由提交 `f6463f9` 和 `6c5d6ef` 完成。
+- `npm run test:contract` 已通过 `74` 项测试，`npm run build` 已通过。
+- 当前下一步为 `10F-R2`，必须按 `docs/24-phase-10f-r2-api-contract-cleanup-plan.md` 执行。
+
 ## 2. 当前基线与验证证据
 
 当前分支：`phase-10-frontend`
@@ -374,7 +380,7 @@ git status --short --branch
 - 文档、脚本和实际运行方式一致。
 - 形成阶段 10G 独立 Git 提交。
 
-## 13. 下一位 Agent 开工指令
+## 13. 已完成的 10F-R1 开工指令
 
 ```text
 任务包 ID：10F-R1
@@ -389,4 +395,4 @@ RED 测试：证明错误状态值导致动作条件失效
   fix(admin-web): align status dictionaries and action guards
 ```
 
-下一位 Agent 不允许跳过 10F-R1 直接搭建 E2E 或开始小程序。
+上述任务已完成。下一位 Agent 不允许重复领取 10F-R1，也不允许直接搭建 E2E 或开始小程序；只允许按 `docs/24-phase-10f-r2-api-contract-cleanup-plan.md` 先执行 `10F-R2A`。
