@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.petcare.booking.domain.BookingAvailabilityCalculator;
 import com.petcare.booking.domain.BookingDistanceCalculator;
-import com.petcare.booking.domain.BookingStateMachine;
 import com.petcare.booking.domain.StaffAssignmentPolicy;
 import com.petcare.booking.dto.BookingAvailabilityRequest;
 import com.petcare.booking.dto.BookingAvailabilityResponse;
@@ -14,7 +13,6 @@ import com.petcare.booking.dto.BookingCancelRequest;
 import com.petcare.booking.dto.BookingCreateRequest;
 import com.petcare.booking.dto.BookingReassignRequest;
 import com.petcare.booking.dto.BookingResponse;
-import com.petcare.booking.entity.BookingStatusLog;
 import com.petcare.booking.entity.ServiceBooking;
 import com.petcare.booking.entity.StaffSchedule;
 import com.petcare.booking.entity.StaffUnavailableTime;
@@ -300,23 +298,16 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
             throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "预约不存在");
         }
 
-        // Validate state transition
-        BookingStateMachine.validateTransition(booking.getStatus(), "CANCELLED");
-
-        // Check cancel time window
+        // Check cancel time window (business rule, not state machine)
         StoreConfig config = getStoreConfig(booking.getStoreId());
         validateCancelTimeWindow(booking, config);
 
-        // Update booking
-        booking.setStatus("CANCELLED");
-        booking.setCancelTime(LocalDateTime.now());
-        booking.setCancelReason(request.reason());
-        serviceBookingService.updateById(booking);
+        // Delegate atomic transition (locks row, validates, updates, writes log)
+        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                bookingId, "CANCELLED", "USER", currentUserId, "用户取消预约",
+                request.reason(), null);
 
-        // Write status log
-        writeStatusLog(bookingId, booking.getStatus(), "CANCELLED", "USER", currentUserId, "用户取消预约");
-
-        return toResponse(booking);
+        return toResponse(updated);
     }
 
     // ========== Admin Operations ==========
@@ -347,75 +338,42 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
 
     @Override
     public BookingResponse confirmBooking(Long bookingId, String merchantRemark, Long operatorId) {
-        ServiceBooking booking = getBookingOrThrow(bookingId);
-        String oldStatus = booking.getStatus();
-        BookingStateMachine.validateTransition(oldStatus, "CONFIRMED");
-
-        booking.setStatus("CONFIRMED");
-        booking.setConfirmTime(LocalDateTime.now());
-        if (merchantRemark != null) {
-            booking.setMerchantRemark(merchantRemark);
-        }
-        serviceBookingService.updateById(booking);
-
-        writeStatusLog(bookingId, oldStatus, "CONFIRMED", "ADMIN", operatorId, "管理员确认预约");
-        return toResponse(booking);
+        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                bookingId, "CONFIRMED", "ADMIN", operatorId, "管理员确认预约",
+                null, merchantRemark);
+        return toResponse(updated);
     }
 
     @Override
     public BookingResponse rejectBooking(Long bookingId, String reason, Long operatorId) {
-        ServiceBooking booking = getBookingOrThrow(bookingId);
-        String oldStatus = booking.getStatus();
-        BookingStateMachine.validateTransition(oldStatus, "REJECTED");
-
-        booking.setStatus("REJECTED");
-        booking.setCancelReason(reason);
-        serviceBookingService.updateById(booking);
-
-        writeStatusLog(bookingId, oldStatus, "REJECTED", "ADMIN", operatorId, "管理员拒绝预约：" + reason);
-        return toResponse(booking);
+        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                bookingId, "REJECTED", "ADMIN", operatorId, "管理员拒绝预约：" + reason,
+                reason, null);
+        return toResponse(updated);
     }
 
     @Override
     public BookingResponse startBooking(Long bookingId, Long operatorId) {
-        ServiceBooking booking = getBookingOrThrow(bookingId);
-        String oldStatus = booking.getStatus();
-        BookingStateMachine.validateTransition(oldStatus, "IN_SERVICE");
-
-        booking.setStatus("IN_SERVICE");
-        serviceBookingService.updateById(booking);
-
-        writeStatusLog(bookingId, oldStatus, "IN_SERVICE", "ADMIN", operatorId, "管理员开始服务");
-        return toResponse(booking);
+        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                bookingId, "IN_SERVICE", "ADMIN", operatorId, "管理员开始服务",
+                null, null);
+        return toResponse(updated);
     }
 
     @Override
     public BookingResponse completeBooking(Long bookingId, Long operatorId) {
-        ServiceBooking booking = getBookingOrThrow(bookingId);
-        String oldStatus = booking.getStatus();
-        BookingStateMachine.validateTransition(oldStatus, "COMPLETED");
-
-        booking.setStatus("COMPLETED");
-        booking.setCompleteTime(LocalDateTime.now());
-        serviceBookingService.updateById(booking);
-
-        writeStatusLog(bookingId, oldStatus, "COMPLETED", "ADMIN", operatorId, "管理员完成服务");
-        return toResponse(booking);
+        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                bookingId, "COMPLETED", "ADMIN", operatorId, "管理员完成服务",
+                null, null);
+        return toResponse(updated);
     }
 
     @Override
     public BookingResponse cancelBookingAdmin(Long bookingId, String reason, Long operatorId) {
-        ServiceBooking booking = getBookingOrThrow(bookingId);
-        String oldStatus = booking.getStatus();
-        BookingStateMachine.validateTransition(oldStatus, "CANCELLED");
-
-        booking.setStatus("CANCELLED");
-        booking.setCancelTime(LocalDateTime.now());
-        booking.setCancelReason(reason);
-        serviceBookingService.updateById(booking);
-
-        writeStatusLog(bookingId, oldStatus, "CANCELLED", "ADMIN", operatorId, "管理员取消预约：" + reason);
-        return toResponse(booking);
+        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                bookingId, "CANCELLED", "ADMIN", operatorId, "管理员取消预约：" + reason,
+                reason, null);
+        return toResponse(updated);
     }
 
     @Override
@@ -505,18 +463,6 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
             throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "预约不存在");
         }
         return booking;
-    }
-
-    private void writeStatusLog(Long bookingId, String oldStatus, String newStatus,
-                                String operatorType, Long operatorId, String remark) {
-        BookingStatusLog statusLog = new BookingStatusLog();
-        statusLog.setBookingId(bookingId);
-        statusLog.setOldStatus(oldStatus);
-        statusLog.setNewStatus(newStatus);
-        statusLog.setOperatorType(operatorType);
-        statusLog.setOperatorId(operatorId);
-        statusLog.setRemark(remark);
-        bookingStatusLogService.save(statusLog);
     }
 
     private BookingResponse toResponse(ServiceBooking b) {

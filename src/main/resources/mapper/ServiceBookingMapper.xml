@@ -17,4 +17,8 @@
           </if>
     </select>
 
+    <select id="selectBookingForUpdate" resultType="com.petcare.booking.entity.ServiceBooking">
+        SELECT * FROM service_booking WHERE id = #{bookingId} AND deleted = 0 FOR UPDATE
+    </select>
+
 </mapper>

@@ -24,4 +24,10 @@ public interface ServiceBookingMapper extends BaseMapper<ServiceBooking> {
                                                    @Param("startTime") LocalTime startTime,
                                                    @Param("endTime") LocalTime endTime,
                                                    @Param("excludeBookingId") Long excludeBookingId);
+
+    /**
+     * Locks a booking row for atomic status transition.
+     * Must be called within a @Transactional context.
+     */
+    ServiceBooking selectBookingForUpdate(@Param("bookingId") Long bookingId);
 }

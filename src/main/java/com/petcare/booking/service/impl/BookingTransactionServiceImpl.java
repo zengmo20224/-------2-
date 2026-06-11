@@ -1,5 +1,6 @@
 package com.petcare.booking.service.impl;
 
+import com.petcare.booking.domain.BookingStateMachine;
 import com.petcare.booking.entity.BookingStatusLog;
 import com.petcare.booking.entity.ServiceBooking;
 import com.petcare.booking.entity.StaffBookingLock;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -115,6 +117,55 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
         writeStatusLog(bookingId, booking.getStatus(), booking.getStatus(),
                 "ADMIN", operatorId,
                 String.format("改派员工：从员工%d改派到员工%d", oldStaffId, newStaffId));
+
+        return booking;
+    }
+
+    @Override
+    @Transactional
+    public ServiceBooking transitionStatusOnce(Long bookingId, String targetStatus,
+                                               String operatorType, Long operatorId, String remark,
+                                               String cancelReason, String merchantRemark) {
+        // Step 1: Lock the booking row
+        ServiceBooking booking = serviceBookingMapper.selectBookingForUpdate(bookingId);
+        if (booking == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "预约不存在");
+        }
+
+        // Step 2: Capture REAL old status before any mutation
+        String oldStatus = booking.getStatus();
+
+        // Step 3: Validate state transition
+        BookingStateMachine.validateTransition(oldStatus, targetStatus);
+
+        // Step 4: Update status and status-specific fields
+        booking.setStatus(targetStatus);
+        LocalDateTime now = LocalDateTime.now();
+        switch (targetStatus) {
+            case "CONFIRMED" -> {
+                booking.setConfirmTime(now);
+                if (merchantRemark != null) {
+                    booking.setMerchantRemark(merchantRemark);
+                }
+            }
+            case "REJECTED" -> {
+                if (cancelReason != null) {
+                    booking.setCancelReason(cancelReason);
+                }
+            }
+            case "CANCELLED" -> {
+                booking.setCancelTime(now);
+                if (cancelReason != null) {
+                    booking.setCancelReason(cancelReason);
+                }
+            }
+            case "COMPLETED" -> booking.setCompleteTime(now);
+            default -> { /* IN_SERVICE has no extra fields */ }
+        }
+        serviceBookingMapper.updateById(booking);
+
+        // Step 5: Write status log with correct old → new
+        writeStatusLog(bookingId, oldStatus, targetStatus, operatorType, operatorId, remark);
 
         return booking;
     }

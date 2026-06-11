@@ -37,4 +37,22 @@ public interface BookingTransactionService {
                                        LocalDate bookingDate,
                                        LocalTime startTime, LocalTime endTime,
                                        Long operatorId);
+
+    /**
+     * Atomically transitions booking status within a single transaction.
+     * Locks the booking row, reads the real old status, validates the transition,
+     * updates the booking, and writes the status log — all atomically.
+     *
+     * @param bookingId     the booking to transition
+     * @param targetStatus  the desired new status
+     * @param operatorType  who performed the transition (USER / ADMIN)
+     * @param operatorId    the operator's ID
+     * @param remark        log remark
+     * @param cancelReason  reason for cancel/reject (nullable)
+     * @param merchantRemark merchant remark for confirm (nullable)
+     * @return the updated ServiceBooking
+     */
+    ServiceBooking transitionStatusOnce(Long bookingId, String targetStatus,
+                                        String operatorType, Long operatorId, String remark,
+                                        String cancelReason, String merchantRemark);
 }
