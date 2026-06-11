@@ -1,5 +1,8 @@
 package com.petcare.community.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
+
 import java.time.LocalDateTime;
 
 /**
@@ -7,10 +10,10 @@ import java.time.LocalDateTime;
  * Does not expose internal fields: riskLevel.
  */
 public record CommentResponse(
-        Long id,
-        Long postId,
-        Long userId,
-        Long parentId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long postId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long userId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long parentId,
         String content,
         String status,
         Integer likeCount,

@@ -1,6 +1,9 @@
 package com.petcare.admin.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
+
 import java.util.List;
 
 /**
@@ -10,7 +13,7 @@ import java.util.List;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AdminMeResponse(
-        Long id,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
         String username,
         String nickname,
         String role,

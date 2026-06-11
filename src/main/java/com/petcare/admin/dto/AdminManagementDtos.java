@@ -1,5 +1,7 @@
 package com.petcare.admin.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -30,9 +32,11 @@ public final class AdminManagementDtos {
             @Size(max = 500) String description) {
     }
 
-    public record StoreView(Long id, String storeName, String phone, String address,
-                            BigDecimal longitude, BigDecimal latitude, String businessHours,
-                            String status, String description) {
+    public record StoreView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            String storeName, String phone, String address,
+            BigDecimal longitude, BigDecimal latitude, String businessHours,
+            String status, String description) {
     }
 
     public record StoreConfigUpdateRequest(
@@ -44,10 +48,13 @@ public final class AdminManagementDtos {
             @NotNull Boolean contentAutoPublish) {
     }
 
-    public record StoreConfigView(Long id, Long storeId, BigDecimal homeServiceRadiusKm,
-                                  Integer bookingAdvanceDays, Integer bookingCancelHours,
-                                  Integer timeSlotMinutes, Boolean autoConfirmBooking,
-                                  Boolean contentAutoPublish) {
+    public record StoreConfigView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
+            BigDecimal homeServiceRadiusKm,
+            Integer bookingAdvanceDays, Integer bookingCancelHours,
+            Integer timeSlotMinutes, Boolean autoConfirmBooking,
+            Boolean contentAutoPublish) {
     }
 
     public record ServiceItemRequest(
@@ -65,10 +72,13 @@ public final class AdminManagementDtos {
             @Min(0) Integer sort) {
     }
 
-    public record ServiceItemView(Long id, Long categoryId, String name, String serviceMode,
-                                  BigDecimal price, Integer durationMinutes, String petType,
-                                  String petSize, Boolean needAddress, Boolean needPet,
-                                  String description, String coverUrl, String status, Integer sort) {
+    public record ServiceItemView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long categoryId,
+            String name, String serviceMode,
+            BigDecimal price, Integer durationMinutes, String petType,
+            String petSize, Boolean needAddress, Boolean needPet,
+            String description, String coverUrl, String status, Integer sort) {
     }
 
     public record StaffRequest(
@@ -80,14 +90,19 @@ public final class AdminManagementDtos {
             @Size(max = 500) String description) {
     }
 
-    public record StaffView(Long id, Long storeId, String name, String phone, String avatarUrl,
-                            String role, String status, String description) {
+    public record StaffView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
+            String name, String phone, String avatarUrl,
+            String role, String status, String description) {
     }
 
     public record StaffSkillUpdateRequest(@NotNull List<@NotNull @Positive Long> serviceCategoryIds) {
     }
 
-    public record StaffSkillView(Long staffId, List<Long> serviceCategoryIds) {
+    public record StaffSkillView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long staffId,
+            @JsonSerialize(contentUsing = SnowflakeIdSerializer.class) List<Long> serviceCategoryIds) {
     }
 
     public record StaffScheduleRequest(
@@ -99,8 +114,12 @@ public final class AdminManagementDtos {
             @Size(max = 255) String remark) {
     }
 
-    public record StaffScheduleView(Long id, Long staffId, Long storeId, LocalDate workDate,
-                                    LocalTime startTime, LocalTime endTime, String status, String remark) {
+    public record StaffScheduleView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long staffId,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
+            LocalDate workDate,
+            LocalTime startTime, LocalTime endTime, String status, String remark) {
     }
 
     public record ProductRequest(
@@ -116,13 +135,19 @@ public final class AdminManagementDtos {
     public record ProductStockUpdateRequest(@NotNull @Min(0) Integer stock) {
     }
 
-    public record ProductView(Long id, Long categoryId, String name, String coverUrl,
-                              BigDecimal price, Integer stock, Integer salesCount,
-                              String description, Boolean pickupOnly, String status, Integer sort) {
+    public record ProductView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long categoryId,
+            String name, String coverUrl,
+            BigDecimal price, Integer stock, Integer salesCount,
+            String description, Boolean pickupOnly, String status, Integer sort) {
     }
 
-    public record OperationLogView(Long id, Long adminId, String module, String operation,
-                                   String requestMethod, String requestUrl, String result,
-                                   String errorMessage, LocalDateTime createTime) {
+    public record OperationLogView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long adminId,
+            String module, String operation,
+            String requestMethod, String requestUrl, String result,
+            String errorMessage, LocalDateTime createTime) {
     }
 }

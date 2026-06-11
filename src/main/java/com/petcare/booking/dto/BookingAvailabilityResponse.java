@@ -1,5 +1,8 @@
 package com.petcare.booking.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -9,8 +12,8 @@ import java.util.List;
  * Does not expose staffId — only aggregate counts.
  */
 public record BookingAvailabilityResponse(
-        Long storeId,
-        Long serviceItemId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long serviceItemId,
         LocalDate bookingDate,
         String serviceMode,
         Integer durationMinutes,

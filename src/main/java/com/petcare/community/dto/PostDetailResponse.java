@@ -1,5 +1,8 @@
 package com.petcare.community.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -8,10 +11,10 @@ import java.util.List;
  * Includes comments preview.
  */
 public record PostDetailResponse(
-        Long id,
-        Long userId,
-        Long petId,
-        Long topicId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long userId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long petId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long topicId,
         String title,
         String content,
         String status,

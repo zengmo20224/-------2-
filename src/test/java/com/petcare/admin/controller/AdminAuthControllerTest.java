@@ -76,7 +76,7 @@ class AdminAuthControllerTest {
                 .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.data.expiresInSeconds").isNumber())
-                .andExpect(jsonPath("$.data.admin.id").isNumber())
+                .andExpect(jsonPath("$.data.admin.id").isString())
                 .andExpect(jsonPath("$.data.admin.username").value("logintest"))
                 .andExpect(jsonPath("$.data.admin.role").value("SUPER_ADMIN"));
     }

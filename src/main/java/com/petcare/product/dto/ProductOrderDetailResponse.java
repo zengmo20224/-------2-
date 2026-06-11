@@ -1,5 +1,8 @@
 package com.petcare.product.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -8,10 +11,10 @@ import java.util.List;
  * Response DTO for a product order detail with items.
  */
 public record ProductOrderDetailResponse(
-        Long id,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
         String orderNo,
-        Long userId,
-        Long storeId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long userId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
         BigDecimal totalAmount,
         String paymentMethod,
         String paymentStatus,
@@ -31,8 +34,8 @@ public record ProductOrderDetailResponse(
      * Response DTO for a single order item snapshot.
      */
     public record OrderItemResponse(
-            Long id,
-            Long productId,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long productId,
             String productName,
             String productCoverUrl,
             BigDecimal price,

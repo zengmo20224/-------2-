@@ -94,6 +94,24 @@ class SnowflakeIdSerializationContractTest {
         }
     }
 
+    /** Assert every element in a flat JSON string array (e.g. List<Long> serialized as List<String>). */
+    private void assertFlatArrayAllStrings(String json, String arrayField) throws Exception {
+        Map<String, Object> map = objectMapper.readValue(json, Map.class);
+        Object raw = map.get(arrayField);
+        assertInstanceOf(List.class, raw, arrayField + " should be a JSON array");
+        @SuppressWarnings("unchecked")
+        List<Object> array = (List<Object>) raw;
+        assertFalse(array.isEmpty(), arrayField + " should not be empty");
+        for (int i = 0; i < array.size(); i++) {
+            Object value = array.get(i);
+            assertInstanceOf(String.class, value,
+                    arrayField + "[" + i + "] should be JSON string but was "
+                            + (value == null ? "null" : value.getClass().getSimpleName() + ": " + value));
+            assertEquals(BIG_ID.toString(), value,
+                    arrayField + "[" + i + "] string value must be exact");
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private Object getNested(Map<String, Object> map, String path) {
         String[] parts = path.split("\\.");
@@ -244,7 +262,7 @@ class SnowflakeIdSerializationContractTest {
             String json = toJson(dto);
             assertIdIsString(json, "staffId");
             // List<Long> of snowflake IDs must serialize as JSON strings
-            assertAllArrayIdsAreStrings(json, "serviceCategoryIds", "");
+            assertFlatArrayAllStrings(json, "serviceCategoryIds");
         }
 
         @Test

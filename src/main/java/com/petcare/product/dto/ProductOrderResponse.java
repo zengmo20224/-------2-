@@ -1,5 +1,8 @@
 package com.petcare.product.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -7,7 +10,7 @@ import java.time.LocalDateTime;
  * Response DTO for a product order (list view).
  */
 public record ProductOrderResponse(
-        Long id,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
         String orderNo,
         BigDecimal totalAmount,
         String paymentMethod,

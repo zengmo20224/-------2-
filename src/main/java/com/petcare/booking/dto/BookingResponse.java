@@ -1,5 +1,8 @@
 package com.petcare.booking.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,18 +13,18 @@ import java.time.LocalTime;
  * Does not expose full phone numbers or other sensitive data.
  */
 public record BookingResponse(
-        Long id,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
         String bookingNo,
-        Long userId,
-        Long petId,
-        Long storeId,
-        Long serviceItemId,
-        Long staffId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long userId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long petId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long serviceItemId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long staffId,
         String serviceMode,
         LocalDate bookingDate,
         LocalTime startTime,
         LocalTime endTime,
-        Long addressId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long addressId,
         BigDecimal distanceKm,
         String contactName,
         String contactPhone,
