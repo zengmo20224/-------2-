@@ -6,23 +6,24 @@ import request from '../utils/request'
 export interface StoreInfo {
   id: number
   storeName: string
-  phone: string
-  address: string
-  longitude: number
-  latitude: number
-  businessHours: string
+  phone: string | null
+  address: string | null
+  longitude: number | null
+  latitude: number | null
+  businessHours: string | null
   status: string // OPEN | CLOSED
-  description: string
+  description: string | null
 }
 
+// storeName and status are required (backend @NotBlank)
 export interface StoreUpdateParams {
-  storeName?: string
+  storeName: string
   phone?: string
   address?: string
   longitude?: number
   latitude?: number
   businessHours?: string
-  status?: string
+  status: string
   description?: string
 }
 

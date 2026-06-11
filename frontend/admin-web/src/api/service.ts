@@ -10,14 +10,14 @@ export interface ServiceItem {
   serviceMode: string // STORE | HOME | BOTH
   price: number
   durationMinutes: number
-  petType: string // DOG | CAT | ALL
-  petSize: string // SMALL | MEDIUM | LARGE | ALL
+  petType: string | null // DOG | CAT | ALL
+  petSize: string | null // SMALL | MEDIUM | LARGE | ALL
   needAddress: boolean
   needPet: boolean
-  description: string
-  coverUrl: string
+  description: string | null
+  coverUrl: string | null
   status: string // ACTIVE | DISABLED
-  sort: number
+  sort: number | null
 }
 
 export interface ServiceItemCreateParams {
@@ -35,8 +35,8 @@ export interface ServiceItemCreateParams {
   sort?: number
 }
 
+// Backend only accepts: page, size, status (no name filter)
 export interface ServiceItemQueryParams extends PageParams {
-  name?: string
   status?: string
 }
 

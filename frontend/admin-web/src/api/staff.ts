@@ -7,11 +7,11 @@ export interface StaffMember {
   id: number
   storeId: number
   name: string
-  phone: string
-  avatarUrl: string
+  phone: string | null
+  avatarUrl: string | null
   role: string // GROOMER | WALKER | FEEDER | MANAGER
   status: string
-  description: string
+  description: string | null
 }
 
 export interface StaffCreateParams {
@@ -40,7 +40,7 @@ export interface StaffSchedule {
   startTime: string
   endTime: string
   status: string // AVAILABLE | UNAVAILABLE
-  remark: string
+  remark: string | null
 }
 
 export interface StaffScheduleCreateParams {
