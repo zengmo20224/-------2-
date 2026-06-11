@@ -9,6 +9,7 @@ import com.petcare.booking.service.BookingStatusLogService;
 import com.petcare.booking.service.BookingTransactionService;
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -46,8 +47,8 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
         Long staffId = booking.getStaffId();
         LocalDate bookingDate = booking.getBookingDate();
 
-        // Step 1: Ensure lock point exists with a unique id
-        long lockId = generateLockId(staffId, bookingDate);
+        // Step 1: Ensure lock point exists with a snowflake id
+        long lockId = generateLockId();
         staffBookingLockMapper.upsertStaffBookingLock(lockId, staffId, bookingDate);
 
         // Step 2: Lock the staff-date row
@@ -83,7 +84,7 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
                                               LocalTime startTime, LocalTime endTime,
                                               Long operatorId) {
         // Step 1: Ensure lock point for new staff
-        long lockId = generateLockId(newStaffId, bookingDate);
+        long lockId = generateLockId();
         staffBookingLockMapper.upsertStaffBookingLock(lockId, newStaffId, bookingDate);
 
         // Step 2: Lock new staff-date row
@@ -131,10 +132,12 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
     }
 
     /**
-     * Generates a deterministic unique ID for the lock row.
-     * Uses staffId * 100000 + dayOfYear to avoid collisions across dates.
+     * Generates a unique ID for the lock row using the project's snowflake ID generator.
+     * Each call produces a unique, positive ID regardless of staff ID or date.
+     * The actual primary key is preserved by the upsert (ON DUPLICATE KEY UPDATE / MERGE INTO)
+     * on repeated calls for the same (staff_id, booking_date).
      */
-    private long generateLockId(Long staffId, LocalDate bookingDate) {
-        return Math.abs(staffId * 100000L + bookingDate.getDayOfYear());
+    private long generateLockId() {
+        return IdWorker.getId();
     }
 }

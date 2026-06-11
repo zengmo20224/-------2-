@@ -4,15 +4,27 @@
 <mapper namespace="com.petcare.booking.mapper.StaffBookingLockMapper">
 
     <!--
-        Uses a composite key based id: staffId * 10000 + dayOfYear to ensure uniqueness
-        across different dates while remaining deterministic for tests.
-        MERGE INTO works in both H2 and MySQL 8.0+.
+        Dialect-specific upsert for staff_booking_lock.
+        Ensures a stable lock point exists for (staff_id, booking_date).
+
+        H2 uses MERGE INTO ... KEY (...).
+        MySQL 8 uses INSERT ... ON DUPLICATE KEY UPDATE.
+        Both preserve the existing primary key on repeated calls.
     -->
-    <update id="upsertStaffBookingLock" parameterType="map">
+
+    <!-- MySQL 8: INSERT ... ON DUPLICATE KEY UPDATE -->
+    <insert id="upsertStaffBookingLock" databaseId="mysql" parameterType="map">
+        INSERT INTO staff_booking_lock (id, staff_id, booking_date, create_time, update_time)
+        VALUES (#{id}, #{staffId}, #{bookingDate}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE update_time = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- H2: MERGE INTO ... KEY (...) -->
+    <insert id="upsertStaffBookingLock" databaseId="H2" parameterType="map">
         MERGE INTO staff_booking_lock (id, staff_id, booking_date, create_time, update_time)
         KEY (staff_id, booking_date)
         VALUES (#{id}, #{staffId}, #{bookingDate}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    </update>
+    </insert>
 
     <select id="selectStaffBookingLockForUpdate" resultType="com.petcare.booking.entity.StaffBookingLock">
         SELECT id, staff_id, booking_date, create_time, update_time
