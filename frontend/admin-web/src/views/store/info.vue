@@ -91,7 +91,16 @@ const loadData = async () => {
   try {
     const res = await getStoreInfo()
     if (res.data) {
-      form.value = { ...res.data }
+      form.value = {
+        storeName: res.data.storeName,
+        phone: res.data.phone ?? undefined,
+        address: res.data.address ?? undefined,
+        longitude: res.data.longitude ?? undefined,
+        latitude: res.data.latitude ?? undefined,
+        businessHours: res.data.businessHours ?? undefined,
+        status: res.data.status,
+        description: res.data.description ?? undefined,
+      }
     }
   } catch {
     // Error handled by interceptor

@@ -17,17 +17,17 @@ export interface AdminLoginResult {
   admin: {
     id: number
     username: string
-    nickname: string
-    role: string
+    nickname: string | null
+    role: string | null
   }
 }
 
 export interface AdminUserInfo {
   id: number
   username: string
-  nickname: string
-  role: string
-  permissions: string[]
+  nickname: string | null
+  role: string | null
+  permissions: string[] | null
 }
 
 // ─── API Functions ───

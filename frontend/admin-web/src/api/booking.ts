@@ -7,10 +7,10 @@ export interface Booking {
   id: number
   bookingNo: string
   userId: number
-  petId: number
+  petId: number | null
   storeId: number
   serviceItemId: number
-  staffId: number
+  staffId: number | null
   serviceMode: string
   bookingDate: string
   startTime: string
@@ -23,8 +23,8 @@ export interface Booking {
   paymentMethod: string
   paymentStatus: string
   status: string
-  remark: string
-  merchantRemark: string
+  remark: string | null
+  merchantRemark: string | null
   createTime: string
 }
 

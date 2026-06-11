@@ -234,7 +234,7 @@ const openEditDialog = (row: StaffMember) => {
   isEdit.value = true
   currentId.value = row.id
   dialogTitle.value = '编辑员工'
-  form.value = { storeId: row.storeId, name: row.name, phone: row.phone, role: row.role, description: row.description }
+  form.value = { storeId: row.storeId, name: row.name, phone: row.phone ?? undefined, role: row.role, description: row.description ?? undefined }
   dialogVisible.value = true
 }
 

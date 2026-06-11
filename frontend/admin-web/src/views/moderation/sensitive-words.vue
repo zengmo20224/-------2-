@@ -118,7 +118,7 @@ const fetchData = async () => {
 }
 
 const openCreateDialog = () => { isEdit.value = false; dialogTitle.value = '新增敏感词'; form.value = { word: '', category: '', level: 1 }; dialogVisible.value = true }
-const openEditDialog = (row: SensitiveWord) => { isEdit.value = true; currentId.value = row.id; dialogTitle.value = '编辑敏感词'; form.value = { word: row.word, category: row.category, level: row.level }; dialogVisible.value = true }
+const openEditDialog = (row: SensitiveWord) => { isEdit.value = true; currentId.value = row.id; dialogTitle.value = '编辑敏感词'; form.value = { word: row.word, category: row.category ?? undefined, level: row.level }; dialogVisible.value = true }
 
 const submitForm = async () => {
   if (!formRef.value) return

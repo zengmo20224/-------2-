@@ -144,7 +144,7 @@ const stockFormRef = ref<FormInstance>()
 const stockTargetId = ref(0)
 const stockForm = reactive({ stock: 0 })
 
-const openStockDialog = (row: Product) => { stockTargetId.value = row.id; stockForm.stock = row.stock; stockDialogVisible.value = true }
+const openStockDialog = (row: Product) => { stockTargetId.value = row.id; stockForm.stock = row.stock ?? 0; stockDialogVisible.value = true }
 const submitStock = async () => {
   if (!stockFormRef.value) return
   await stockFormRef.value.validate(async (valid) => {
@@ -165,7 +165,7 @@ const fetchData = async () => {
 const openCreateDialog = () => { isEdit.value = false; dialogTitle.value = '新增商品'; form.value = { ...defaultForm }; dialogVisible.value = true }
 const openEditDialog = (row: Product) => {
   isEdit.value = true; currentId.value = row.id; dialogTitle.value = '编辑商品'
-  form.value = { categoryId: row.categoryId, name: row.name, coverUrl: row.coverUrl, price: row.price, description: row.description, pickupOnly: row.pickupOnly, sort: row.sort }
+  form.value = { categoryId: row.categoryId, name: row.name, coverUrl: row.coverUrl ?? undefined, price: row.price, description: row.description ?? undefined, pickupOnly: row.pickupOnly, sort: row.sort ?? undefined }
   dialogVisible.value = true
 }
 

@@ -12,9 +12,6 @@
 
       <!-- Search -->
       <el-form :inline="true" :model="queryParams">
-        <el-form-item label="名称">
-          <el-input v-model="queryParams.name" placeholder="服务名称" clearable />
-        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryParams.status" placeholder="状态" clearable style="width: 130px">
             <el-option label="启用" value="ON_SALE" />
@@ -168,7 +165,6 @@ const total = ref(0)
 const queryParams = reactive({
   page: 1,
   size: 10,
-  name: '',
   status: '',
 })
 
@@ -237,13 +233,13 @@ const openEditDialog = (row: ServiceItem) => {
     serviceMode: row.serviceMode,
     price: row.price,
     durationMinutes: row.durationMinutes,
-    petType: row.petType,
-    petSize: row.petSize,
+    petType: row.petType ?? undefined,
+    petSize: row.petSize ?? undefined,
     needAddress: row.needAddress,
     needPet: row.needPet,
-    description: row.description,
-    coverUrl: row.coverUrl,
-    sort: row.sort,
+    description: row.description ?? undefined,
+    coverUrl: row.coverUrl ?? undefined,
+    sort: row.sort ?? undefined,
   }
   dialogVisible.value = true
 }

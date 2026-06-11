@@ -7,14 +7,14 @@ export interface Product {
   id: number
   categoryId: number
   name: string
-  coverUrl: string
+  coverUrl: string | null
   price: number
-  stock: number
-  salesCount: number
-  description: string
+  stock: number | null
+  salesCount: number | null
+  description: string | null
   pickupOnly: boolean
   status: string
-  sort: number
+  sort: number | null
 }
 
 export interface ProductCreateParams {

@@ -13,7 +13,7 @@ export interface ProductOrder {
   status: string
   contactName: string
   contactPhone: string
-  remark: string
+  remark: string | null
   createTime: string
   confirmTime: string | null
   completeTime: string | null
@@ -33,7 +33,7 @@ export interface ProductOrderItem {
 export interface ProductOrderDetail extends ProductOrder {
   userId: number
   storeId: number
-  merchantRemark: string
+  merchantRemark: string | null
   items: ProductOrderItem[]
 }
 

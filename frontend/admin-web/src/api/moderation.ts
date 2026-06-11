@@ -6,7 +6,7 @@ import type { PageResponse, PageParams } from '../types/api'
 export interface SensitiveWord {
   id: number
   word: string
-  category: string
+  category: string | null
   level: number
   status: string
   createTime: string
