@@ -181,7 +181,8 @@ status
 
 - `10F-R2A` 已由提交 `edbf2a4` 完成。
 - 真实契约清单已生成：`docs/25-admin-web-api-contract.md`。
-- 当前只允许按 `docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md` 执行 `10F-R2B`。
+- `10F-R2B` 已由提交 `fb1ca59`、`08ab84b`、`d963ad4` 完成。
+- 当前处于 D-011、D-012 决策门禁，后续计划见 `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`。
 
 ## 6. 任务包 10F-R2A：建立真实 API 契约清单
 
@@ -432,13 +433,13 @@ mvn package "-DskipTests"
 ## 13. 当前 Agent 开工指令
 
 ```text
-任务包 ID：10F-R2B
-目标：清理不依赖 D-011、D-012 的前端 API 契约问题
-允许修改：frontend/admin-web/src/api/**、API 契约测试、因类型修正直接失败的现有页面、test:contract 脚本
-禁止修改：后端、小程序、数据库、ID 字符串迁移、固定门店 ID 方案、未跟踪保护文件
-依赖：提交 edbf2a4；docs/25-admin-web-api-contract.md
-验证：npm run test:contract、npm run build、git diff --check
-预期提交：见 docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md
+任务包 ID：DECISION-GATE-D011-D012
+目标：向用户确认雪花 ID 和当前门店契约
+允许修改：用户决定后仅更新决策与规划文档
+禁止修改：生产代码、测试、数据库和未跟踪保护文件
+依赖：docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md
+验证：用户明确决定；决策文档独立提交；git diff --check
+预期提交：docs: decide snowflake ID and current store contracts
 ```
 
-`10F-R2B` 完成后必须等待 D-011、D-012 决策。未决定前，禁止执行 `10F-R2C` 至 `10F-R2E`。
+D-011、D-012 未决定前，禁止执行 `10F-R2C` 至 `10F-R2E`。

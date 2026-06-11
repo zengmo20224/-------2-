@@ -182,7 +182,7 @@
 
 可选方案：
 
-1. 后端将所有对外 `Long` ID 序列化为 JSON 字符串，前端统一使用 `string`。推荐。
+1. 所有对外雪花 ID 字段序列化为 JSON 字符串，前端统一使用 `string`；仅处理 ID 字段，不全局转换所有 Java `Long`。推荐。
 2. 仅对指定 DTO 的 ID 字段使用字符串序列化。变更分散，容易遗漏。
 3. 前端使用特殊 JSON BigInt 解析器。复杂度高，且默认 JSON 解析可能已丢失精度。
 4. 限制 ID 小于 JavaScript 安全整数。与既定雪花 ID 策略冲突，不推荐。
@@ -192,8 +192,9 @@
 - 可以完成真实 API 契约盘点、删除伪接口和修正非 ID 字段。
 - 禁止只修改前端 TypeScript 类型后声称已解决精度问题。
 - 禁止声称管理后台资源操作已经安全联调。
+- 禁止将所有 Java `Long` 全局序列化为字符串，因为 `PageResponse.total` 等非 ID 数值必须保持数字。
 
-详细计划见 `docs/24-phase-10f-r2-api-contract-cleanup-plan.md`。
+详细计划见 `docs/24-phase-10f-r2-api-contract-cleanup-plan.md` 和 `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`。
 
 ## D-012：单门店后台如何获得当前门店 ID
 
@@ -209,7 +210,7 @@
 
 可选方案：
 
-1. 新增受权限保护的“当前门店”后台接口。推荐。
+1. 新增受权限保护、由服务端解析唯一门店的 `/api/v1/admin/stores/current` 契约；无门店或多门店时明确失败。推荐。
 2. 在 `/api/v1/admin/auth/me` 中返回 `storeId`，并明确管理员与门店关系。
 3. 使用环境变量提供门店 ID，仅适合临时演示。
 4. 保持固定 `STORE_ID = 1`。禁止。
@@ -218,8 +219,9 @@
 
 - 门店信息和配置页面必须标记为“门店上下文未确定”。
 - 禁止继续依赖固定 ID `1` 声明联调完成。
+- 禁止在多于一个门店时静默选择第一条记录。
 
-详细计划见 `docs/24-phase-10f-r2-api-contract-cleanup-plan.md`。
+详细计划见 `docs/24-phase-10f-r2-api-contract-cleanup-plan.md` 和 `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`。
 
 ## 决策记录规则
 

@@ -20,6 +20,13 @@ docs/25-admin-web-api-contract.md
 
 本任务只清理不依赖 D-011、D-012 决策的前端 API 契约问题，不修改后端，不新增业务页面，不声称雪花 ID 精度问题或当前门店上下文问题已经解决。
 
+进度更新（2026-06-11）：
+
+- `10F-R2B` 已由提交 `fb1ca59`、`08ab84b`、`d963ad4` 完成。
+- `npm run test:contract` 已通过 `98` 项测试。
+- `npm run build` 已通过。
+- 下一阶段被 D-011、D-012 阻塞，执行计划见 `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`。
+
 ## 2. 当前并发工作区保护
 
 编写本计划时，工作区存在其他 Agent 或用户的未提交变更：
