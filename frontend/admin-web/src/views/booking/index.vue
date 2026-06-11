@@ -96,7 +96,7 @@
 
     <!-- Reject Dialog (needs form input) -->
     <el-dialog title="拒绝预约" v-model="rejectVisible" width="400px">
-      <el-form ref="rejectFormRef" :model="rejectForm" :rules="rejectRules">
+      <el-form ref="rejectFormRef" :model="rejectForm" :rules="rejectRules" label-width="80px">
         <el-form-item label="拒绝原因" prop="reason">
           <el-input v-model="rejectForm.reason" type="textarea" :rows="3" placeholder="请输入拒绝原因" />
         </el-form-item>
