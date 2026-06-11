@@ -1,0 +1,49 @@
+/**
+ * PetCare O2O Design Tokens
+ *
+ * Source of truth: Figma "00 设计系统"
+ * Desktop baseline: 1440px, minimum: 1280px
+ */
+
+:root {
+  /* ─── Color Tokens ─── */
+
+  --pc-primary: #157F76;
+  --pc-primary-dark: #0F5E59;
+  --pc-primary-soft: #E4F3F0;
+  --pc-accent: #F4A640;
+  --pc-danger: #D94A4A;
+  --pc-surface: #F7F8F6;
+  --pc-ink: #1D2A28;
+  --pc-muted: #65736F;
+  --pc-line: #DDE5E1;
+
+  /* ─── Layout Tokens ─── */
+
+  --pc-sidebar-width: 224px;
+  --pc-content-gap: 28px;
+  --pc-radius: 12px;
+  --pc-radius-lg: 16px;
+  --pc-min-width: 1280px;
+
+  /* ─── Typography ─── */
+
+  --pc-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pc-font-size-base: 14px;
+  --pc-font-size-sm: 12px;
+  --pc-font-size-lg: 16px;
+
+  /* ─── Spacing ─── */
+
+  --pc-spacing-xs: 4px;
+  --pc-spacing-sm: 8px;
+  --pc-spacing-md: 16px;
+  --pc-spacing-lg: 24px;
+  --pc-spacing-xl: 32px;
+
+  /* ─── Shadows ─── */
+
+  --pc-shadow-sm: 0 1px 2px rgba(29, 42, 40, 0.06);
+  --pc-shadow-md: 0 4px 8px rgba(29, 42, 40, 0.08);
+  --pc-shadow-lg: 0 8px 24px rgba(29, 42, 40, 0.12);
+}

@@ -1,20 +1,21 @@
 <template>
   <el-container class="app-wrapper">
-    <el-aside width="200px" class="sidebar-container">
-      <div class="logo-container">
-        <span class="logo-text">PetCare Admin</span>
+    <el-aside :width="sidebarWidth" class="pc-sidebar">
+      <div class="pc-sidebar__logo">
+        <span class="pc-sidebar__logo-text">PetCare Admin</span>
       </div>
       <el-menu
         router
         :default-active="$route.path"
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
-        style="height: calc(100% - 50px)"
+        :collapse="sidebarCollapsed"
+        background-color="var(--pc-primary-dark)"
+        text-color="rgba(255, 255, 255, 0.7)"
+        active-text-color="#fff"
+        class="pc-sidebar__menu"
       >
         <el-menu-item index="/dashboard">
           <el-icon><Menu /></el-icon>
-          <span>Dashboard</span>
+          <span>运营总览</span>
         </el-menu-item>
 
         <el-sub-menu v-if="userStore.hasPermission('store:info:read') || userStore.hasPermission('store:config:read')" index="store-sub">
@@ -70,15 +71,18 @@
         </el-menu-item>
       </el-menu>
     </el-aside>
-    <el-container class="main-container">
-      <el-header class="navbar">
-        <div class="right-menu">
-          <span class="user-name">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</span>
+    <el-container class="pc-main">
+      <el-header class="pc-navbar">
+        <div class="pc-navbar__toggle" @click="sidebarCollapsed = !sidebarCollapsed">
+          <el-icon :size="18"><Fold v-if="!sidebarCollapsed" /><Expand v-else /></el-icon>
+        </div>
+        <div class="pc-navbar__right">
+          <span class="pc-navbar__user">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</span>
           <el-tag size="small" type="info">{{ userStore.userInfo?.role }}</el-tag>
           <el-button type="primary" link @click="handleLogout">退出登录</el-button>
         </div>
       </el-header>
-      <el-main>
+      <el-main class="pc-content">
         <router-view />
       </el-main>
     </el-container>
@@ -86,6 +90,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useUserStore } from '../store/user'
 import { useRouter } from 'vue-router'
 import {
@@ -98,10 +103,17 @@ import {
   ChatDotRound,
   Filter,
   Document,
+  Fold,
+  Expand,
 } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const router = useRouter()
+const sidebarCollapsed = ref(false)
+
+const sidebarWidth = computed(() =>
+  sidebarCollapsed.value ? '64px' : 'var(--pc-sidebar-width)'
+)
 
 const handleLogout = () => {
   userStore.logoutAction()
@@ -113,39 +125,88 @@ const handleLogout = () => {
 .app-wrapper {
   height: 100vh;
   width: 100vw;
+  min-width: var(--pc-min-width);
 }
-.sidebar-container {
-  background-color: #304156;
+
+/* ─── Sidebar ─── */
+
+.pc-sidebar {
+  background-color: var(--pc-primary-dark);
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s ease;
 }
-.logo-container {
-  height: 50px;
+
+.pc-sidebar__logo {
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #263445;
+  background-color: var(--pc-primary-dark);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.logo-text {
+
+.pc-sidebar__logo-text {
   color: #fff;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
-.navbar {
-  height: 50px;
+
+.pc-sidebar__menu {
+  border-right: none;
+}
+
+.pc-sidebar__menu .el-menu-item.is-active {
+  background-color: var(--pc-primary) !important;
+}
+
+/* ─── Main Area ─── */
+
+.pc-main {
+  background-color: var(--pc-surface);
+}
+
+/* ─── Navbar ─── */
+
+.pc-navbar {
+  height: 56px;
   background: #fff;
-  border-bottom: 1px solid #d8dce5;
+  border-bottom: 1px solid var(--pc-line);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 0 20px;
+  justify-content: space-between;
+  padding: 0 var(--pc-content-gap);
+  box-shadow: var(--pc-shadow-sm);
 }
-.right-menu {
+
+.pc-navbar__toggle {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--pc-muted);
+  transition: color 0.2s;
+}
+
+.pc-navbar__toggle:hover {
+  color: var(--pc-ink);
+}
+
+.pc-navbar__right {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.user-name {
-  font-size: 14px;
-  color: #606266;
+
+.pc-navbar__user {
+  font-size: var(--pc-font-size-base);
+  color: var(--pc-ink);
+}
+
+/* ─── Content ─── */
+
+.pc-content {
+  padding: var(--pc-content-gap);
+  min-height: 0;
 }
 </style>
