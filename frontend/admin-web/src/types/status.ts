@@ -164,6 +164,14 @@ export const REPORT_HANDLE_RESULT = {
 
 export type ReportHandleResult = keyof typeof REPORT_HANDLE_RESULT
 
+export const REPORT_STATUS = {
+  PENDING: { label: '待处理', color: 'warning' },
+  PROCESSED: { label: '已处理', color: 'success' },
+  IGNORED: { label: '已忽略', color: 'info' },
+} as const
+
+export type ReportStatus = keyof typeof REPORT_STATUS
+
 // ─── Sensitive Word ───
 
 export const SENSITIVE_WORD_STATUS = {
