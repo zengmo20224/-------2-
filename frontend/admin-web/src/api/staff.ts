@@ -75,11 +75,10 @@ export const disableStaff = (id: number) => {
 }
 
 // ─── Staff Skills ───
+// NOTE: Backend only has PUT /staff/{id}/skills (replace). No GET endpoint exists.
+// The full skill editing flow is blocked until a read endpoint is added to the backend.
 
-export const getStaffSkills = (staffId: number) => {
-  return request.get<StaffSkillView>(`/v1/admin/staff/${staffId}/skills`)
-}
-
+/** PUT /api/v1/admin/staff/{id}/skills — @PreAuthorize('staff:skill:manage') */
 export const updateStaffSkills = (staffId: number, data: StaffSkillUpdateParams) => {
   return request.put<StaffSkillView>(`/v1/admin/staff/${staffId}/skills`, data)
 }

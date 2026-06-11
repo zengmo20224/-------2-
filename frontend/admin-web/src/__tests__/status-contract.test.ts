@@ -33,6 +33,7 @@ import {
   STORE_STATUS,
   SCHEDULE_STATUS,
   POST_STATUS,
+  REPORT_HANDLE_RESULT,
   getBookingActions,
   getProductOrderActions,
   isServiceOnSale,
@@ -287,13 +288,15 @@ describe('getBookingActions', () => {
 // PREPARING → READY_FOR_PICKUP, CANCELLED
 // READY_FOR_PICKUP → CANCELLED, COMPLETED
 // COMPLETED/CANCELLED/OUT_OF_STOCK → terminal
+// Backend completeOrder requires READY_FOR_PICKUP + paymentStatus=OFFLINE_PAID + pickupStatus=PICKED_UP
 
 describe('getProductOrderActions', () => {
-  it('PENDING_CONFIRM allows confirm, cancel', () => {
+  it('PENDING_CONFIRM allows confirm, cancel, out-of-stock', () => {
     const actions = getProductOrderActions('PENDING_CONFIRM')
     expect(actions).toContain('confirm')
     expect(actions).toContain('cancel')
-    expect(actions).toHaveLength(2)
+    expect(actions).toContain('out-of-stock')
+    expect(actions).toHaveLength(3)
   })
 
   it('PREPARING allows ready, cancel', () => {
@@ -303,12 +306,31 @@ describe('getProductOrderActions', () => {
     expect(actions).toHaveLength(2)
   })
 
-  it('READY_FOR_PICKUP allows confirm-payment, complete, cancel', () => {
+  it('READY_FOR_PICKUP with unknown payment shows confirm-payment and cancel only', () => {
     const actions = getProductOrderActions('READY_FOR_PICKUP')
     expect(actions).toContain('confirm-payment')
-    expect(actions).toContain('complete')
     expect(actions).toContain('cancel')
-    expect(actions).toHaveLength(3)
+    expect(actions).not.toContain('complete')
+  })
+
+  it('READY_FOR_PICKUP unpaid allows confirm-payment and cancel', () => {
+    const actions = getProductOrderActions({ status: 'READY_FOR_PICKUP', paymentStatus: 'UNPAID' })
+    expect(actions).toContain('confirm-payment')
+    expect(actions).toContain('cancel')
+    expect(actions).not.toContain('complete')
+  })
+
+  it('READY_FOR_PICKUP paid but not picked up has no actions', () => {
+    const actions = getProductOrderActions({ status: 'READY_FOR_PICKUP', paymentStatus: 'OFFLINE_PAID', pickupStatus: 'READY_FOR_PICKUP' })
+    expect(actions).toEqual([])
+  })
+
+  it('READY_FOR_PICKUP paid and picked up allows complete', () => {
+    const actions = getProductOrderActions({ status: 'READY_FOR_PICKUP', paymentStatus: 'OFFLINE_PAID', pickupStatus: 'PICKED_UP' })
+    expect(actions).toContain('complete')
+    expect(actions).not.toContain('confirm-payment')
+    expect(actions).not.toContain('cancel')
+    expect(actions).toHaveLength(1)
   })
 
   it('COMPLETED has no actions', () => {
@@ -441,5 +463,17 @@ describe('Status filter values match backend', () => {
     Object.keys(PRODUCT_ORDER_STATUS).forEach((key) => {
       expect(validOrderStatuses).toContain(key)
     })
+  })
+})
+
+// ─── Report Status Contract ───
+// Backend: PostReport.status = PENDING | PROCESSED | IGNORED
+// Backend: AdminReportHandleRequest.handleResult = PROCESSED | IGNORED
+
+describe('Report status contract', () => {
+  it('REPORT_HANDLE_RESULT must contain PROCESSED and IGNORED (not HANDLED)', () => {
+    expect(REPORT_HANDLE_RESULT).toHaveProperty('PROCESSED')
+    expect(REPORT_HANDLE_RESULT).toHaveProperty('IGNORED')
+    expect(REPORT_HANDLE_RESULT).not.toHaveProperty('HANDLED')
   })
 })

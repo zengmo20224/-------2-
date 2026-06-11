@@ -9,9 +9,10 @@
 
       <el-form :inline="true" :model="queryParams">
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="状态" clearable style="width: 130px">
+          <el-select v-model="queryParams.status" placeholder="状态" clearable style="width: 160px">
             <el-option label="待处理" value="PENDING" />
-            <el-option label="已处理" value="HANDLED" />
+            <el-option label="已处理" value="PROCESSED" />
+            <el-option label="已忽略" value="IGNORED" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -25,7 +26,10 @@
         <el-table-column prop="reason" label="举报原因" show-overflow-tooltip />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'PENDING' ? 'warning' : 'success'">{{ row.status === 'PENDING' ? '待处理' : '已处理' }}</el-tag>
+            <el-tag v-if="row.status === 'PENDING'" type="warning">待处理</el-tag>
+            <el-tag v-else-if="row.status === 'PROCESSED'" type="success">已处理</el-tag>
+            <el-tag v-else-if="row.status === 'IGNORED'" type="info">已忽略</el-tag>
+            <el-tag v-else type="info">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="handleResult" label="处理结果" width="100">

@@ -34,10 +34,11 @@ export interface PostReport {
   id: number
   postId: number
   reporterId: number
+  reasonType: string | null
   reason: string
   status: string
   handleResult: string | null
-  handleRemark: string | null
+  handlerId: number | null
   handleTime: string | null
   createTime: string
 }

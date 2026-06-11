@@ -40,14 +40,15 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
-            <el-button size="small" type="success" v-if="getProductOrderActions(row.status).includes('confirm')" @click="handleAction(row.id, 'confirm')" :disabled="!userStore.hasPermission('product:order:confirm')">确认</el-button>
-            <el-button size="small" v-if="getProductOrderActions(row.status).includes('confirm-payment')" @click="handleAction(row.id, 'confirm-payment')" :disabled="!userStore.hasPermission('product:order:confirm-payment')">确认支付</el-button>
-            <el-button size="small" type="primary" v-if="getProductOrderActions(row.status).includes('ready')" @click="handleAction(row.id, 'ready')" :disabled="!userStore.hasPermission('product:order:ready')">备货完成</el-button>
-            <el-button size="small" type="success" v-if="getProductOrderActions(row.status).includes('complete')" @click="handleAction(row.id, 'complete')" :disabled="!userStore.hasPermission('product:order:complete')">完成</el-button>
-            <el-button size="small" type="danger" v-if="getProductOrderActions(row.status).includes('cancel')" @click="handleAction(row.id, 'cancel')" :disabled="!userStore.hasPermission('product:order:cancel')">取消</el-button>
+            <el-button size="small" type="success" v-if="getProductOrderActions(row).includes('confirm')" @click="handleAction(row.id, 'confirm')" :disabled="!userStore.hasPermission('product:order:confirm')">确认</el-button>
+            <el-button size="small" v-if="getProductOrderActions(row).includes('confirm-payment')" @click="handleAction(row.id, 'confirm-payment')" :disabled="!userStore.hasPermission('product:order:confirm-payment')">确认支付</el-button>
+            <el-button size="small" type="primary" v-if="getProductOrderActions(row).includes('ready')" @click="handleAction(row.id, 'ready')" :disabled="!userStore.hasPermission('product:order:ready')">备货完成</el-button>
+            <el-button size="small" type="success" v-if="getProductOrderActions(row).includes('complete')" @click="handleAction(row.id, 'complete')" :disabled="!userStore.hasPermission('product:order:complete')">完成</el-button>
+            <el-button size="small" type="danger" v-if="getProductOrderActions(row).includes('cancel')" @click="handleAction(row.id, 'cancel')" :disabled="!userStore.hasPermission('product:order:cancel')">取消</el-button>
+            <el-button size="small" type="warning" v-if="getProductOrderActions(row).includes('out-of-stock')" @click="handleAction(row.id, 'out-of-stock')" :disabled="!userStore.hasPermission('product:order:cancel')">缺货</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -95,7 +96,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { getProductOrderList, getProductOrderDetail, confirmProductOrder, readyProductOrder, confirmPaymentOrder, completeProductOrder, cancelProductOrder } from '../../api/product-order'
+import { getProductOrderList, getProductOrderDetail, confirmProductOrder, readyProductOrder, confirmPaymentOrder, completeProductOrder, cancelProductOrder, outOfStockProductOrder } from '../../api/product-order'
 import type { ProductOrder, ProductOrderDetail } from '../../api/product-order'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '../../store/user'
@@ -115,14 +116,15 @@ const viewDetail = async (id: number) => {
   try { const res = await getProductOrderDetail(id); if (res.data) { detailData.value = res.data; detailVisible.value = true } } catch { /* handled */ }
 }
 
-const actionMap: Record<string, (id: number) => Promise<unknown>> = {
+const actionMap: Record<string, (id: number, data?: unknown) => Promise<unknown>> = {
   confirm: confirmProductOrder,
   'confirm-payment': confirmPaymentOrder,
   ready: readyProductOrder,
   complete: completeProductOrder,
-  cancel: cancelProductOrder,
+  cancel: (id: number) => cancelProductOrder(id),
+  'out-of-stock': (id: number) => outOfStockProductOrder(id),
 }
-const actionLabels: Record<string, string> = { confirm: '确认', 'confirm-payment': '确认支付', ready: '备货完成', complete: '完成', cancel: '取消' }
+const actionLabels: Record<string, string> = { confirm: '确认', 'confirm-payment': '确认支付', ready: '备货完成', complete: '完成', cancel: '取消', 'out-of-stock': '缺货取消' }
 
 const handleAction = (id: number, action: string) => {
   const label = actionLabels[action] || action

@@ -195,14 +195,43 @@ export function getBookingActions(status: string): string[] {
 }
 
 /**
- * Returns available product order actions for the given status.
- * Backend: ProductOrderStateMachine
+ * Context for determining product order actions.
+ * Backend completeOrder requires READY_FOR_PICKUP + OFFLINE_PAID + PICKED_UP.
  */
-export function getProductOrderActions(status: string): string[] {
+export interface OrderActionContext {
+  status: string
+  paymentStatus?: string
+  pickupStatus?: string
+}
+
+/**
+ * Returns available product order actions for the given order context.
+ * Backend: ProductOrderStateMachine
+ * - complete requires READY_FOR_PICKUP + paymentStatus=OFFLINE_PAID + pickupStatus=PICKED_UP
+ * - cancel blocked when already paid or picked up
+ * - out-of-stock available from PENDING_CONFIRM
+ */
+export function getProductOrderActions(statusOrOrder: string | OrderActionContext): string[] {
+  const status = typeof statusOrOrder === 'string' ? statusOrOrder : statusOrOrder.status
+  const paymentStatus = typeof statusOrOrder === 'string' ? undefined : statusOrOrder.paymentStatus
+  const pickupStatus = typeof statusOrOrder === 'string' ? undefined : statusOrOrder.pickupStatus
+
+  // READY_FOR_PICKUP has conditional actions based on payment and pickup
+  if (status === 'READY_FOR_PICKUP') {
+    const result: string[] = []
+    if (paymentStatus !== 'OFFLINE_PAID') {
+      result.push('confirm-payment')
+      result.push('cancel')
+    }
+    if (paymentStatus === 'OFFLINE_PAID' && pickupStatus === 'PICKED_UP') {
+      result.push('complete')
+    }
+    return result
+  }
+
   const actions: Record<string, string[]> = {
-    PENDING_CONFIRM: ['confirm', 'cancel'],
+    PENDING_CONFIRM: ['confirm', 'cancel', 'out-of-stock'],
     PREPARING: ['ready', 'cancel'],
-    READY_FOR_PICKUP: ['confirm-payment', 'complete', 'cancel'],
     COMPLETED: [],
     CANCELLED: [],
     OUT_OF_STOCK: [],
