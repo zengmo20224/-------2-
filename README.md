@@ -33,6 +33,7 @@
 - [docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md](docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md)
 - [docs/27-glm5-risk-remediation-and-test-plan.md](docs/27-glm5-risk-remediation-and-test-plan.md)
 - [docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md](docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md)
+- [docs/29-frontend-figma-design-and-glm-long-running-plan.md](docs/29-frontend-figma-design-and-glm-long-running-plan.md)
 
 ## 原始需求基线
 

@@ -39,6 +39,7 @@
 29. `docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md`
 30. `docs/27-glm5-risk-remediation-and-test-plan.md`
 31. `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`
+32. `docs/29-frontend-figma-design-and-glm-long-running-plan.md`
 
 如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
 
