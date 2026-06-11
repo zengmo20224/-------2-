@@ -177,6 +177,12 @@ status
 
 `10F-R2A` 与 `10F-R2B` 可以立即执行。`10F-R2C` 至 `10F-R2E` 必须等待对应决策。
 
+进度更新（2026-06-11）：
+
+- `10F-R2A` 已由提交 `edbf2a4` 完成。
+- 真实契约清单已生成：`docs/25-admin-web-api-contract.md`。
+- 当前只允许按 `docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md` 执行 `10F-R2B`。
+
 ## 6. 任务包 10F-R2A：建立真实 API 契约清单
 
 目标：生成管理后台真实 API 的唯一核对清单。
@@ -423,16 +429,16 @@ mvn package "-DskipTests"
 
 不能进入 10F-R3 或 10G。
 
-## 13. 下一位 Agent 开工指令
+## 13. 当前 Agent 开工指令
 
 ```text
-任务包 ID：10F-R2A
-目标：建立真实管理后台 API 契约清单
-允许修改：新增 docs/25-admin-web-api-contract.md
-禁止修改：前后端代码、小程序、数据库、未跟踪文件
-依赖：提交 6c5d6ef；真实 Controller、DTO 和 @PreAuthorize
-验证：所有清单接口可定位到真实 Controller；权限码一致；git diff --check
-预期提交：docs(admin-web): add verified admin API contract inventory
+任务包 ID：10F-R2B
+目标：清理不依赖 D-011、D-012 的前端 API 契约问题
+允许修改：frontend/admin-web/src/api/**、API 契约测试、因类型修正直接失败的现有页面、test:contract 脚本
+禁止修改：后端、小程序、数据库、ID 字符串迁移、固定门店 ID 方案、未跟踪保护文件
+依赖：提交 edbf2a4；docs/25-admin-web-api-contract.md
+验证：npm run test:contract、npm run build、git diff --check
+预期提交：见 docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md
 ```
 
-`10F-R2A` 完成后，下一任务只能是 `10F-R2B`。D-011 和 D-012 未决定前，禁止执行 `10F-R2C` 至 `10F-R2E`。
+`10F-R2B` 完成后必须等待 D-011、D-012 决策。未决定前，禁止执行 `10F-R2C` 至 `10F-R2E`。

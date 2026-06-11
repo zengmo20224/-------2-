@@ -29,6 +29,8 @@
 - [docs/22-continuous-agent-development-rules.md](docs/22-continuous-agent-development-rules.md)
 - [docs/23-phase-10f-review-fix-and-10g-quality-plan.md](docs/23-phase-10f-review-fix-and-10g-quality-plan.md)
 - [docs/24-phase-10f-r2-api-contract-cleanup-plan.md](docs/24-phase-10f-r2-api-contract-cleanup-plan.md)
+- [docs/25-admin-web-api-contract.md](docs/25-admin-web-api-contract.md)
+- [docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md](docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md)
 
 ## 原始需求基线
 
@@ -62,8 +64,9 @@
 
 第十阶段当前执行“管理后台优先”：
 
-1. 按 [阶段 10F-R2 管理后台 API 契约清理代码计划](docs/24-phase-10f-r2-api-contract-cleanup-plan.md) 先执行 `10F-R2A`，建立真实 API 契约清单。
-2. 执行不依赖决策的 `10F-R2B`，并等待用户决定 D-011、D-012 后再处理跨前后端契约。
-3. 完成阶段 10F-R 验收后，建立管理后台测试、类型检查、覆盖率和 E2E 门禁。
-4. 完成管理后台核心流程后，再补齐小程序依赖的后端能力。
-5. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。
+1. `10F-R2A` 已完成，真实契约基线见 [管理后台 API 契约清单](docs/25-admin-web-api-contract.md)。
+2. 按 [阶段 10F-R2B 前端 API 契约清理编码计划](docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md) 执行不依赖决策的前端契约清理。
+3. 完成 `10F-R2B` 后，等待用户决定 D-011、D-012，再处理跨前后端契约。
+4. 完成阶段 10F-R 验收后，建立管理后台测试、类型检查、覆盖率和 E2E 门禁。
+5. 完成管理后台核心流程后，再补齐小程序依赖的后端能力。
+6. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。

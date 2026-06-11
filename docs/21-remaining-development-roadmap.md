@@ -27,6 +27,7 @@
 - 管理后台服务、员工、预约、商品、订单、社区、敏感词和操作日志页面，提交为 `076374a`。
 - 管理后台状态契约回归测试，提交为 `f6463f9`。
 - 管理后台状态字典与动作条件修复，提交为 `6c5d6ef`。
+- 管理后台真实 API 契约清单，提交为 `edbf2a4`。
 - D-010 已决定为“先管理后台，再小程序”。
 
 当前工作区仅发现两个未跟踪的前端根级 npm 文件：
@@ -67,8 +68,9 @@
 当前进度：
 
 - `10F-R1` 已完成并验证。
-- 当前任务为 `10F-R2`，细化计划见 `docs/24-phase-10f-r2-api-contract-cleanup-plan.md`。
-- 下一位 Agent 只允许先领取 `10F-R2A`，建立 `docs/25-admin-web-api-contract.md`。
+- `10F-R2A` 已完成，真实契约基线为 `docs/25-admin-web-api-contract.md`。
+- 当前任务为 `10F-R2B`，编码计划见 `docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md`。
+- `10F-R2B` 完成后必须等待 D-011、D-012 决策，禁止直接进入后续任务。
 
 允许修改：
 
