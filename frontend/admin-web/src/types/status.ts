@@ -262,3 +262,8 @@ export function isProductOnSale(status: string): boolean {
 export function canDisableStaff(status: string): boolean {
   return status === 'ACTIVE'
 }
+
+// ─── File Upload Limits ───
+
+/** Maximum file upload size: 10 MB */
+export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024

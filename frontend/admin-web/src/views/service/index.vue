@@ -1,87 +1,65 @@
 <template>
-  <div class="service-list-container">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>服务项目管理</span>
-          <el-button type="primary" @click="openCreateDialog" :disabled="!userStore.hasPermission('service:item:create')">
-            新增服务
-          </el-button>
-        </div>
-      </template>
+  <div class="pc-service">
+    <div class="pc-service__header">
+      <h2 class="pc-service__title">服务项目管理</h2>
+      <el-button type="primary" @click="openCreateDialog" :disabled="!userStore.hasPermission('service:item:create')">新增服务</el-button>
+    </div>
 
-      <!-- Search -->
-      <el-form :inline="true" :model="queryParams">
-        <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="状态" clearable style="width: 130px">
-            <el-option label="启用" value="ON_SALE" />
-            <el-option label="已禁用" value="OFF_SALE" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="fetchData">查询</el-button>
-        </el-form-item>
-      </el-form>
+    <FilterBar @search="fetchData" @reset="handleReset">
+      <el-form-item label="状态">
+        <el-select v-model="queryParams.status" placeholder="全部状态" clearable style="width: 130px">
+          <el-option v-for="(v, k) in SERVICE_STATUS" :key="k" :label="v.label" :value="k" />
+        </el-select>
+      </el-form-item>
+    </FilterBar>
 
-      <!-- Table -->
-      <el-table v-loading="loading" :data="tableData" border style="width: 100%" empty-text="暂无数据">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="名称" width="160" />
-        <el-table-column prop="serviceMode" label="服务模式" width="120">
-          <template #default="{ row }">
-            <el-tag :type="SERVICE_MODE[row.serviceMode as ServiceMode]?.color || 'info'">
-              {{ SERVICE_MODE[row.serviceMode as ServiceMode]?.label || row.serviceMode }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="price" label="价格 (元)" width="100">
-          <template #default="{ row }">
-            {{ Number(row.price).toFixed(2) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="durationMinutes" label="时长 (分钟)" width="110" />
-        <el-table-column prop="petType" label="宠物类型" width="90">
-          <template #default="{ row }">
-            {{ PET_TYPE[row.petType as PetType] || row.petType || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
-          <template #default="{ row }">
-            <el-tag :type="SERVICE_STATUS[row.status as ServiceStatus]?.color || 'info'">
-              {{ SERVICE_STATUS[row.status as ServiceStatus]?.label || row.status }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sort" label="排序" width="70" />
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" @click="openEditDialog(row)" :disabled="!userStore.hasPermission('service:item:update')">编辑</el-button>
-            <el-button
-              size="small"
-              type="danger"
-              v-if="isServiceOnSale(row.status)"
-              @click="handleDisable(row.id)"
-              :disabled="!userStore.hasPermission('service:item:disable')"
-            >
-              禁用
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- Pagination -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="queryParams.page"
-          v-model:page-size="queryParams.size"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="fetchData"
-          @current-change="fetchData"
-        />
-      </div>
-    </el-card>
+    <DataTableShell
+      :data="tableData"
+      :total="total"
+      :page="queryParams.page"
+      :size="queryParams.size"
+      :loading="loading"
+      @page-change="handlePageChange"
+    >
+      <el-table-column prop="name" label="名称" width="160" />
+      <el-table-column prop="serviceMode" label="服务模式" width="120">
+        <template #default="{ row }">
+          <el-tag :type="SERVICE_MODE[row.serviceMode as ServiceMode]?.color || 'info'">
+            {{ SERVICE_MODE[row.serviceMode as ServiceMode]?.label || row.serviceMode }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="price" label="价格 (元)" width="100">
+        <template #default="{ row }">
+          {{ Number(row.price).toFixed(2) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="durationMinutes" label="时长 (分钟)" width="110" />
+      <el-table-column prop="petType" label="宠物类型" width="90">
+        <template #default="{ row }">
+          {{ PET_TYPE[row.petType as PetType] || row.petType || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="status" label="状态" width="90">
+        <template #default="{ row }">
+          <el-tag :type="SERVICE_STATUS[row.status as ServiceStatus]?.color || 'info'">
+            {{ SERVICE_STATUS[row.status as ServiceStatus]?.label || row.status }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="sort" label="排序" width="70" />
+      <el-table-column label="操作" width="180" fixed="right">
+        <template #default="{ row }">
+          <el-button size="small" @click="openEditDialog(row)" :disabled="!userStore.hasPermission('service:item:update')">编辑</el-button>
+          <el-button
+            size="small" type="danger"
+            v-if="isServiceOnSale(row.status)"
+            @click="handleDisable(row.id)"
+            :disabled="!userStore.hasPermission('service:item:disable')"
+          >禁用</el-button>
+        </template>
+      </el-table-column>
+    </DataTableShell>
 
     <!-- Create/Edit Dialog -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" @close="resetDialog">
@@ -94,9 +72,7 @@
         </el-form-item>
         <el-form-item label="服务模式" prop="serviceMode">
           <el-select v-model="form.serviceMode" style="width: 100%">
-            <el-option label="到店" value="STORE" />
-            <el-option label="上门" value="HOME" />
-            <el-option label="到店/上门" value="BOTH" />
+            <el-option v-for="(v, k) in SERVICE_MODE" :key="k" :label="v.label" :value="k" />
           </el-select>
         </el-form-item>
         <el-form-item label="价格 (元)" prop="price">
@@ -119,17 +95,12 @@
         </el-row>
         <el-form-item label="宠物类型" prop="petType">
           <el-select v-model="form.petType" clearable style="width: 100%">
-            <el-option label="犬类" value="DOG" />
-            <el-option label="猫类" value="CAT" />
-            <el-option label="不限" value="ALL" />
+            <el-option v-for="(v, k) in PET_TYPE" :key="k" :label="v" :value="k" />
           </el-select>
         </el-form-item>
         <el-form-item label="宠物体型" prop="petSize">
           <el-select v-model="form.petSize" clearable style="width: 100%">
-            <el-option label="小型" value="SMALL" />
-            <el-option label="中型" value="MEDIUM" />
-            <el-option label="大型" value="LARGE" />
-            <el-option label="不限" value="ALL" />
+            <el-option v-for="(v, k) in PET_SIZE" :key="k" :label="v" :value="k" />
           </el-select>
         </el-form-item>
         <el-form-item label="排序" prop="sort">
@@ -144,6 +115,16 @@
         <el-button type="primary" @click="submitForm" :loading="submitLoading">确认</el-button>
       </template>
     </el-dialog>
+
+    <!-- Disable Confirm Dialog -->
+    <ActionConfirmDialog
+      :visible="disableDialogVisible"
+      title="禁用服务项目"
+      message="确定要禁用此服务项目吗？禁用后将不再展示给用户。"
+      :danger="true"
+      @confirm="executeDisable"
+      @cancel="disableDialogVisible = false"
+    />
   </div>
 </template>
 
@@ -151,23 +132,23 @@
 import { ref, reactive, onMounted } from 'vue'
 import { getServiceItems, createServiceItem, updateServiceItem, disableServiceItem } from '../../api/service'
 import type { ServiceItem, ServiceItemCreateParams } from '../../api/service'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useUserStore } from '../../store/user'
-import { SERVICE_MODE, SERVICE_STATUS, PET_TYPE, isServiceOnSale } from '../../types/status'
-import type { ServiceMode, ServiceStatus, PetType } from '../../types/status'
+import { showSuccess, showError } from '../../utils/feedback'
+import { SERVICE_MODE, SERVICE_STATUS, PET_TYPE, PET_SIZE, isServiceOnSale } from '../../types/status'
+import type { ServiceMode, ServiceStatus, PetType, PetSize } from '../../types/status'
+import FilterBar from '../../components/FilterBar.vue'
+import DataTableShell from '../../components/DataTableShell.vue'
+import ActionConfirmDialog from '../../components/ActionConfirmDialog.vue'
 
 const userStore = useUserStore()
 
 const loading = ref(false)
 const tableData = ref<ServiceItem[]>([])
 const total = ref(0)
-const queryParams = reactive({
-  page: 1,
-  size: 10,
-  status: '',
-})
+const queryParams = reactive({ page: 1, size: 10, status: '' })
 
+// ─── Dialog ───
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const submitLoading = ref(false)
@@ -201,6 +182,27 @@ const rules: FormRules = {
   needPet: [{ required: true, message: '请选择', trigger: 'change' }],
 }
 
+// ─── Disable Confirm Dialog ───
+const disableDialogVisible = ref(false)
+const disableTargetId = ref(0)
+
+const handleDisable = (id: number) => {
+  disableTargetId.value = id
+  disableDialogVisible.value = true
+}
+
+const executeDisable = async () => {
+  disableDialogVisible.value = false
+  try {
+    await disableServiceItem(disableTargetId.value)
+    showSuccess('服务项目已禁用')
+    await fetchData()
+  } catch (error) {
+    showError(error instanceof Error ? error.message : '操作失败')
+  }
+}
+
+// ─── Data Loading ───
 const fetchData = async () => {
   loading.value = true
   try {
@@ -209,13 +211,24 @@ const fetchData = async () => {
       tableData.value = res.data.items
       total.value = res.data.total
     }
-  } catch {
-    // Error handled by interceptor
-  } finally {
+  } catch { /* handled */ } finally {
     loading.value = false
   }
 }
 
+const handlePageChange = (page: number, size: number) => {
+  queryParams.page = page
+  queryParams.size = size
+  fetchData()
+}
+
+const handleReset = () => {
+  queryParams.status = ''
+  queryParams.page = 1
+  fetchData()
+}
+
+// ─── CRUD ───
 const openCreateDialog = () => {
   isEdit.value = false
   dialogTitle.value = '新增服务项目'
@@ -247,64 +260,47 @@ const openEditDialog = (row: ServiceItem) => {
 const submitForm = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
-    if (valid) {
-      submitLoading.value = true
-      try {
-        if (isEdit.value && currentId.value) {
-          await updateServiceItem(currentId.value, form.value)
-          ElMessage.success('更新成功')
-        } else {
-          await createServiceItem(form.value)
-          ElMessage.success('创建成功')
-        }
-        dialogVisible.value = false
-        await fetchData()
-      } catch {
-        // Error handled by interceptor
-      } finally {
-        submitLoading.value = false
+    if (!valid) return
+    submitLoading.value = true
+    try {
+      if (isEdit.value && currentId.value) {
+        await updateServiceItem(currentId.value, form.value)
+        showSuccess('服务项目已更新')
+      } else {
+        await createServiceItem(form.value)
+        showSuccess('服务项目已创建')
       }
+      dialogVisible.value = false
+      await fetchData()
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '操作失败')
+    } finally {
+      submitLoading.value = false
     }
   })
 }
 
-const handleDisable = (id: number) => {
-  ElMessageBox.confirm('确定要禁用此服务项目吗？', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
-  }).then(async () => {
-    try {
-      await disableServiceItem(id)
-      ElMessage.success('已禁用')
-      await fetchData()
-    } catch {
-      // Error handled by interceptor
-    }
-  }).catch(() => {})
-}
+const resetDialog = () => { formRef.value?.resetFields() }
 
-const resetDialog = () => {
-  formRef.value?.resetFields()
-}
-
-onMounted(() => {
-  fetchData()
-})
+onMounted(() => { fetchData() })
 </script>
 
 <style scoped>
-.service-list-container {
-  padding: 20px;
+.pc-service {
+  padding: 0;
 }
-.card-header {
+
+.pc-service__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--pc-spacing-lg);
 }
-.pagination-container {
-  margin-top: 15px;
-  display: flex;
-  justify-content: flex-end;
+
+.pc-service__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--pc-ink);
 }
 </style>
