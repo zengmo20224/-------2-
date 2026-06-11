@@ -182,7 +182,8 @@ status
 - `10F-R2A` 已由提交 `edbf2a4` 完成。
 - 真实契约清单已生成：`docs/25-admin-web-api-contract.md`。
 - `10F-R2B` 已由提交 `fb1ca59`、`08ab84b`、`d963ad4` 完成。
-- 当前处于 D-011、D-012 决策门禁，后续计划见 `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`。
+- D-011、D-012 已于 2026-06-11 批准。
+- 当前只允许执行 `10F-R2C1`，后续计划见 `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`。
 
 ## 6. 任务包 10F-R2A：建立真实 API 契约清单
 
@@ -422,24 +423,24 @@ mvn package "-DskipTests"
 - CRITICAL/HIGH 契约问题为零。
 - 每个跨层变更均按后端、前端拆分提交。
 
-如果 D-011 或 D-012 未决定，只能声明：
+历史门禁：D-011 或 D-012 未决定时，只能声明：
 
 ```text
 10F-R2A/R2B 已完成，10F-R2 被决策门禁阻塞。
 ```
 
-不能进入 10F-R3 或 10G。
+该决策门禁现已解除，但在 R2C 至 R2F 完成前仍不能进入 10F-R3 或 10G。
 
 ## 13. 当前 Agent 开工指令
 
 ```text
-任务包 ID：DECISION-GATE-D011-D012
-目标：向用户确认雪花 ID 和当前门店契约
-允许修改：用户决定后仅更新决策与规划文档
-禁止修改：生产代码、测试、数据库和未跟踪保护文件
-依赖：docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md
-验证：用户明确决定；决策文档独立提交；git diff --check
-预期提交：docs: decide snowflake ID and current store contracts
+任务包 ID：10F-R2C1
+目标：建立后端雪花 ID JSON 传输 RED 契约测试和字段清单
+允许修改：后端 ID JSON 契约测试、docs/25-admin-web-api-contract.md、必要测试夹具
+禁止修改：生产实现、前端、当前门店接口、数据库、未跟踪保护文件
+依赖：D-011 已决定；docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md
+验证：大 ID 测试形成 RED；非 ID 数值契约有直接断言；git diff --check
+预期提交：test(api): add snowflake ID serialization contract tests
 ```
 
-D-011、D-012 未决定前，禁止执行 `10F-R2C` 至 `10F-R2E`。
+禁止跳过 `10F-R2C1` 直接实现后端序列化或执行前端迁移。
