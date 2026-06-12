@@ -10,6 +10,12 @@ import com.petcare.booking.service.BookingStatusLogService;
 import com.petcare.booking.service.BookingTransactionService;
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
+import com.petcare.service.entity.ServiceItem;
+import com.petcare.service.service.ServiceItemService;
+import com.petcare.staff.entity.Staff;
+import com.petcare.staff.entity.StaffSkill;
+import com.petcare.staff.mapper.StaffMapper;
+import com.petcare.staff.mapper.StaffSkillMapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +40,22 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
     private final StaffBookingLockMapper staffBookingLockMapper;
     private final ServiceBookingMapper serviceBookingMapper;
     private final BookingStatusLogService bookingStatusLogService;
+    private final StaffMapper staffMapper;
+    private final StaffSkillMapper staffSkillMapper;
+    private final ServiceItemService serviceItemService;
 
     public BookingTransactionServiceImpl(StaffBookingLockMapper staffBookingLockMapper,
                                          ServiceBookingMapper serviceBookingMapper,
-                                         BookingStatusLogService bookingStatusLogService) {
+                                         BookingStatusLogService bookingStatusLogService,
+                                         StaffMapper staffMapper,
+                                         StaffSkillMapper staffSkillMapper,
+                                         ServiceItemService serviceItemService) {
         this.staffBookingLockMapper = staffBookingLockMapper;
         this.serviceBookingMapper = serviceBookingMapper;
         this.bookingStatusLogService = bookingStatusLogService;
+        this.staffMapper = staffMapper;
+        this.staffSkillMapper = staffSkillMapper;
+        this.serviceItemService = serviceItemService;
     }
 
     @Override
@@ -96,6 +111,21 @@ public class BookingTransactionServiceImpl implements BookingTransactionService 
         if (!"PENDING_CONFIRM".equals(status) && !"CONFIRMED".equals(status)) {
             throw new BusinessException(ErrorCode.BOOKING_STATUS_INVALID,
                     "只有待确认或已确认的预约可以改派员工");
+        }
+
+        // Step 2b: Re-validate new staff status and skill INSIDE transaction with row locks
+        // (pre-validation in ApplicationService is outside the transaction)
+        // Lock order: booking → staff → staff_skill → staff_booking_lock
+        Staff newStaff = staffMapper.selectStaffForUpdate(newStaffId);
+        if (newStaff == null || !"ACTIVE".equals(newStaff.getStatus())) {
+            throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE,
+                    "该员工不存在或已停用");
+        }
+        ServiceItem item = serviceItemService.getById(booking.getServiceItemId());
+        StaffSkill skill = staffSkillMapper.selectStaffSkillForUpdate(newStaffId, item.getCategoryId());
+        if (skill == null) {
+            throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE,
+                    "该员工不具备此服务技能");
         }
 
         // Step 3: Read actual date/time from the locked booking (ignore stale parameters)

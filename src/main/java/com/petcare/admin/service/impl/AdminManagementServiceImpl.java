@@ -43,11 +43,15 @@ import com.petcare.store.service.StoreConfigService;
 import com.petcare.store.service.StoreService;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AdminManagementServiceImpl implements AdminManagementService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminManagementServiceImpl.class);
 
     private final StoreService storeService;
     private final StoreConfigService storeConfigService;
@@ -86,18 +90,24 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public StoreView updateStore(Long id, StoreUpdateRequest request, Long operatorId) {
-        Store store = requireStore(id);
-        store.setStoreName(request.storeName());
-        store.setPhone(request.phone());
-        store.setAddress(request.address());
-        store.setLongitude(request.longitude());
-        store.setLatitude(request.latitude());
-        store.setBusinessHours(request.businessHours());
-        store.setStatus(request.status());
-        store.setDescription(request.description());
-        storeService.updateById(store);
-        audit(operatorId, "store", "update-info", "PATCH", "/api/v1/admin/stores/" + id);
-        return storeView(store);
+        String url = "/api/v1/admin/stores/" + id;
+        try {
+            Store store = requireStore(id);
+            store.setStoreName(request.storeName());
+            store.setPhone(request.phone());
+            store.setAddress(request.address());
+            store.setLongitude(request.longitude());
+            store.setLatitude(request.latitude());
+            store.setBusinessHours(request.businessHours());
+            store.setStatus(request.status());
+            store.setDescription(request.description());
+            storeService.updateById(store);
+            audit(operatorId, "store", "update-info", "PATCH", url, "SUCCESS", null);
+            return storeView(store);
+        } catch (BusinessException e) {
+            audit(operatorId, "store", "update-info", "PATCH", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -108,17 +118,23 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public StoreConfigView updateStoreConfig(Long storeId, StoreConfigUpdateRequest request, Long operatorId) {
-        requireStore(storeId);
-        StoreConfig config = requireStoreConfig(storeId);
-        config.setHomeServiceRadiusKm(request.homeServiceRadiusKm());
-        config.setBookingAdvanceDays(request.bookingAdvanceDays());
-        config.setBookingCancelHours(request.bookingCancelHours());
-        config.setTimeSlotMinutes(request.timeSlotMinutes());
-        config.setAutoConfirmBooking(flag(request.autoConfirmBooking()));
-        config.setContentAutoPublish(flag(request.contentAutoPublish()));
-        storeConfigService.updateById(config);
-        audit(operatorId, "store", "update-config", "PUT", "/api/v1/admin/stores/" + storeId + "/config");
-        return storeConfigView(config);
+        String url = "/api/v1/admin/stores/" + storeId + "/config";
+        try {
+            requireStore(storeId);
+            StoreConfig config = requireStoreConfig(storeId);
+            config.setHomeServiceRadiusKm(request.homeServiceRadiusKm());
+            config.setBookingAdvanceDays(request.bookingAdvanceDays());
+            config.setBookingCancelHours(request.bookingCancelHours());
+            config.setTimeSlotMinutes(request.timeSlotMinutes());
+            config.setAutoConfirmBooking(flag(request.autoConfirmBooking()));
+            config.setContentAutoPublish(flag(request.contentAutoPublish()));
+            storeConfigService.updateById(config);
+            audit(operatorId, "store", "update-config", "PUT", url, "SUCCESS", null);
+            return storeConfigView(config);
+        } catch (BusinessException e) {
+            audit(operatorId, "store", "update-config", "PUT", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -134,34 +150,52 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public ServiceItemView createServiceItem(ServiceItemRequest request, Long operatorId) {
-        requireServiceCategory(request.categoryId());
-        ServiceItem item = new ServiceItem();
-        apply(item, request);
-        item.setStatus("ON_SALE");
-        serviceItemService.save(item);
-        audit(operatorId, "service", "create-item", "POST", "/api/v1/admin/service-items");
-        return serviceItemView(item);
+        String url = "/api/v1/admin/service-items";
+        try {
+            requireServiceCategory(request.categoryId());
+            ServiceItem item = new ServiceItem();
+            apply(item, request);
+            item.setStatus("ON_SALE");
+            serviceItemService.save(item);
+            audit(operatorId, "service", "create-item", "POST", url, "SUCCESS", null);
+            return serviceItemView(item);
+        } catch (BusinessException e) {
+            audit(operatorId, "service", "create-item", "POST", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public ServiceItemView updateServiceItem(Long id, ServiceItemRequest request, Long operatorId) {
-        requireServiceCategory(request.categoryId());
-        ServiceItem item = requireServiceItem(id);
-        apply(item, request);
-        serviceItemService.updateById(item);
-        audit(operatorId, "service", "update-item", "PUT", "/api/v1/admin/service-items/" + id);
-        return serviceItemView(item);
+        String url = "/api/v1/admin/service-items/" + id;
+        try {
+            requireServiceCategory(request.categoryId());
+            ServiceItem item = requireServiceItem(id);
+            apply(item, request);
+            serviceItemService.updateById(item);
+            audit(operatorId, "service", "update-item", "PUT", url, "SUCCESS", null);
+            return serviceItemView(item);
+        } catch (BusinessException e) {
+            audit(operatorId, "service", "update-item", "PUT", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public ServiceItemView disableServiceItem(Long id, Long operatorId) {
-        ServiceItem item = requireServiceItem(id);
-        item.setStatus("OFF_SALE");
-        serviceItemService.updateById(item);
-        audit(operatorId, "service", "disable-item", "POST", "/api/v1/admin/service-items/" + id + "/disable");
-        return serviceItemView(item);
+        String url = "/api/v1/admin/service-items/" + id + "/disable";
+        try {
+            ServiceItem item = requireServiceItem(id);
+            item.setStatus("OFF_SALE");
+            serviceItemService.updateById(item);
+            audit(operatorId, "service", "disable-item", "POST", url, "SUCCESS", null);
+            return serviceItemView(item);
+        } catch (BusinessException e) {
+            audit(operatorId, "service", "disable-item", "POST", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -177,51 +211,75 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public StaffView createStaff(StaffRequest request, Long operatorId) {
-        requireStore(request.storeId());
-        Staff staff = new Staff();
-        apply(staff, request);
-        staff.setStatus("ACTIVE");
-        staffService.save(staff);
-        audit(operatorId, "staff", "create-profile", "POST", "/api/v1/admin/staff");
-        return staffView(staff);
+        String url = "/api/v1/admin/staff";
+        try {
+            requireStore(request.storeId());
+            Staff staff = new Staff();
+            apply(staff, request);
+            staff.setStatus("ACTIVE");
+            staffService.save(staff);
+            audit(operatorId, "staff", "create-profile", "POST", url, "SUCCESS", null);
+            return staffView(staff);
+        } catch (BusinessException e) {
+            audit(operatorId, "staff", "create-profile", "POST", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public StaffView updateStaff(Long id, StaffRequest request, Long operatorId) {
-        requireStore(request.storeId());
-        Staff staff = requireStaff(id);
-        apply(staff, request);
-        staffService.updateById(staff);
-        audit(operatorId, "staff", "update-profile", "PUT", "/api/v1/admin/staff/" + id);
-        return staffView(staff);
+        String url = "/api/v1/admin/staff/" + id;
+        try {
+            requireStore(request.storeId());
+            Staff staff = requireStaff(id);
+            apply(staff, request);
+            staffService.updateById(staff);
+            audit(operatorId, "staff", "update-profile", "PUT", url, "SUCCESS", null);
+            return staffView(staff);
+        } catch (BusinessException e) {
+            audit(operatorId, "staff", "update-profile", "PUT", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public StaffView disableStaff(Long id, Long operatorId) {
-        Staff staff = requireStaff(id);
-        staff.setStatus("INACTIVE");
-        staffService.updateById(staff);
-        audit(operatorId, "staff", "disable-profile", "POST", "/api/v1/admin/staff/" + id + "/disable");
-        return staffView(staff);
+        String url = "/api/v1/admin/staff/" + id + "/disable";
+        try {
+            Staff staff = requireStaff(id);
+            staff.setStatus("INACTIVE");
+            staffService.updateById(staff);
+            audit(operatorId, "staff", "disable-profile", "POST", url, "SUCCESS", null);
+            return staffView(staff);
+        } catch (BusinessException e) {
+            audit(operatorId, "staff", "disable-profile", "POST", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public StaffSkillView replaceStaffSkills(Long staffId, List<Long> categoryIds, Long operatorId) {
-        requireStaff(staffId);
-        List<Long> distinctIds = categoryIds.stream().distinct().toList();
-        distinctIds.forEach(this::requireServiceCategory);
-        staffSkillService.remove(new LambdaQueryWrapper<StaffSkill>().eq(StaffSkill::getStaffId, staffId));
-        distinctIds.forEach(categoryId -> {
-            StaffSkill skill = new StaffSkill();
-            skill.setStaffId(staffId);
-            skill.setServiceCategoryId(categoryId);
-            staffSkillService.save(skill);
-        });
-        audit(operatorId, "staff", "replace-skills", "PUT", "/api/v1/admin/staff/" + staffId + "/skills");
-        return new StaffSkillView(staffId, distinctIds);
+        String url = "/api/v1/admin/staff/" + staffId + "/skills";
+        try {
+            requireStaff(staffId);
+            List<Long> distinctIds = categoryIds.stream().distinct().toList();
+            distinctIds.forEach(this::requireServiceCategory);
+            staffSkillService.remove(new LambdaQueryWrapper<StaffSkill>().eq(StaffSkill::getStaffId, staffId));
+            distinctIds.forEach(categoryId -> {
+                StaffSkill skill = new StaffSkill();
+                skill.setStaffId(staffId);
+                skill.setServiceCategoryId(categoryId);
+                staffSkillService.save(skill);
+            });
+            audit(operatorId, "staff", "replace-skills", "PUT", url, "SUCCESS", null);
+            return new StaffSkillView(staffId, distinctIds);
+        } catch (BusinessException e) {
+            audit(operatorId, "staff", "replace-skills", "PUT", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -238,28 +296,39 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public StaffScheduleView createSchedule(Long staffId, StaffScheduleRequest request, Long operatorId) {
-        Staff staff = requireStaff(staffId);
-        validateSchedule(staff, request, null);
-        StaffSchedule schedule = new StaffSchedule();
-        schedule.setStaffId(staffId);
-        apply(schedule, request);
-        scheduleService.save(schedule);
-        audit(operatorId, "staff", "create-schedule", "POST", "/api/v1/admin/staff/" + staffId + "/schedules");
-        return scheduleView(schedule);
+        String url = "/api/v1/admin/staff/" + staffId + "/schedules";
+        try {
+            Staff staff = requireStaff(staffId);
+            validateSchedule(staff, request, null);
+            StaffSchedule schedule = new StaffSchedule();
+            schedule.setStaffId(staffId);
+            apply(schedule, request);
+            scheduleService.save(schedule);
+            audit(operatorId, "staff", "create-schedule", "POST", url, "SUCCESS", null);
+            return scheduleView(schedule);
+        } catch (BusinessException e) {
+            audit(operatorId, "staff", "create-schedule", "POST", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public StaffScheduleView updateSchedule(Long staffId, Long scheduleId,
             StaffScheduleRequest request, Long operatorId) {
-        Staff staff = requireStaff(staffId);
-        validateSchedule(staff, request, scheduleId);
-        StaffSchedule schedule = requireSchedule(staffId, scheduleId);
-        apply(schedule, request);
-        scheduleService.updateById(schedule);
-        audit(operatorId, "staff", "update-schedule", "PUT",
-                "/api/v1/admin/staff/" + staffId + "/schedules/" + scheduleId);
-        return scheduleView(schedule);
+        String url = "/api/v1/admin/staff/" + staffId + "/schedules/" + scheduleId;
+        try {
+            Staff staff = requireStaff(staffId);
+            StaffSchedule schedule = requireSchedule(staffId, scheduleId);
+            validateSchedule(staff, request, scheduleId);
+            apply(schedule, request);
+            scheduleService.updateById(schedule);
+            audit(operatorId, "staff", "update-schedule", "PUT", url, "SUCCESS", null);
+            return scheduleView(schedule);
+        } catch (BusinessException e) {
+            audit(operatorId, "staff", "update-schedule", "PUT", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -275,46 +344,70 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     @Override
     @Transactional
     public ProductView createProduct(ProductRequest request, Long operatorId) {
-        requireProductCategory(request.categoryId());
-        Product product = new Product();
-        apply(product, request);
-        product.setStock(0);
-        product.setSalesCount(0);
-        product.setStatus("ON_SALE");
-        productService.save(product);
-        audit(operatorId, "product", "create-item", "POST", "/api/v1/admin/products");
-        return productView(product);
+        String url = "/api/v1/admin/products";
+        try {
+            requireProductCategory(request.categoryId());
+            Product product = new Product();
+            apply(product, request);
+            product.setStock(0);
+            product.setSalesCount(0);
+            product.setStatus("ON_SALE");
+            productService.save(product);
+            audit(operatorId, "product", "create-item", "POST", url, "SUCCESS", null);
+            return productView(product);
+        } catch (BusinessException e) {
+            audit(operatorId, "product", "create-item", "POST", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public ProductView updateProduct(Long id, ProductRequest request, Long operatorId) {
-        requireProductCategory(request.categoryId());
-        Product product = requireProduct(id);
-        apply(product, request);
-        productService.updateById(product);
-        audit(operatorId, "product", "update-item", "PUT", "/api/v1/admin/products/" + id);
-        return productView(product);
+        String url = "/api/v1/admin/products/" + id;
+        try {
+            requireProductCategory(request.categoryId());
+            Product product = requireProduct(id);
+            apply(product, request);
+            productService.updateById(product);
+            audit(operatorId, "product", "update-item", "PUT", url, "SUCCESS", null);
+            return productView(product);
+        } catch (BusinessException e) {
+            audit(operatorId, "product", "update-item", "PUT", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public ProductView disableProduct(Long id, Long operatorId) {
-        Product product = requireProduct(id);
-        product.setStatus("OFF_SALE");
-        productService.updateById(product);
-        audit(operatorId, "product", "disable-item", "POST", "/api/v1/admin/products/" + id + "/disable");
-        return productView(product);
+        String url = "/api/v1/admin/products/" + id + "/disable";
+        try {
+            Product product = requireProduct(id);
+            product.setStatus("OFF_SALE");
+            productService.updateById(product);
+            audit(operatorId, "product", "disable-item", "POST", url, "SUCCESS", null);
+            return productView(product);
+        } catch (BusinessException e) {
+            audit(operatorId, "product", "disable-item", "POST", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public ProductView updateProductStock(Long id, Integer stock, Long operatorId) {
-        Product product = requireProductForUpdate(id);
-        product.setStock(stock);
-        productService.updateById(product);
-        audit(operatorId, "product", "update-stock", "PUT", "/api/v1/admin/products/" + id + "/stock");
-        return productView(product);
+        String url = "/api/v1/admin/products/" + id + "/stock";
+        try {
+            Product product = requireProductForUpdate(id);
+            product.setStock(stock);
+            productService.updateById(product);
+            audit(operatorId, "product", "update-stock", "PUT", url, "SUCCESS", null);
+            return productView(product);
+        } catch (BusinessException e) {
+            audit(operatorId, "product", "update-stock", "PUT", url, "FAIL", e.getMessage());
+            throw e;
+        }
     }
 
     @Override
@@ -326,16 +419,33 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         return response(result, page, size, this::operationLogView);
     }
 
-    private void audit(Long operatorId, String module, String operation, String method, String url) {
-        AdminOperationLog entry = new AdminOperationLog();
-        entry.setAdminId(operatorId);
-        entry.setModule(module);
-        entry.setOperation(operation);
-        entry.setRequestMethod(method);
-        entry.setRequestUrl(url);
-        entry.setResult("SUCCESS");
-        entry.setCreateTime(LocalDateTime.now());
-        operationLogService.save(entry);
+    /**
+     * Writes an audit log entry. Failures are caught and logged but do NOT
+     * propagate — audit logging must not roll back the main business transaction.
+     */
+    private void audit(Long operatorId, String module, String operation,
+            String method, String url, String result, String errorMessage) {
+        try {
+            AdminOperationLog entry = new AdminOperationLog();
+            entry.setAdminId(operatorId);
+            entry.setModule(module);
+            entry.setOperation(operation);
+            entry.setRequestMethod(method);
+            entry.setRequestUrl(url);
+            entry.setResult(result);
+            entry.setErrorMessage(errorMessage);
+            entry.setCreateTime(LocalDateTime.now());
+            if ("FAIL".equals(result)) {
+                // FAIL logs use REQUIRES_NEW so they survive business-tx rollback
+                operationLogService.saveFailLog(entry);
+            } else {
+                // SUCCESS logs share the business transaction
+                operationLogService.save(entry);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to write admin operation log: operatorId={}, operation={}, error={}",
+                    operatorId, operation, e.getMessage());
+        }
     }
 
     private Store requireStore(Long id) {

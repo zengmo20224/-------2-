@@ -180,6 +180,16 @@ class BookingReassignMySqlIT {
         done.await(30, TimeUnit.SECONDS);
         executor.shutdown();
 
+        // Exactly 2 operations attempted: success + fail == 2
+        assertThat(successCount.get() + failCount.get())
+                .as("Exactly 2 cancel+reassign attempts must complete")
+                .isEqualTo(2);
+
+        // All collected errors must be BusinessException
+        assertThat(errors)
+                .as("All failures must be BusinessException")
+                .allMatch(e -> e instanceof BusinessException);
+
         // Cancel always succeeds from CONFIRMED, so status must be CANCELLED
         ServiceBooking result = serviceBookingService.getById(booking.id());
         assertThat(result.getStatus())
@@ -265,6 +275,16 @@ class BookingReassignMySqlIT {
         assertThat(successCount.get())
                 .as("At least 1 reassign must succeed")
                 .isGreaterThanOrEqualTo(1);
+
+        // Exactly 2 operations attempted: success + fail == 2
+        assertThat(successCount.get() + failCount.get())
+                .as("Exactly 2 reassign attempts must complete")
+                .isEqualTo(2);
+
+        // All collected errors must be BusinessException
+        assertThat(errors)
+                .as("All failures must be BusinessException")
+                .allMatch(e -> e instanceof BusinessException);
 
         // Final staff must be one of the target staff
         ServiceBooking result = serviceBookingService.getById(booking.id());

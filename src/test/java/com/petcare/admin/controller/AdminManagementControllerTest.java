@@ -285,7 +285,7 @@ class AdminManagementControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"))
                 .andReturn().getResponse().getContentAsString();
-        String createdStaffId = createdStaffBody.replaceAll(".*\"id\":(\\d+).*", "$1");
+        String createdStaffId = createdStaffBody.replaceAll(".*\"id\":\"?(\\d+)\"?.*", "$1");
 
         mockMvc.perform(put("/api/v1/admin/staff/" + createdStaffId)
                         .header("Authorization", bearer(token))
@@ -305,7 +305,7 @@ class AdminManagementControllerTest {
                                 """.formatted(storeId)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        String parsedScheduleId = scheduleBody.replaceAll(".*\"id\":(\\d+).*", "$1");
+        String parsedScheduleId = scheduleBody.replaceAll(".*\"id\":\"?(\\d+)\"?.*", "$1");
 
         mockMvc.perform(put("/api/v1/admin/staff/" + staffId + "/schedules/" + parsedScheduleId)
                         .header("Authorization", bearer(token))
@@ -367,7 +367,7 @@ class AdminManagementControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.stock").value(0))
                 .andReturn().getResponse().getContentAsString();
-        String createdProductId = productBody.replaceAll(".*\"id\":(\\d+).*", "$1");
+        String createdProductId = productBody.replaceAll(".*\"id\":\"?(\\d+)\"?.*", "$1");
 
         mockMvc.perform(put("/api/v1/admin/products/" + createdProductId)
                         .header("Authorization", bearer(token))
@@ -397,7 +397,41 @@ class AdminManagementControllerTest {
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.total").value(1))
-                .andExpect(jsonPath("$.data.items[0].operation").value("update-stock"));
+                .andExpect(jsonPath("$.data.items[0].operation").value("update-stock"))
+                .andExpect(jsonPath("$.data.items[0].result").value("SUCCESS"));
+    }
+
+    @Test
+    void failedWriteOperationProducesFailAuditLog() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/service-items")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"categoryId":999999,"name":"无效分类","serviceMode":"STORE",
+                                 "price":50,"durationMinutes":30,"needAddress":false,"needPet":true}
+                                """))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/admin/operation-logs?page=1&size=10&module=service")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.data.items[?(@.operation=='create-item' && @.result=='FAIL')]").exists())
+                .andExpect(jsonPath("$.data.items[?(@.operation=='create-item' && @.result=='FAIL')].errorMessage")
+                        .isNotEmpty());
+    }
+
+    @Test
+    void updateNonexistentScheduleReturns404NotConflict() throws Exception {
+        mockMvc.perform(put("/api/v1/admin/staff/" + staffId + "/schedules/999999")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"storeId":%d,"workDate":"2026-06-12","startTime":"09:00:00",
+                                 "endTime":"18:00:00","status":"AVAILABLE"}
+                                """.formatted(storeId)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("resource_not_found"));
     }
 
     private String createAdmin(String username, String roleCode, String[] permissions) {

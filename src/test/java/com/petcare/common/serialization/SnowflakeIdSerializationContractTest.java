@@ -12,6 +12,9 @@ import com.petcare.ai.dto.AiUsageResponse;
 import com.petcare.moderation.dto.SensitiveWordResponse;
 import com.petcare.product.dto.ProductOrderDetailResponse;
 import com.petcare.product.dto.ProductOrderResponse;
+import com.petcare.product.dto.ProductSummaryResponse;
+import com.petcare.service.dto.ServiceCategoryResponse;
+import com.petcare.service.dto.ServiceItemResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -642,11 +645,64 @@ class SnowflakeIdSerializationContractTest {
     }
 
     // ================================================================
-    // 13. Null IDs stay null (not "null" string)
+    // 13. Public-facing Service & Product DTOs (non-admin)
     // ================================================================
 
     @Nested
-    @DisplayName("13. Null ID handling")
+    @DisplayName("13a. ServiceCategoryResponse, ServiceItemResponse, ProductSummaryResponse")
+    class PublicServiceProductDtoTests {
+
+        @Test
+        void serviceCategoryResponse_id_isJsonString() throws Exception {
+            var dto = new ServiceCategoryResponse(BIG_ID, "美容", "icon.png", 1);
+            String json = toJson(dto);
+            assertIdIsString(json, "id");
+            assertNonIdIsNumber(json, "sort");
+        }
+
+        @Test
+        void serviceItemResponse_id_and_categoryId_areJsonStrings() throws Exception {
+            var dto = new ServiceItemResponse(BIG_ID, BIG_ID, "洗澡", "STORE",
+                    new BigDecimal("99.00"), 60, "ALL", "ALL", 0, 1, "描述", "cover.jpg");
+            String json = toJson(dto);
+            assertIdIsString(json, "id");
+            assertIdIsString(json, "categoryId");
+        }
+
+        @Test
+        void serviceItemResponse_priceAndDuration_remainJsonNumbers() throws Exception {
+            var dto = new ServiceItemResponse(BIG_ID, BIG_ID, "洗澡", "STORE",
+                    new BigDecimal("99.00"), 60, "ALL", "ALL", 0, 1, "描述", "cover.jpg");
+            String json = toJson(dto);
+            assertNonIdIsNumber(json, "durationMinutes");
+        }
+
+        @Test
+        void productSummaryResponse_id_and_categoryId_areJsonStrings() throws Exception {
+            var dto = new ProductSummaryResponse(BIG_ID, BIG_ID, "零食", "cover.jpg",
+                    new BigDecimal("20.00"), 10, 5, 0);
+            String json = toJson(dto);
+            assertIdIsString(json, "id");
+            assertIdIsString(json, "categoryId");
+        }
+
+        @Test
+        void productSummaryResponse_stockAndSales_remainJsonNumbers() throws Exception {
+            var dto = new ProductSummaryResponse(BIG_ID, BIG_ID, "零食", "cover.jpg",
+                    new BigDecimal("20.00"), 10, 5, 0);
+            String json = toJson(dto);
+            assertNonIdIsNumber(json, "stock");
+            assertNonIdIsNumber(json, "salesCount");
+            assertNonIdIsNumber(json, "sort");
+        }
+    }
+
+    // ================================================================
+    // 14. Null IDs stay null (not "null" string)
+    // ================================================================
+
+    @Nested
+    @DisplayName("14. Null ID handling")
     class NullIdTests {
 
         @Test

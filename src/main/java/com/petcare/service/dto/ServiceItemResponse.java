@@ -1,13 +1,15 @@
 package com.petcare.service.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.petcare.common.serialization.SnowflakeIdSerializer;
 import java.math.BigDecimal;
 
 /**
  * Response DTO for service item.
  */
 public record ServiceItemResponse(
-        Long id,
-        Long categoryId,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+        @JsonSerialize(using = SnowflakeIdSerializer.class) Long categoryId,
         String name,
         String serviceMode,
         BigDecimal price,

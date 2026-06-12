@@ -78,77 +78,79 @@ class ServiceCatalogControllerTest {
     @Test
     @DisplayName("GET /service-categories returns active categories")
     void listCategoriesReturnsActive() throws Exception {
-        createCategory("美容_catalogTest", 1);
-        createCategory("洗澡_catalogTest", 2);
+        createCategory("美容_sccT", 1);
+        createCategory("洗澡_sccT", 2);
 
         mockMvc.perform(get("/api/v1/service-categories")
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[?(@.name=='美容_catalogTest')]").exists())
-                .andExpect(jsonPath("$.data[?(@.name=='洗澡_catalogTest')]").exists());
+                .andExpect(jsonPath("$.data[?(@.name=='美容_sccT')]").exists())
+                .andExpect(jsonPath("$.data[?(@.name=='洗澡_sccT')]").exists());
     }
 
     @Test
     @DisplayName("GET /service-items returns paginated ON_SALE items")
     void listItemsReturnsOnSale() throws Exception {
-        ServiceCategory cat = createCategory("美容_catalogTest", 1);
-        createItem(cat.getId(), "洗澡服务_onSale", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
-        createItem(cat.getId(), "下架服务_offSale", "STORE", new BigDecimal("50.00"), 30, "OFF_SALE");
+        ServiceCategory cat = createCategory("美容_sccT", 1);
+        createItem(cat.getId(), "洗澡服务_onSale_sccT", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
+        createItem(cat.getId(), "下架服务_offSale_sccT", "STORE", new BigDecimal("50.00"), 30, "OFF_SALE");
 
         mockMvc.perform(get("/api/v1/service-items")
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.items").isArray())
-                .andExpect(jsonPath("$.data.items[?(@.name=='洗澡服务_onSale')]").exists())
-                .andExpect(jsonPath("$.data.items[?(@.name=='下架服务_offSale')]").doesNotExist());
+                .andExpect(jsonPath("$.data.items[?(@.name=='洗澡服务_onSale_sccT')]").exists())
+                .andExpect(jsonPath("$.data.items[?(@.name=='下架服务_offSale_sccT')]").doesNotExist());
     }
 
     @Test
     @DisplayName("GET /service-items filters by categoryId")
     void filterByCategoryId() throws Exception {
-        ServiceCategory cat1 = createCategory("美容", 1);
-        ServiceCategory cat2 = createCategory("遛狗", 2);
-        createItem(cat1.getId(), "洗澡", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
-        createItem(cat2.getId(), "遛狗上门", "HOME", new BigDecimal("80.00"), 60, "ON_SALE");
+        ServiceCategory cat1 = createCategory("美容_sccT_cat1", 1);
+        ServiceCategory cat2 = createCategory("遛狗_sccT_cat2", 2);
+        createItem(cat1.getId(), "洗澡_sccT", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
+        createItem(cat2.getId(), "遛狗上门_sccT", "HOME", new BigDecimal("80.00"), 60, "ON_SALE");
 
         mockMvc.perform(get("/api/v1/service-items")
                         .param("categoryId", cat1.getId().toString())
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items.length()").value(1))
-                .andExpect(jsonPath("$.data.items[0].name").value("洗澡"));
+                .andExpect(jsonPath("$.data.items[0].name").value("洗澡_sccT"));
     }
 
     @Test
     @DisplayName("GET /service-items filters by serviceMode")
     void filterByServiceMode() throws Exception {
-        ServiceCategory cat = createCategory("服务", 1);
-        createItem(cat.getId(), "到店服务", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
-        createItem(cat.getId(), "上门服务", "HOME", new BigDecimal("120.00"), 90, "ON_SALE");
-        createItem(cat.getId(), "通用服务", "BOTH", new BigDecimal("100.00"), 60, "ON_SALE");
+        ServiceCategory cat = createCategory("服务_sccT_mode", 1);
+        createItem(cat.getId(), "到店服务_sccT", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
+        createItem(cat.getId(), "上门服务_sccT", "HOME", new BigDecimal("120.00"), 90, "ON_SALE");
+        createItem(cat.getId(), "通用服务_sccT", "BOTH", new BigDecimal("100.00"), 60, "ON_SALE");
 
         mockMvc.perform(get("/api/v1/service-items")
                         .param("serviceMode", "HOME")
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.items.length()").value(2)); // HOME + BOTH
+                .andExpect(jsonPath("$.data.items[?(@.name=='上门服务_sccT')]").exists())
+                .andExpect(jsonPath("$.data.items[?(@.name=='通用服务_sccT')]").exists())
+                .andExpect(jsonPath("$.data.items[?(@.name=='到店服务_sccT')]").doesNotExist());
     }
 
     @Test
     @DisplayName("GET /service-items/{id} returns single item detail")
     void getItemReturnsDetail() throws Exception {
-        ServiceCategory cat = createCategory("美容", 1);
-        ServiceItem item = createItem(cat.getId(), "精洗服务", "STORE",
+        ServiceCategory cat = createCategory("美容_sccT_detail", 1);
+        ServiceItem item = createItem(cat.getId(), "精洗服务_sccT", "STORE",
                 new BigDecimal("128.00"), 90, "ON_SALE");
 
         mockMvc.perform(get("/api/v1/service-items/" + item.getId())
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("精洗服务"))
+                .andExpect(jsonPath("$.data.name").value("精洗服务_sccT"))
                 .andExpect(jsonPath("$.data.price").value(128.00))
                 .andExpect(jsonPath("$.data.durationMinutes").value(90));
     }
@@ -166,8 +168,8 @@ class ServiceCatalogControllerTest {
     @Test
     @DisplayName("GET /service-items/{id} for OFF_SALE item returns 404")
     void offSaleItemReturns404() throws Exception {
-        ServiceCategory cat = createCategory("美容", 1);
-        ServiceItem item = createItem(cat.getId(), "下架", "STORE",
+        ServiceCategory cat = createCategory("美容_sccT_off", 1);
+        ServiceItem item = createItem(cat.getId(), "下架_sccT", "STORE",
                 new BigDecimal("50.00"), 30, "OFF_SALE");
 
         mockMvc.perform(get("/api/v1/service-items/" + item.getId())
