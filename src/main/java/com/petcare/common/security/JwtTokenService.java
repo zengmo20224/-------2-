@@ -13,21 +13,23 @@ import java.time.Instant;
 import java.util.Date;
 
 /**
- * JWT token service for signing and parsing admin access tokens.
+ * JWT token service for signing and parsing admin and user access tokens.
  *
- * JWT Claims:
- * - sub = adminId
- * - username = admin username
- * - role = admin_user.role
- * - tokenType = ADMIN
- * - iss = petcare-o2o-api
- * - iat = issued time
- * - exp = expiration time
+ * ADMIN JWT Claims:
+ * - sub = adminId, username, role, tokenType = ADMIN
  *
- * Prohibited from containing: password hash, phone, full permission list, API key, DB connection info.
+ * USER JWT Claims:
+ * - sub = userId, tokenType = USER
+ * - No phone, openid, unionid, nickname, avatar, admin role/permissions.
+ *
+ * Prohibited from containing: password hash, phone, openid, unionid,
+ * full permission list, API key, DB connection info.
  */
 @Service
 public class JwtTokenService {
+
+    private static final String TOKEN_TYPE_ADMIN = "ADMIN";
+    private static final String TOKEN_TYPE_USER = "USER";
 
     private final SecretKey signingKey;
     private final String issuer;
@@ -70,7 +72,7 @@ public class JwtTokenService {
                 .subject(String.valueOf(adminId))
                 .claim("username", username)
                 .claim("role", role)
-                .claim("tokenType", "ADMIN")
+                .claim("tokenType", TOKEN_TYPE_ADMIN)
                 .issuer(issuer)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
@@ -95,12 +97,15 @@ public class JwtTokenService {
 
     /**
      * Extracts the admin ID from the token subject.
+     * Rejects USER tokens.
      *
      * @param token the JWT string
      * @return admin ID
+     * @throws JwtException if the token is invalid or is not an ADMIN token
      */
     public Long getAdminId(String token) {
         Claims claims = parseToken(token);
+        requireTokenType(claims, TOKEN_TYPE_ADMIN);
         return Long.parseLong(claims.getSubject());
     }
 
@@ -135,46 +140,64 @@ public class JwtTokenService {
         return expirationMinutes * 60;
     }
 
-    // --- USER token stubs (RED-1: will be implemented in GREEN-1) ---
-
     /**
-     * Signs a new USER access token.
-     * Stub — throws UnsupportedOperationException until GREEN-1.
+     * Signs a new USER access token using the configured expiration.
+     * Only contains sub (userId), tokenType=USER, iss, iat, exp.
+     * No phone, openid, unionid, nickname, avatar, or admin data.
      */
     public String signUserToken(Long userId) {
-        throw new UnsupportedOperationException("signUserToken not yet implemented");
+        return signUserToken(userId, getExpirationSeconds());
     }
 
     /**
-     * Signs a new USER access token with custom expiration in seconds.
-     * Stub — throws UnsupportedOperationException until GREEN-1.
+     * Signs a new USER access token with a custom expiration in seconds.
      */
     public String signUserToken(Long userId, int expirationSeconds) {
-        throw new UnsupportedOperationException("signUserToken(expiration) not yet implemented");
+        Instant now = Instant.now();
+        Instant expiration = now.plusSeconds(expirationSeconds);
+
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .claim("tokenType", TOKEN_TYPE_USER)
+                .issuer(issuer)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .signWith(signingKey)
+                .compact();
     }
 
     /**
      * Extracts the user ID from a USER token.
-     * Must reject ADMIN tokens.
-     * Stub — throws UnsupportedOperationException until GREEN-1.
+     * Rejects ADMIN tokens.
+     *
+     * @throws JwtException if the token is invalid or is not a USER token
      */
     public Long getUserId(String token) {
-        throw new UnsupportedOperationException("getUserId not yet implemented");
+        Claims claims = parseToken(token);
+        requireTokenType(claims, TOKEN_TYPE_USER);
+        return Long.parseLong(claims.getSubject());
     }
 
     /**
-     * Extracts the subject ID from any valid token (admin or user).
-     * Stub — throws UnsupportedOperationException until GREEN-1.
+     * Extracts the subject ID from any valid token regardless of type.
      */
     public Long getSubjectId(String token) {
-        throw new UnsupportedOperationException("getSubjectId not yet implemented");
+        Claims claims = parseToken(token);
+        return Long.parseLong(claims.getSubject());
     }
 
     /**
      * Extracts the tokenType claim from a token.
-     * Stub — throws UnsupportedOperationException until GREEN-1.
      */
     public String getTokenType(String token) {
-        throw new UnsupportedOperationException("getTokenType not yet implemented");
+        Claims claims = parseToken(token);
+        return claims.get("tokenType", String.class);
+    }
+
+    private void requireTokenType(Claims claims, String expectedType) {
+        String actualType = claims.get("tokenType", String.class);
+        if (!expectedType.equals(actualType)) {
+            throw new JwtException("Token type mismatch: expected " + expectedType);
+        }
     }
 }

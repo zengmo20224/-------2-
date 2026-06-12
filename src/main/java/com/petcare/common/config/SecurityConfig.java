@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * - GET /api/v1/system/health
  * - POST /api/v1/admin/auth/login
  * - POST /api/v1/auth/wechat-login
+ * - POST /api/v1/auth/test-login (only active in test profile)
  *
  * All other /api/v1/** endpoints require authentication.
  * Method-level security enabled via @EnableMethodSecurity.
@@ -55,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/system/health").permitAll()
                         .requestMatchers("/api/v1/admin/auth/login").permitAll()
                         .requestMatchers("/api/v1/auth/wechat-login").permitAll()
+                        .requestMatchers("/api/v1/auth/test-login").permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().authenticated()
                 )
