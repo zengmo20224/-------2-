@@ -9,11 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -107,6 +109,36 @@ public class GlobalExceptionHandler {
                 "请求的资源不存在"
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    /**
+     * Handles path/query parameter type conversion failures (e.g. "abc" for Long).
+     * Returns 400 with a safe message, never leaking internal details.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String paramName = ex.getName();
+        String rejectedValue = ex.getValue() != null ? ex.getValue().toString() : "null";
+        log.debug("Parameter type mismatch: {}={}", paramName, rejectedValue);
+        ApiResponse<Void> body = ApiResponse.error(
+                ErrorCode.VALIDATION_ERROR,
+                "请求参数不合法"
+        );
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * Handles unreadable request body (malformed JSON, wrong types).
+     * Returns 400 with a safe message, never leaking internal details.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        log.debug("Unreadable request body: {}", ex.getMessage());
+        ApiResponse<Void> body = ApiResponse.error(
+                ErrorCode.VALIDATION_ERROR,
+                "请求数据格式不正确"
+        );
+        return ResponseEntity.badRequest().body(body);
     }
 
     /**

@@ -8,6 +8,7 @@ import com.petcare.common.pagination.PageResponse;
 import com.petcare.community.domain.CommunityContentType;
 import com.petcare.community.dto.AdminReportHandleRequest;
 import com.petcare.community.dto.CommentResponse;
+import com.petcare.community.dto.PostReportResponse;
 import com.petcare.community.dto.PostResponse;
 import com.petcare.community.entity.Post;
 import com.petcare.community.entity.PostComment;
@@ -279,7 +280,7 @@ public class CommunityAdminService {
     /**
      * Lists pending reports for admin.
      */
-    public PageResponse<PostReport> listReports(String status, int page, int size) {
+    public PageResponse<PostReportResponse> listReports(String status, int page, int size) {
         LambdaQueryWrapper<PostReport> wrapper = new LambdaQueryWrapper<>();
         if (status != null && !status.isEmpty()) {
             wrapper.eq(PostReport::getStatus, status);
@@ -287,7 +288,10 @@ public class CommunityAdminService {
         wrapper.orderByDesc(PostReport::getCreateTime);
 
         Page<PostReport> pageResult = reportMapper.selectPage(new Page<>(page, size), wrapper);
-        return PageResponse.of(pageResult.getRecords(), pageResult.getTotal(), page, size);
+        var items = pageResult.getRecords().stream()
+                .map(this::toReportResponse)
+                .toList();
+        return PageResponse.of(items, pageResult.getTotal(), page, size);
     }
 
     /**
@@ -365,6 +369,15 @@ public class CommunityAdminService {
                 comment.getId(), comment.getPostId(), comment.getUserId(),
                 comment.getParentId(), comment.getContent(), comment.getStatus(),
                 comment.getLikeCount(), comment.getCreateTime()
+        );
+    }
+
+    private PostReportResponse toReportResponse(PostReport report) {
+        return new PostReportResponse(
+                report.getId(), report.getPostId(), report.getReporterId(),
+                report.getReasonType(), report.getReason(), report.getStatus(),
+                report.getHandleResult(), report.getHandlerId(),
+                report.getHandleTime(), report.getCreateTime()
         );
     }
 }

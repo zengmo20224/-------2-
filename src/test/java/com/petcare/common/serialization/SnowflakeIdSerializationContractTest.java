@@ -7,8 +7,8 @@ import com.petcare.admin.dto.AdminManagementDtos;
 import com.petcare.common.pagination.PageResponse;
 import com.petcare.booking.dto.BookingResponse;
 import com.petcare.community.dto.CommentResponse;
+import com.petcare.community.dto.PostReportResponse;
 import com.petcare.community.dto.PostResponse;
-import com.petcare.community.entity.PostReport;
 import com.petcare.ai.dto.AiAnalysisReportResponse;
 import com.petcare.ai.dto.AiUsageResponse;
 import com.petcare.moderation.dto.SensitiveWordResponse;
@@ -584,14 +584,10 @@ class SnowflakeIdSerializationContractTest {
 
         @Test
         void postReport_allIds_areJsonStrings() throws Exception {
-            var report = new PostReport();
-            report.setId(BIG_ID);
-            report.setPostId(BIG_ID);
-            report.setReporterId(BIG_ID);
-            report.setHandlerId(BIG_ID);
-            report.setReasonType("SPAM");
-            report.setReason("垃圾内容");
-            report.setStatus("HANDLED");
+            var report = new PostReportResponse(
+                    BIG_ID, BIG_ID, BIG_ID,
+                    "SPAM", "垃圾内容", "HANDLED",
+                    null, BIG_ID, null, null);
 
             String json = toJson(report);
 

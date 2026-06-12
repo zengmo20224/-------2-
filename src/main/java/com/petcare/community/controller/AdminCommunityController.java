@@ -5,8 +5,8 @@ import com.petcare.common.pagination.PageResponse;
 import com.petcare.community.dto.AdminReportHandleRequest;
 import com.petcare.community.dto.AdminReviewRequest;
 import com.petcare.community.dto.CommentResponse;
+import com.petcare.community.dto.PostReportResponse;
 import com.petcare.community.dto.PostResponse;
-import com.petcare.community.entity.PostReport;
 import com.petcare.community.service.CommunityAdminService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -144,11 +144,11 @@ public class AdminCommunityController {
 
     @GetMapping("/reports")
     @PreAuthorize("hasAuthority('community:report:handle')")
-    public ResponseEntity<ApiResponse<PageResponse<PostReport>>> listReports(
+    public ResponseEntity<ApiResponse<PageResponse<PostReportResponse>>> listReports(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        PageResponse<PostReport> result = adminService.listReports(status, page, size);
+        PageResponse<PostReportResponse> result = adminService.listReports(status, page, size);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
