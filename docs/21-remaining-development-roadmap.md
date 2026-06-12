@@ -40,16 +40,17 @@
 - D-016 已决定使用 Testcontainers MySQL 8 建立真实数据库门禁。
 - D-017 已决定 V1 不扩展操作日志 Schema，目标 ID 暂存脱敏后的 `requestParams`。
 - 阶段 11 实施计划见 `docs/31-phase-11-user-prerequisites-plan.md`。
+- Testcontainers MySQL Schema、预约并发和真实数据库门禁已完成，提交为 `dd58edf`。
 
 当前工作区状态：
 
-- `frontend/package.json` 和 `frontend/package-lock.json` 已误混入历史提交，D-015 已决定通过独立任务删除。
-- 阶段 10H 管理后台合约测试通过，构建有一处已修复的 TS 未使用导入。
+- D-015 根重复 package 文件已删除，提交为 `40b7eb0`。
+- 阶段 10H 管理后台合约测试、构建和安全修复已完成。
 
 强制约束：
 
-- 当前优先完成已批准的预约管理员审计质量任务和阶段 10F-R5 根 package 清理。
-- 阶段 11 的 D-013、D-014 决策阻塞已解除，但仍需按任务包逐项 TDD 实施。
+- 阶段 10 管理后台核心流程、预约管理员审计质量任务、根 package 清理和 Testcontainers MySQL 门禁已完成。
+- 阶段 11 的 D-013、D-014 决策阻塞已解除，当前只允许按 `docs/33-phase-11-01-glm5-test-login-implementation-brief.md` 执行 11-01。
 - 禁止跳过阶段 11 门禁直接开始阶段 12 或后续阶段。
 
 ## 3. 总体阶段依赖
@@ -78,8 +79,8 @@
 
 - `10F-R1` 已完成并验证。
 - `10F-R2A`、`10F-R2B` 已完成，真实契约基线为 `docs/25-admin-web-api-contract.md`。
-- D-011、D-012 已决定，下一阶段计划见 `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`。
-- 当前只允许执行 `10F-R2C1` 后端 ID 契约测试，不允许跳过测试直接实现或进入后续阶段。
+- D-011、D-012 对应的跨层契约修复已完成。
+- `10F-R2C1` 后端 ID 契约测试和修复已完成，提交为 `6533342`、`f8e4b08`。
 
 允许修改：
 

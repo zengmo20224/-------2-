@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：D-010 已决定先完成管理后台再开发小程序。阶段 `10F-R2A`、`10F-R2B` 已完成，D-011、D-012 已决定，下一任务为 `10F-R2C1` 后端雪花 ID 契约测试；不要在 `main` 分支直接加入业务代码，当前阶段代码只能在 `phase-10-frontend` 分支执行。
+当前状态：阶段 10 管理后台核心流程、跨层契约修复、根依赖清理、管理员预约审计和 Testcontainers MySQL 门禁已完成。下一任务为阶段 `11-01` 用户测试登录与 USER JWT；必须从 `phase-10-frontend` 最新提交创建 `phase-11-user-prerequisites` 分支执行，不得在 `main` 分支直接加入业务代码。
 
 ## AI Agent 强制入口
 
@@ -35,6 +35,8 @@
 - [docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md](docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md)
 - [docs/29-frontend-figma-design-and-glm-long-running-plan.md](docs/29-frontend-figma-design-and-glm-long-running-plan.md)
 - [docs/30-user-miniapp-frontend-design-spec.md](docs/30-user-miniapp-frontend-design-spec.md)
+- [docs/31-phase-11-user-prerequisites-plan.md](docs/31-phase-11-user-prerequisites-plan.md)
+- [docs/33-phase-11-01-glm5-test-login-implementation-brief.md](docs/33-phase-11-01-glm5-test-login-implementation-brief.md)
 
 ## 原始需求基线
 
@@ -66,11 +68,11 @@
 
 ## 当前最近一步
 
-第十阶段当前执行“管理后台优先”：
+当前最近一步为阶段 11 后端前置能力：
 
-1. `10F-R2A` 已完成，真实契约基线见 [管理后台 API 契约清单](docs/25-admin-web-api-contract.md)。
-2. `10F-R2B` 已完成并通过 `98` 项契约测试和管理后台构建。
-3. D-011、D-012 已决定，按 [阶段 10F-R2C 至 R2E 跨层契约修复编码计划](docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md) 先执行 `10F-R2C1`。
-4. 完成阶段 10F-R 验收后，建立管理后台测试、类型检查、覆盖率和 E2E 门禁。
-5. 完成管理后台核心流程后，再补齐小程序依赖的后端能力。
+1. 阶段 10 管理后台核心流程和质量门禁已完成。
+2. Testcontainers MySQL Schema、预约并发和真实数据库门禁已通过。
+3. 从 `phase-10-frontend` 最新提交创建 `phase-11-user-prerequisites` 分支。
+4. GLM5.1 只能先执行 [阶段 11-01 用户测试登录与 USER JWT 实施任务书](docs/33-phase-11-01-glm5-test-login-implementation-brief.md)。
+5. 只有 11-01 的测试、Review、MySQL 门禁和 Git 提交全部通过后，才允许开始 11-02。
 6. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。

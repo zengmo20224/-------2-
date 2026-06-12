@@ -53,6 +53,8 @@
 
 **状态**：已批准，可按 TDD 实施。
 
+**GLM5.1 详细执行任务书**：`docs/33-phase-11-01-glm5-test-login-implementation-brief.md`
+
 **目标**：仅为自动化测试环境提供用户身份获取能力。
 
 **允许修改**：
@@ -90,7 +92,8 @@
 - `test` profile 下，使用预设手机号能获得合法 JWT。
 - `test` profile 下，不存在的手机号登录失败且不会创建用户。
 - 非 `test` profile 下，该端点不可达（返回 404）。
-- 获得的 JWT 能通过 `/api/v1/user/profile` 等用户接口验证。
+- 获得的 JWT 能通过仅存在于测试源码中的受保护用户认证探针验证。
+- 禁止为验证本任务而提前实现属于 11-02 的 `/api/v1/user/profile`。
 
 **完成验证**：
 
