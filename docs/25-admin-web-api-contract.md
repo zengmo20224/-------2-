@@ -11,7 +11,7 @@
 
 | 级别 | 问题 | 阻塞项 |
 |------|------|--------|
-| CRITICAL | 雪花 BIGINT ID 精度风险：后端 `Long` → 前端 `number` | D-011 |
+| CRITICAL | 雪花 BIGINT ID 精度风险：D-011 已决定，后端字段覆盖与前端迁移尚未完成 | 10F-R2C 至 R2D |
 | HIGH | 固定 `STORE_ID = 1` 与雪花 ID 不兼容 | D-012 |
 | HIGH | `getStaffSkills` 伪接口：后端无 GET 读取 | 无 |
 | MEDIUM | `ServiceItemQueryParams.name` 后端不支持 | 无 |
@@ -1400,7 +1400,9 @@
 ## 附录 C：ID 字段汇总
 
 > 所有以下 `Long` 字段在雪花 ID 生成策略下可能超过 JavaScript `Number.MAX_SAFE_INTEGER`。
-> D-011 未决前，这些字段的 JSON 传输精度无法保证安全。
+> D-011 已决定：所有对外雪花 ID 字段序列化为 JSON 字符串，非 ID 数值保持 JSON 数字。
+> 10F-R2C1 审计发现当前分支已有部分字段序列化实现，但举报列表仍直接返回 `PostReport` 实体，
+> 其 ID 字段尚未满足契约；非法字符串路径、查询和请求体 ID 也需要可控 `400` 契约。
 
 **涉及雪花 ID 的响应字段（按模块）：**
 
@@ -1408,15 +1410,24 @@
 |------|------|
 | 认证 | `AdminLoginResponse.admin.id`, `AdminMeResponse.id` |
 | 门店 | `StoreView.id`, `StoreConfigView.id`, `StoreConfigView.storeId` |
-| 服务 | `ServiceItemView.id`, `ServiceItemView.categoryId` |
+| 服务 | `ServiceItemView.id`, `ServiceItemView.categoryId`, `ServiceCategoryResponse.id`, `ServiceItemResponse.id`, `ServiceItemResponse.categoryId` |
 | 员工 | `StaffView.id`, `StaffView.storeId`, `StaffSkillView.staffId`, `StaffSkillView.serviceCategoryIds[]`, `StaffScheduleView.id`, `StaffScheduleView.staffId`, `StaffScheduleView.storeId` |
 | 预约 | `BookingResponse.id`, `userId`, `petId`, `storeId`, `serviceItemId`, `staffId`, `addressId` |
-| 商品 | `ProductView.id`, `categoryId` |
+| 商品 | `ProductView.id`, `categoryId`, `ProductCategoryResponse.id`, `ProductSummaryResponse.id`, `ProductSummaryResponse.categoryId`, `ProductDetailResponse.id`, `ProductDetailResponse.categoryId`, `CartItemResponse.id`, `CartItemResponse.productId` |
 | 订单 | `ProductOrderResponse.id`, `ProductOrderDetailResponse.userId`, `storeId`, `OrderItemResponse.id`, `productId` |
-| 社区 | `PostResponse.id`, `userId`, `petId`, `topicId`, `CommentResponse.id`, `postId`, `userId`, `parentId`, `PostReport.id`, `postId`, `reporterId`, `handlerId` |
+| 社区 | `TopicResponse.id`, `PostResponse.id`, `userId`, `petId`, `topicId`, `PostDetailResponse.id`, `userId`, `petId`, `topicId`, `CommentResponse.id`, `postId`, `userId`, `parentId`, `PostReport.id`, `postId`, `reporterId`, `handlerId` |
 | 敏感词 | `SensitiveWordResponse.id` |
 | 操作日志 | `OperationLogView.id`, `adminId` |
-| AI | `AiAnalysisReportResponse.id`, `createdBy`, `AiUsageResponse.id`, `userId`, `adminId` |
+| AI | `AiConversationResponse.id`, `AiMessageResponse.id`, `conversationId`, `AiAnalysisReportResponse.id`, `createdBy`, `AiUsageResponse.id`, `userId`, `adminId` |
+
+**10F-R2C1 RED 契约覆盖：**
+
+| 契约 | 当前 RED 证据 |
+|------|---------------|
+| 举报响应 ID 字符串化 | `PostReport.id/postId/reporterId/handlerId` 当前输出 JSON 数字 |
+| 非法字符串 ID | 路径、查询和请求体非法 ID 当前未统一返回安全 `400` |
+| 非 ID 数值保持数字 | `PageResponse.total/page/size/totalPages` 有直接断言 |
+| 合法字符串 ID 输入 | 路径、查询和请求体中的 `9007199254740993` 有精确绑定断言 |
 
 **涉及雪花 ID 的请求字段：**
 

@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.petcare.admin.dto.AdminLoginResponse;
 import com.petcare.admin.dto.AdminMeResponse;
 import com.petcare.admin.dto.AdminManagementDtos;
+import com.petcare.common.pagination.PageResponse;
 import com.petcare.booking.dto.BookingResponse;
 import com.petcare.community.dto.CommentResponse;
 import com.petcare.community.dto.PostResponse;
+import com.petcare.community.entity.PostReport;
 import com.petcare.ai.dto.AiAnalysisReportResponse;
 import com.petcare.ai.dto.AiUsageResponse;
 import com.petcare.moderation.dto.SensitiveWordResponse;
@@ -30,15 +32,14 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * RED contract tests for snowflake ID JSON serialization (10F-R2C1).
+ * Contract tests for snowflake ID JSON serialization (10F-R2C1).
  *
  * These tests verify that all external-facing snowflake ID fields
  * are serialized as JSON strings, while non-ID numeric values
  * (totals, quantities, prices, stock, tokens) remain JSON numbers.
  *
- * These tests are expected to FAIL in the current state (RED),
- * because IDs are currently serialized as JSON numbers by Jackson.
- * They will pass after 10F-R2C2 implements per-field ID serialization.
+ * The branch already contains partial per-field serialization. New coverage in this
+ * task must still expose any external response fields that remain unsafe.
  *
  * Test ID: 9007199254740993 (greater than JavaScript Number.MAX_SAFE_INTEGER)
  */
@@ -574,11 +575,51 @@ class SnowflakeIdSerializationContractTest {
     }
 
     // ================================================================
-    // 12. Request body deserialization: string IDs -> Java Long
+    // 12. Report entity exposure and pagination numeric contract
     // ================================================================
 
     @Nested
-    @DisplayName("12. Request deserialization: string IDs accepted as Long")
+    @DisplayName("12. PostReport and PageResponse")
+    class ReportAndPaginationTests {
+
+        @Test
+        void postReport_allIds_areJsonStrings() throws Exception {
+            var report = new PostReport();
+            report.setId(BIG_ID);
+            report.setPostId(BIG_ID);
+            report.setReporterId(BIG_ID);
+            report.setHandlerId(BIG_ID);
+            report.setReasonType("SPAM");
+            report.setReason("垃圾内容");
+            report.setStatus("HANDLED");
+
+            String json = toJson(report);
+
+            assertIdIsString(json, "id");
+            assertIdIsString(json, "postId");
+            assertIdIsString(json, "reporterId");
+            assertIdIsString(json, "handlerId");
+        }
+
+        @Test
+        void pageResponse_totalAndPageMetadata_remainJsonNumbers() throws Exception {
+            var page = PageResponse.of(List.of("item"), BIG_ID, 1, 20);
+
+            String json = toJson(page);
+
+            assertNonIdIsNumber(json, "total");
+            assertNonIdIsNumber(json, "page");
+            assertNonIdIsNumber(json, "size");
+            assertNonIdIsNumber(json, "totalPages");
+        }
+    }
+
+    // ================================================================
+    // 13. Request body deserialization: string IDs -> Java Long
+    // ================================================================
+
+    @Nested
+    @DisplayName("13. Request deserialization: string IDs accepted as Long")
     class RequestDeserializationTests {
 
         @Test
@@ -645,11 +686,11 @@ class SnowflakeIdSerializationContractTest {
     }
 
     // ================================================================
-    // 13. Public-facing Service & Product DTOs (non-admin)
+    // 14. Public-facing Service & Product DTOs (non-admin)
     // ================================================================
 
     @Nested
-    @DisplayName("13a. ServiceCategoryResponse, ServiceItemResponse, ProductSummaryResponse")
+    @DisplayName("14. ServiceCategoryResponse, ServiceItemResponse, ProductSummaryResponse")
     class PublicServiceProductDtoTests {
 
         @Test
@@ -698,11 +739,11 @@ class SnowflakeIdSerializationContractTest {
     }
 
     // ================================================================
-    // 14. Null IDs stay null (not "null" string)
+    // 15. Null IDs stay null (not "null" string)
     // ================================================================
 
     @Nested
-    @DisplayName("14. Null ID handling")
+    @DisplayName("15. Null ID handling")
     class NullIdTests {
 
         @Test
