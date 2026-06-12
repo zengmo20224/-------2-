@@ -51,9 +51,11 @@
 
 ### 11-01：测试环境测试登录端点
 
-**状态**：已批准，可按 TDD 实施。
+**状态**：首轮编码已完成，Review 未通过；必须先执行 11-01R。
 
 **GLM5.1 详细执行任务书**：`docs/33-phase-11-01-glm5-test-login-implementation-brief.md`
+
+**Review 与修复任务书**：`docs/34-phase-11-01-review-and-remediation-plan.md`
 
 **目标**：仅为自动化测试环境提供用户身份获取能力。
 
@@ -107,6 +109,10 @@ git diff --check
 
 ### 11-02：用户资料 API
 
+**状态**：已规划，当前锁定；11-01R 全部门禁通过后解锁。
+
+**GLM5.1 详细执行任务书**：`docs/35-phase-11-02-glm5-user-profile-api-brief.md`
+
 **目标**：实现用户个人资料的查看和修改接口。
 
 **依赖**：11-01（需要用户身份体系）
@@ -155,7 +161,7 @@ UpdateProfileRequest {
 - 用户能修改自己的昵称。
 - 用户 A 不能通过修改 ID 查看用户 B 的资料。
 - 未认证请求返回 401。
-- 昵称为空返回 422。
+- 昵称为空返回 400 `validation_error`。
 
 **完成验证**：
 

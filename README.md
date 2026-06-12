@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 10 管理后台核心流程、跨层契约修复、根依赖清理、管理员预约审计和 Testcontainers MySQL 门禁已完成。下一任务为阶段 `11-01` 用户测试登录与 USER JWT；必须从 `phase-10-frontend` 最新提交创建 `phase-11-user-prerequisites` 分支执行，不得在 `main` 分支直接加入业务代码。
+当前状态：阶段 `11-01` 已完成首轮编码，但 Review 未通过。下一任务为 `11-01R` 认证安全修复与完整测试门禁恢复；当前只能在 `phase-11-user-prerequisites` 分支执行，禁止提前开始 `11-02`，不得在 `main` 分支直接加入业务代码。
 
 ## AI Agent 强制入口
 
@@ -37,6 +37,8 @@
 - [docs/30-user-miniapp-frontend-design-spec.md](docs/30-user-miniapp-frontend-design-spec.md)
 - [docs/31-phase-11-user-prerequisites-plan.md](docs/31-phase-11-user-prerequisites-plan.md)
 - [docs/33-phase-11-01-glm5-test-login-implementation-brief.md](docs/33-phase-11-01-glm5-test-login-implementation-brief.md)
+- [docs/34-phase-11-01-review-and-remediation-plan.md](docs/34-phase-11-01-review-and-remediation-plan.md)
+- [docs/35-phase-11-02-glm5-user-profile-api-brief.md](docs/35-phase-11-02-glm5-user-profile-api-brief.md)
 
 ## 原始需求基线
 
@@ -68,11 +70,11 @@
 
 ## 当前最近一步
 
-当前最近一步为阶段 11 后端前置能力：
+当前最近一步为阶段 11-01 Review 修复：
 
-1. 阶段 10 管理后台核心流程和质量门禁已完成。
-2. Testcontainers MySQL Schema、预约并发和真实数据库门禁已通过。
-3. 从 `phase-10-frontend` 最新提交创建 `phase-11-user-prerequisites` 分支。
-4. GLM5.1 只能先执行 [阶段 11-01 用户测试登录与 USER JWT 实施任务书](docs/33-phase-11-01-glm5-test-login-implementation-brief.md)。
-5. 只有 11-01 的测试、Review、MySQL 门禁和 Git 提交全部通过后，才允许开始 11-02。
+1. 11-01 定向测试、构建和 MySQL Testcontainers 门禁通过。
+2. Review 发现认证异常外溢、角色隔离假阳性和 Controller 职责问题。
+3. 完整 `mvn test` 仍有预约状态测试失败，阶段门禁未通过。
+4. GLM5.1 当前只能执行 [阶段 11-01 Review 结论与修复任务书](docs/34-phase-11-01-review-and-remediation-plan.md)。
+5. [阶段 11-02 用户资料 API 任务书](docs/35-phase-11-02-glm5-user-profile-api-brief.md) 已准备，但必须等待 11-01R 全部门禁通过。
 6. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。
