@@ -104,8 +104,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             storeService.updateById(store);
             audit(operatorId, "store", "update-info", "PATCH", url, "SUCCESS", null);
             return storeView(store);
-        } catch (BusinessException e) {
-            audit(operatorId, "store", "update-info", "PATCH", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "store", "update-info", "PATCH", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -131,8 +131,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             storeConfigService.updateById(config);
             audit(operatorId, "store", "update-config", "PUT", url, "SUCCESS", null);
             return storeConfigView(config);
-        } catch (BusinessException e) {
-            audit(operatorId, "store", "update-config", "PUT", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "store", "update-config", "PUT", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -159,8 +159,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             serviceItemService.save(item);
             audit(operatorId, "service", "create-item", "POST", url, "SUCCESS", null);
             return serviceItemView(item);
-        } catch (BusinessException e) {
-            audit(operatorId, "service", "create-item", "POST", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "service", "create-item", "POST", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -176,8 +176,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             serviceItemService.updateById(item);
             audit(operatorId, "service", "update-item", "PUT", url, "SUCCESS", null);
             return serviceItemView(item);
-        } catch (BusinessException e) {
-            audit(operatorId, "service", "update-item", "PUT", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "service", "update-item", "PUT", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -192,8 +192,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             serviceItemService.updateById(item);
             audit(operatorId, "service", "disable-item", "POST", url, "SUCCESS", null);
             return serviceItemView(item);
-        } catch (BusinessException e) {
-            audit(operatorId, "service", "disable-item", "POST", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "service", "disable-item", "POST", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -220,8 +220,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             staffService.save(staff);
             audit(operatorId, "staff", "create-profile", "POST", url, "SUCCESS", null);
             return staffView(staff);
-        } catch (BusinessException e) {
-            audit(operatorId, "staff", "create-profile", "POST", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "staff", "create-profile", "POST", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -237,8 +237,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             staffService.updateById(staff);
             audit(operatorId, "staff", "update-profile", "PUT", url, "SUCCESS", null);
             return staffView(staff);
-        } catch (BusinessException e) {
-            audit(operatorId, "staff", "update-profile", "PUT", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "staff", "update-profile", "PUT", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -253,8 +253,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             staffService.updateById(staff);
             audit(operatorId, "staff", "disable-profile", "POST", url, "SUCCESS", null);
             return staffView(staff);
-        } catch (BusinessException e) {
-            audit(operatorId, "staff", "disable-profile", "POST", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "staff", "disable-profile", "POST", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -276,8 +276,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             });
             audit(operatorId, "staff", "replace-skills", "PUT", url, "SUCCESS", null);
             return new StaffSkillView(staffId, distinctIds);
-        } catch (BusinessException e) {
-            audit(operatorId, "staff", "replace-skills", "PUT", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "staff", "replace-skills", "PUT", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -306,8 +306,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             scheduleService.save(schedule);
             audit(operatorId, "staff", "create-schedule", "POST", url, "SUCCESS", null);
             return scheduleView(schedule);
-        } catch (BusinessException e) {
-            audit(operatorId, "staff", "create-schedule", "POST", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "staff", "create-schedule", "POST", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -325,8 +325,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             scheduleService.updateById(schedule);
             audit(operatorId, "staff", "update-schedule", "PUT", url, "SUCCESS", null);
             return scheduleView(schedule);
-        } catch (BusinessException e) {
-            audit(operatorId, "staff", "update-schedule", "PUT", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "staff", "update-schedule", "PUT", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -355,8 +355,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             productService.save(product);
             audit(operatorId, "product", "create-item", "POST", url, "SUCCESS", null);
             return productView(product);
-        } catch (BusinessException e) {
-            audit(operatorId, "product", "create-item", "POST", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "product", "create-item", "POST", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -372,8 +372,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             productService.updateById(product);
             audit(operatorId, "product", "update-item", "PUT", url, "SUCCESS", null);
             return productView(product);
-        } catch (BusinessException e) {
-            audit(operatorId, "product", "update-item", "PUT", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "product", "update-item", "PUT", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -388,8 +388,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             productService.updateById(product);
             audit(operatorId, "product", "disable-item", "POST", url, "SUCCESS", null);
             return productView(product);
-        } catch (BusinessException e) {
-            audit(operatorId, "product", "disable-item", "POST", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "product", "disable-item", "POST", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -404,8 +404,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             productService.updateById(product);
             audit(operatorId, "product", "update-stock", "PUT", url, "SUCCESS", null);
             return productView(product);
-        } catch (BusinessException e) {
-            audit(operatorId, "product", "update-stock", "PUT", url, "FAIL", e.getMessage());
+        } catch (RuntimeException e) {
+            audit(operatorId, "product", "update-stock", "PUT", url, "FAIL", auditFailureMessage(e));
             throw e;
         }
     }
@@ -419,33 +419,36 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         return response(result, page, size, this::operationLogView);
     }
 
-    /**
-     * Writes an audit log entry. Failures are caught and logged but do NOT
-     * propagate — audit logging must not roll back the main business transaction.
-     */
     private void audit(Long operatorId, String module, String operation,
             String method, String url, String result, String errorMessage) {
-        try {
-            AdminOperationLog entry = new AdminOperationLog();
-            entry.setAdminId(operatorId);
-            entry.setModule(module);
-            entry.setOperation(operation);
-            entry.setRequestMethod(method);
-            entry.setRequestUrl(url);
-            entry.setResult(result);
-            entry.setErrorMessage(errorMessage);
-            entry.setCreateTime(LocalDateTime.now());
-            if ("FAIL".equals(result)) {
-                // FAIL logs use REQUIRES_NEW so they survive business-tx rollback
+        AdminOperationLog entry = new AdminOperationLog();
+        entry.setAdminId(operatorId);
+        entry.setModule(module);
+        entry.setOperation(operation);
+        entry.setRequestMethod(method);
+        entry.setRequestUrl(url);
+        entry.setResult(result);
+        entry.setErrorMessage(errorMessage);
+        entry.setCreateTime(LocalDateTime.now());
+        if ("FAIL".equals(result)) {
+            try {
                 operationLogService.saveFailLog(entry);
-            } else {
-                // SUCCESS logs share the business transaction
-                operationLogService.save(entry);
+            } catch (RuntimeException auditException) {
+                log.warn("Failed to write FAIL admin operation log: operatorId={}, operation={}",
+                        operatorId, operation);
             }
-        } catch (Exception e) {
-            log.warn("Failed to write admin operation log: operatorId={}, operation={}, error={}",
-                    operatorId, operation, e.getMessage());
+            return;
         }
+        if (!operationLogService.save(entry)) {
+            throw new IllegalStateException("Failed to persist required admin operation log");
+        }
+    }
+
+    private String auditFailureMessage(RuntimeException exception) {
+        if (exception instanceof BusinessException && exception.getMessage() != null) {
+            return exception.getMessage().substring(0, Math.min(exception.getMessage().length(), 1000));
+        }
+        return "unexpected_error";
     }
 
     private Store requireStore(Long id) {
