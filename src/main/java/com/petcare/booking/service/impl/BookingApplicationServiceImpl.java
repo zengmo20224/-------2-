@@ -481,7 +481,10 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
         entry.setResult("FAIL");
         entry.setErrorMessage(sanitizeErrorMessage(cause));
         try {
-            operationLogService.saveFailLog(entry);
+            if (!operationLogService.saveFailLog(entry)) {
+                log.warn("Failed to write FAIL admin operation log: operatorId={}, operation={}",
+                        operatorId, operation);
+            }
         } catch (RuntimeException auditException) {
             log.warn("Failed to write FAIL admin operation log: operatorId={}, operation={}",
                     operatorId, operation);

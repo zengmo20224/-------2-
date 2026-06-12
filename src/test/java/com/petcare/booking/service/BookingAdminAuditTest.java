@@ -237,6 +237,21 @@ class BookingAdminAuditTest {
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("状态无效");
         }
+
+        @Test
+        @DisplayName("Fail audit false result preserves original business exception")
+        void failAuditFalseResult_preservesOriginalException() {
+            BusinessException original = new BusinessException(
+                    ErrorCode.BOOKING_STATUS_INVALID, "状态无效");
+            when(bookingTransactionService.transitionStatusOnce(
+                    BOOKING_ID, "CONFIRMED", "ADMIN", OPERATOR_ID,
+                    "管理员确认预约", null, null))
+                    .thenThrow(original);
+            when(operationLogService.saveFailLog(any(AdminOperationLog.class))).thenReturn(false);
+
+            assertThatThrownBy(() -> service.confirmBooking(BOOKING_ID, null, OPERATOR_ID))
+                    .isSameAs(original);
+        }
     }
 
     // ========== USER CANCEL TEST ==========
