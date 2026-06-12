@@ -3,12 +3,15 @@ package com.petcare.user.controller;
 import com.petcare.common.security.JwtTokenService;
 import com.petcare.user.entity.User;
 import com.petcare.user.service.UserService;
+import com.petcare.admin.entity.AdminUser;
+import com.petcare.admin.service.AdminUserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,12 @@ class TestLoginControllerTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AdminUserService adminUserService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // === Test Login Success ===
 
@@ -137,7 +146,8 @@ class TestLoginControllerTest {
     @Test
     @DisplayName("ADMIN token cannot access user auth probe")
     void adminTokenCannotAccessUserAuthProbe() throws Exception {
-        String adminToken = jwtTokenService.signAdminToken(1L, "admin", "SUPER_ADMIN");
+        Long adminId = createTestAdmin("probe_admin", "SUPER_ADMIN");
+        String adminToken = jwtTokenService.signAdminToken(adminId, "probe_admin", "SUPER_ADMIN");
 
         mockMvc.perform(get("/api/v1/test/user-auth-probe")
                         .header("Authorization", "Bearer " + adminToken))
@@ -182,5 +192,15 @@ class TestLoginControllerTest {
         user.setUnionid("test_unionid_" + phone);
         userService.save(user);
         return user;
+    }
+
+    private Long createTestAdmin(String username, String role) {
+        AdminUser admin = new AdminUser();
+        admin.setUsername(username);
+        admin.setPassword(passwordEncoder.encode("password123456"));
+        admin.setRole(role);
+        admin.setStatus("ACTIVE");
+        adminUserService.save(admin);
+        return admin.getId();
     }
 }
