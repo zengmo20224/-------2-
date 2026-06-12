@@ -129,7 +129,8 @@ router.beforeEach(async (to, _from, next) => {
           await userStore.getInfoAction()
         } catch {
           userStore.logoutAction()
-          next(`/login?redirect=${to.path}`)
+          const safePath = to.path.startsWith('/') && !to.path.startsWith('//') ? to.path : '/'
+          next(`/login?redirect=${safePath}`)
           return
         }
       }
@@ -141,7 +142,8 @@ router.beforeEach(async (to, _from, next) => {
       }
       next()
     } else {
-      next(`/login?redirect=${to.path}`)
+      const safePath = to.path.startsWith('/') && !to.path.startsWith('//') ? to.path : '/'
+      next(`/login?redirect=${safePath}`)
     }
   }
 })

@@ -20,10 +20,10 @@ export function showError(message: unknown): void {
 
 /** Show a conflict warning (409 — optimistic lock failure) */
 export function showConflict(message?: string): void {
-  ElMessage.warning(message ?? '记录已更新，请刷新后重试')
+  ElMessage.warning(message ? sanitizeErrorMessage(message) : '记录已更新，请刷新后重试')
 }
 
 /** Show a validation warning (422) */
 export function showValidation(message?: string): void {
-  ElMessage.warning(message ?? '提交数据验证失败')
+  ElMessage.warning(message ? sanitizeErrorMessage(message) : '提交数据验证失败')
 }

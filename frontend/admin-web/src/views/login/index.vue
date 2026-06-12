@@ -76,8 +76,11 @@ const handleLogin = async () => {
     loading.value = true
     try {
       await userStore.loginAction(loginForm)
-      const redirect = (route.query.redirect as string) || '/'
-      router.push(redirect)
+      const rawRedirect = route.query.redirect as string
+      const safeRedirect = rawRedirect && rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes('//') && !rawRedirect.includes(':')
+        ? rawRedirect
+        : '/'
+      router.push(safeRedirect)
     } catch (error) {
       const msg = error instanceof Error ? error.message : '登录失败'
       showError(msg)

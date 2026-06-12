@@ -3,6 +3,7 @@ import type { AxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '../router'
 import type { ApiResponse } from '../types/api'
+import { sanitizeErrorMessage } from './error-sanitizer'
 
 const axiosInstance = axios.create({
   baseURL: '/api',
@@ -30,7 +31,7 @@ axiosInstance.interceptors.response.use(
     const apiResponse = response.data as ApiResponse<unknown>
 
     if (apiResponse && apiResponse.success === false) {
-      const errorMsg = apiResponse.error?.message || '请求失败'
+      const errorMsg = sanitizeErrorMessage(apiResponse.error?.message || '请求失败')
       ElMessage.error(errorMsg)
       return Promise.reject(new Error(errorMsg)) as never
     }
@@ -40,7 +41,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data } = error.response
-      const msg = data?.error?.message || data?.message || ''
+      const msg = sanitizeErrorMessage(data?.error?.message || data?.message || '')
 
       switch (status) {
         case 401:

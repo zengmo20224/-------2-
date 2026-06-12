@@ -16,7 +16,7 @@ export interface ServiceItem {
   needPet: boolean
   description: string | null
   coverUrl: string | null
-  status: string // ACTIVE | DISABLED
+  status: string // ON_SALE | OFF_SALE
   sort: number | null
 }
 
