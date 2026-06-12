@@ -1,6 +1,7 @@
 package com.petcare.common.security;
 
 import com.petcare.admin.security.AdminPrincipal;
+import com.petcare.user.security.UserPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -55,5 +56,23 @@ public final class SecurityContextHelper {
         return getAdminPrincipal()
                 .map(AdminPrincipal::getPermissionCodes)
                 .orElse(Collections.emptyList());
+    }
+
+    // --- User identity stubs (RED-1: will be implemented in GREEN-1) ---
+
+    /**
+     * Returns the UserPrincipal if the current user is an authenticated user (not admin).
+     */
+    public static Optional<UserPrincipal> getUserPrincipal() {
+        return getAuthentication()
+                .filter(auth -> auth.getPrincipal() instanceof UserPrincipal)
+                .map(auth -> (UserPrincipal) auth.getPrincipal());
+    }
+
+    /**
+     * Returns the current user's ID, or empty if not authenticated as user.
+     */
+    public static Optional<Long> getCurrentUserId() {
+        return getUserPrincipal().map(UserPrincipal::getUserId);
     }
 }

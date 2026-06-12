@@ -134,4 +134,47 @@ public class JwtTokenService {
     public int getExpirationSeconds() {
         return expirationMinutes * 60;
     }
+
+    // --- USER token stubs (RED-1: will be implemented in GREEN-1) ---
+
+    /**
+     * Signs a new USER access token.
+     * Stub — throws UnsupportedOperationException until GREEN-1.
+     */
+    public String signUserToken(Long userId) {
+        throw new UnsupportedOperationException("signUserToken not yet implemented");
+    }
+
+    /**
+     * Signs a new USER access token with custom expiration in seconds.
+     * Stub — throws UnsupportedOperationException until GREEN-1.
+     */
+    public String signUserToken(Long userId, int expirationSeconds) {
+        throw new UnsupportedOperationException("signUserToken(expiration) not yet implemented");
+    }
+
+    /**
+     * Extracts the user ID from a USER token.
+     * Must reject ADMIN tokens.
+     * Stub — throws UnsupportedOperationException until GREEN-1.
+     */
+    public Long getUserId(String token) {
+        throw new UnsupportedOperationException("getUserId not yet implemented");
+    }
+
+    /**
+     * Extracts the subject ID from any valid token (admin or user).
+     * Stub — throws UnsupportedOperationException until GREEN-1.
+     */
+    public Long getSubjectId(String token) {
+        throw new UnsupportedOperationException("getSubjectId not yet implemented");
+    }
+
+    /**
+     * Extracts the tokenType claim from a token.
+     * Stub — throws UnsupportedOperationException until GREEN-1.
+     */
+    public String getTokenType(String token) {
+        throw new UnsupportedOperationException("getTokenType not yet implemented");
+    }
 }
