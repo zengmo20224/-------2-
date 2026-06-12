@@ -15,8 +15,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * RED-3: Tests that test-login endpoint does not exist outside test profile.
- * Uses "profile-isolation" profile which does not activate TestLoginController.
+ * Tests that test-login endpoint and beans do not exist outside test profile.
+ * Uses "profile-isolation" profile which does not activate TestLoginController
+ * or TestLoginService.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -43,5 +44,12 @@ class TestLoginProfileIsolationTest {
     void testLoginControllerBeanDoesNotExist() {
         boolean hasController = applicationContext.containsBeanDefinition("testLoginController");
         assertThat(hasController).isFalse();
+    }
+
+    @Test
+    @DisplayName("TestLoginService bean does not exist in non-test profile")
+    void testLoginServiceBeanDoesNotExist() {
+        boolean hasService = applicationContext.containsBeanDefinition("testLoginService");
+        assertThat(hasService).isFalse();
     }
 }
