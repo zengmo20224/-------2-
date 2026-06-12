@@ -33,13 +33,12 @@ import com.petcare.store.entity.Store;
 import com.petcare.store.mapper.StoreMapper;
 import com.petcare.user.entity.User;
 import com.petcare.user.mapper.UserMapper;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -52,10 +51,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
-@ActiveProfiles("mysql-test")
+@Tag("tc-mysql")
 @Transactional
-class MySqlMapperIntegrationIT {
+class MySqlMapperIntegrationIT extends AbstractTcMySqlIT {
 
     @Autowired
     private ApplicationContext applicationContext;

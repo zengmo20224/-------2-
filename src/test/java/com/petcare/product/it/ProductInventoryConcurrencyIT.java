@@ -1,6 +1,7 @@
 package com.petcare.product.it;
 
 import com.petcare.common.exception.BusinessException;
+import com.petcare.common.persistence.AbstractTcMySqlIT;
 import com.petcare.product.entity.CartItem;
 import com.petcare.product.entity.Product;
 import com.petcare.product.mapper.CartItemMapper;
@@ -11,8 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -34,12 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <h3>How to run:</h3>
  * <pre>
- * # Set environment variables for your MySQL instance
- * $env:DB_URL="jdbc:mysql://localhost:3306/petcare_o2o?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai"
- * $env:DB_USERNAME="root"
- * $env:DB_PASSWORD="your_password"
- *
- * mvn "-Dtest=ProductInventoryConcurrencyIT" test -Dspring.profiles.active=mysql-test
+ * mvn clean test -Ptc-mysql
  * </pre>
  *
  * <h3>What it verifies:</h3>
@@ -50,10 +44,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>No orphaned order or order-item rows remain for the failed order</li>
  * </ul>
  */
-@SpringBootTest
-@ActiveProfiles("mysql-test")
-@Tag("mysql-integration")
-class ProductInventoryConcurrencyIT {
+@Tag("tc-mysql")
+class ProductInventoryConcurrencyIT extends AbstractTcMySqlIT {
 
     @Autowired
     private ProductMapper productMapper;

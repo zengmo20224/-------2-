@@ -12,6 +12,7 @@ import com.petcare.booking.service.BookingStatusLogService;
 import com.petcare.booking.service.ServiceBookingService;
 import com.petcare.booking.service.StaffScheduleService;
 import com.petcare.common.exception.BusinessException;
+import com.petcare.common.persistence.AbstractTcMySqlIT;
 import com.petcare.service.entity.ServiceCategory;
 import com.petcare.service.entity.ServiceItem;
 import com.petcare.service.service.ServiceCategoryService;
@@ -29,8 +30,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -56,13 +55,11 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * 3. Same-staff overlapping concurrent bookings: exactly 1 succeeds
  * 4. Same-staff adjacent time slots: both succeed
  *
- * Must run with mysql-test profile:
- *   mvn -Dtest=BookingConcurrencyMySqlIT -Dspring.profiles.active=mysql-test test
+ * Run with the Testcontainers MySQL gate:
+ *   mvn clean test -Ptc-mysql
  */
-@SpringBootTest
-@ActiveProfiles("mysql-test")
-@Tag("mysql-concurrency")
-class BookingConcurrencyMySqlIT {
+@Tag("tc-mysql")
+class BookingConcurrencyMySqlIT extends AbstractTcMySqlIT {
 
     @Autowired private StaffBookingLockMapper staffBookingLockMapper;
     @Autowired private BookingApplicationService bookingApplicationService;
