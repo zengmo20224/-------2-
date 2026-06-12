@@ -181,8 +181,8 @@
 - [ ] 高风险宠物症状会触发建议就医。
 - [ ] AI 不能直接查询数据库。
 - [ ] Provider 原始错误、完整 Prompt、API Key 和 Authorization Header 不会出现在响应或日志中。
-- [ ] D-008 未决项未决定前，没有写死模型、超时、重试、最大 Token、限流或流式策略。
-- [ ] D-008 未决项未决定前，没有声称真实 DeepSeek 已接入。
+- [ ] 模型、超时、重试、最大 Token 和限流按 D-008 配置化，V1 不启用流式输出。
+- [ ] 阶段 14B 未完成真实 Provider 验收前，没有声称真实 DeepSeek 已接入。
 - [ ] `mvn test` 通过。
 - [ ] `mvn clean package` 通过。
 - [ ] `git diff --check` 通过。

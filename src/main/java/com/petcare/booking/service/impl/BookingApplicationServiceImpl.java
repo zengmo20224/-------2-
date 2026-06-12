@@ -23,6 +23,8 @@ import com.petcare.booking.service.BookingStatusLogService;
 import com.petcare.booking.service.ServiceBookingService;
 import com.petcare.booking.service.StaffScheduleService;
 import com.petcare.booking.service.StaffUnavailableTimeService;
+import com.petcare.admin.entity.AdminOperationLog;
+import com.petcare.admin.service.AdminOperationLogService;
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
 import com.petcare.common.pagination.PageResponse;
@@ -38,7 +40,10 @@ import com.petcare.store.service.StoreConfigService;
 import com.petcare.store.service.StoreService;
 import com.petcare.user.entity.UserAddress;
 import com.petcare.user.service.UserAddressService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -55,6 +60,8 @@ import java.util.Map;
 @Service
 public class BookingApplicationServiceImpl implements BookingApplicationService {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingApplicationServiceImpl.class);
+
     private final ServiceItemService serviceItemService;
     private final StoreConfigService storeConfigService;
     private final StoreService storeService;
@@ -67,6 +74,7 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
     private final UserAddressService userAddressService;
     private final BookingRetryService bookingRetryService;
     private final BookingTransactionService bookingTransactionService;
+    private final AdminOperationLogService operationLogService;
 
     public BookingApplicationServiceImpl(ServiceItemService serviceItemService,
                                          StoreConfigService storeConfigService,
@@ -79,7 +87,8 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
                                          BookingStatusLogService bookingStatusLogService,
                                          UserAddressService userAddressService,
                                          BookingRetryService bookingRetryService,
-                                         BookingTransactionService bookingTransactionService) {
+                                         BookingTransactionService bookingTransactionService,
+                                         AdminOperationLogService operationLogService) {
         this.serviceItemService = serviceItemService;
         this.storeConfigService = storeConfigService;
         this.storeService = storeService;
@@ -92,6 +101,7 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
         this.userAddressService = userAddressService;
         this.bookingRetryService = bookingRetryService;
         this.bookingTransactionService = bookingTransactionService;
+        this.operationLogService = operationLogService;
     }
 
     // ========== Availability ==========
@@ -337,72 +347,169 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
     }
 
     @Override
+    @Transactional
     public BookingResponse confirmBooking(Long bookingId, String merchantRemark, Long operatorId) {
-        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
-                bookingId, "CONFIRMED", "ADMIN", operatorId, "管理员确认预约",
-                null, merchantRemark);
-        return toResponse(updated);
+        String url = "/api/v1/admin/bookings/" + bookingId + "/confirm";
+        String params = "bookingId=" + bookingId;
+        try {
+            ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                    bookingId, "CONFIRMED", "ADMIN", operatorId, "管理员确认预约",
+                    null, merchantRemark);
+            auditSuccess(operatorId, "confirm-booking", url, params);
+            return toResponse(updated);
+        } catch (RuntimeException e) {
+            auditFail(operatorId, "confirm-booking", url, params, e);
+            throw e;
+        }
     }
 
     @Override
+    @Transactional
     public BookingResponse rejectBooking(Long bookingId, String reason, Long operatorId) {
-        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
-                bookingId, "REJECTED", "ADMIN", operatorId, "管理员拒绝预约：" + reason,
-                reason, null);
-        return toResponse(updated);
+        String url = "/api/v1/admin/bookings/" + bookingId + "/reject";
+        String params = "bookingId=" + bookingId;
+        try {
+            ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                    bookingId, "REJECTED", "ADMIN", operatorId, "管理员拒绝预约：" + reason,
+                    reason, null);
+            auditSuccess(operatorId, "reject-booking", url, params);
+            return toResponse(updated);
+        } catch (RuntimeException e) {
+            auditFail(operatorId, "reject-booking", url, params, e);
+            throw e;
+        }
     }
 
     @Override
+    @Transactional
     public BookingResponse startBooking(Long bookingId, Long operatorId) {
-        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
-                bookingId, "IN_SERVICE", "ADMIN", operatorId, "管理员开始服务",
-                null, null);
-        return toResponse(updated);
+        String url = "/api/v1/admin/bookings/" + bookingId + "/start";
+        String params = "bookingId=" + bookingId;
+        try {
+            ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                    bookingId, "IN_SERVICE", "ADMIN", operatorId, "管理员开始服务",
+                    null, null);
+            auditSuccess(operatorId, "start-booking", url, params);
+            return toResponse(updated);
+        } catch (RuntimeException e) {
+            auditFail(operatorId, "start-booking", url, params, e);
+            throw e;
+        }
     }
 
     @Override
+    @Transactional
     public BookingResponse completeBooking(Long bookingId, Long operatorId) {
-        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
-                bookingId, "COMPLETED", "ADMIN", operatorId, "管理员完成服务",
-                null, null);
-        return toResponse(updated);
+        String url = "/api/v1/admin/bookings/" + bookingId + "/complete";
+        String params = "bookingId=" + bookingId;
+        try {
+            ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                    bookingId, "COMPLETED", "ADMIN", operatorId, "管理员完成服务",
+                    null, null);
+            auditSuccess(operatorId, "complete-booking", url, params);
+            return toResponse(updated);
+        } catch (RuntimeException e) {
+            auditFail(operatorId, "complete-booking", url, params, e);
+            throw e;
+        }
     }
 
     @Override
+    @Transactional
     public BookingResponse cancelBookingAdmin(Long bookingId, String reason, Long operatorId) {
-        ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
-                bookingId, "CANCELLED", "ADMIN", operatorId, "管理员取消预约：" + reason,
-                reason, null);
-        return toResponse(updated);
+        String url = "/api/v1/admin/bookings/" + bookingId + "/cancel";
+        String params = "bookingId=" + bookingId;
+        try {
+            ServiceBooking updated = bookingTransactionService.transitionStatusOnce(
+                    bookingId, "CANCELLED", "ADMIN", operatorId, "管理员取消预约：" + reason,
+                    reason, null);
+            auditSuccess(operatorId, "cancel-booking", url, params);
+            return toResponse(updated);
+        } catch (RuntimeException e) {
+            auditFail(operatorId, "cancel-booking", url, params, e);
+            throw e;
+        }
     }
 
     @Override
+    @Transactional
     public BookingResponse reassignBooking(Long bookingId, BookingReassignRequest request, Long operatorId) {
-        // Pre-validate staff skill and status (optimistic checks before transaction)
-        ServiceItem item = serviceItemService.getById(
-                getBookingOrThrow(bookingId).getServiceItemId());
-        StaffSkill skill = staffSkillService.getOne(new LambdaQueryWrapper<StaffSkill>()
-                .eq(StaffSkill::getStaffId, request.newStaffId())
-                .eq(StaffSkill::getServiceCategoryId, item.getCategoryId()));
-        if (skill == null) {
-            throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE, "该员工不具备此服务技能");
+        String url = "/api/v1/admin/bookings/" + bookingId + "/reassign";
+        String params = "bookingId=" + bookingId + ",newStaffId=" + request.newStaffId();
+        try {
+            // Pre-validate staff skill and status (optimistic checks before transaction)
+            ServiceItem item = serviceItemService.getById(
+                    getBookingOrThrow(bookingId).getServiceItemId());
+            StaffSkill skill = staffSkillService.getOne(new LambdaQueryWrapper<StaffSkill>()
+                    .eq(StaffSkill::getStaffId, request.newStaffId())
+                    .eq(StaffSkill::getServiceCategoryId, item.getCategoryId()));
+            if (skill == null) {
+                throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE, "该员工不具备此服务技能");
+            }
+
+            Staff newStaff = staffService.getById(request.newStaffId());
+            if (newStaff == null || !"ACTIVE".equals(newStaff.getStatus())) {
+                throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE, "该员工不存在或已停用");
+            }
+
+            // Delegate to transaction service (locks booking, validates status, uses locked snapshot)
+            ServiceBooking booking = getBookingOrThrow(bookingId);
+            bookingTransactionService.reassignBookingOnce(bookingId, request.newStaffId(),
+                    booking.getBookingDate(), booking.getStartTime(), booking.getEndTime(), operatorId);
+
+            auditSuccess(operatorId, "reassign-booking", url, params);
+            return toResponse(serviceBookingService.getById(bookingId));
+        } catch (RuntimeException e) {
+            auditFail(operatorId, "reassign-booking", url, params, e);
+            throw e;
         }
-
-        Staff newStaff = staffService.getById(request.newStaffId());
-        if (newStaff == null || !"ACTIVE".equals(newStaff.getStatus())) {
-            throw new BusinessException(ErrorCode.BOOKING_STAFF_UNAVAILABLE, "该员工不存在或已停用");
-        }
-
-        // Delegate to transaction service (locks booking, validates status, uses locked snapshot)
-        // Date/time params are passed but the transaction reads actual values from the locked booking
-        ServiceBooking booking = getBookingOrThrow(bookingId);
-        bookingTransactionService.reassignBookingOnce(bookingId, request.newStaffId(),
-                booking.getBookingDate(), booking.getStartTime(), booking.getEndTime(), operatorId);
-
-        return toResponse(serviceBookingService.getById(bookingId));
     }
 
     // ========== Helper Methods ==========
+
+    private void auditSuccess(Long operatorId, String operation, String url, String params) {
+        AdminOperationLog entry = buildAuditEntry(operatorId, operation, url, params);
+        entry.setResult("SUCCESS");
+        if (!operationLogService.save(entry)) {
+            throw new IllegalStateException("Failed to persist required admin operation log");
+        }
+    }
+
+    private void auditFail(Long operatorId, String operation, String url,
+                           String params, RuntimeException cause) {
+        AdminOperationLog entry = buildAuditEntry(operatorId, operation, url, params);
+        entry.setResult("FAIL");
+        entry.setErrorMessage(sanitizeErrorMessage(cause));
+        try {
+            if (!operationLogService.saveFailLog(entry)) {
+                log.warn("Failed to write FAIL admin operation log: operatorId={}, operation={}",
+                        operatorId, operation);
+            }
+        } catch (RuntimeException auditException) {
+            log.warn("Failed to write FAIL admin operation log: operatorId={}, operation={}",
+                    operatorId, operation);
+        }
+    }
+
+    private AdminOperationLog buildAuditEntry(Long operatorId, String operation,
+                                               String url, String params) {
+        AdminOperationLog entry = new AdminOperationLog();
+        entry.setAdminId(operatorId);
+        entry.setModule("booking");
+        entry.setOperation(operation);
+        entry.setRequestMethod("POST");
+        entry.setRequestUrl(url);
+        entry.setRequestParams(params);
+        entry.setCreateTime(LocalDateTime.now());
+        return entry;
+    }
+
+    private String sanitizeErrorMessage(RuntimeException exception) {
+        if (exception instanceof BusinessException && exception.getMessage() != null) {
+            return exception.getMessage().substring(0, Math.min(exception.getMessage().length(), 1000));
+        }
+        return "unexpected_error";
+    }
 
     private void validateServiceMode(ServiceItem item, String requestedMode) {
         String itemMode = item.getServiceMode();

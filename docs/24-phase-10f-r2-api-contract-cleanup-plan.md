@@ -36,7 +36,7 @@ f6463f9 test(admin-web): add backend status contract regression tests
 - 小程序工程
 - 预约、订单等后端业务状态机
 - 数据库业务状态、权限码和核心业务规则
-- D-007、D-008 未决能力
+- D-007、D-008 对应的阶段 14 扩展能力
 - 与 API 契约无关的页面视觉重构
 
 ### 当前受保护未跟踪文件
