@@ -1,5 +1,6 @@
 package com.petcare.user.controller;
 
+import com.petcare.common.config.SecurityProperties;
 import com.petcare.common.security.JwtTokenService;
 import com.petcare.user.entity.User;
 import com.petcare.user.service.UserService;
@@ -144,15 +145,14 @@ class TestLoginControllerTest {
     // === Token Type Isolation ===
 
     @Test
-    @DisplayName("ADMIN token cannot access user auth probe")
+    @DisplayName("ADMIN token cannot access user auth probe (403 Forbidden)")
     void adminTokenCannotAccessUserAuthProbe() throws Exception {
         Long adminId = createTestAdmin("probe_admin", "SUPER_ADMIN");
         String adminToken = jwtTokenService.signAdminToken(adminId, "probe_admin", "SUPER_ADMIN");
 
         mockMvc.perform(get("/api/v1/test/user-auth-probe")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.userId").value("none"));
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -179,6 +179,131 @@ class TestLoginControllerTest {
         mockMvc.perform(get("/api/v1/test/user-auth-probe")
                         .header("Authorization", "Bearer " + expiredToken))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // === Helper ===
+
+    // --- Token State Change Regression (HIGH-1) ---
+
+    @Test
+    @DisplayName("USER token returns 401 after user is disabled")
+    void userTokenReturns401AfterUserDisabled() throws Exception {
+        User user = createUser("13800138010", "禁用回归", "ACTIVE");
+        String token = jwtTokenService.signUserToken(user.getId());
+
+        user.setStatus("DISABLED");
+        userService.updateById(user);
+
+        mockMvc.perform(get("/api/v1/test/user-auth-probe")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("USER token returns 401 after user is logically deleted")
+    void userTokenReturns401AfterUserDeleted() throws Exception {
+        User user = createUser("13800138011", "删除回归", "ACTIVE");
+        String token = jwtTokenService.signUserToken(user.getId());
+
+        userService.removeById(user.getId());
+
+        mockMvc.perform(get("/api/v1/test/user-auth-probe")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("ADMIN token returns 401 after admin is disabled")
+    void adminTokenReturns401AfterAdminDisabled() throws Exception {
+        Long adminId = createTestAdmin("disabled_admin_test", "SUPER_ADMIN");
+        String token = jwtTokenService.signAdminToken(adminId, "disabled_admin_test", "SUPER_ADMIN");
+
+        AdminUser admin = adminUserService.getById(adminId);
+        admin.setStatus("DISABLED");
+        adminUserService.updateById(admin);
+
+        mockMvc.perform(get("/api/v1/admin/auth/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // --- Issuer Validation (MEDIUM-2) ---
+
+    @Test
+    @DisplayName("Token signed with wrong issuer returns 401")
+    void tokenWithWrongIssuerReturns401() throws Exception {
+        SecurityProperties wrongIssuerProps = new SecurityProperties(
+                "test-secret-key-for-unit-tests-at-least-32-chars",
+                "malicious-issuer",
+                120
+        );
+        JwtTokenService wrongService = new JwtTokenService(wrongIssuerProps);
+        String wrongToken = wrongService.signUserToken(9999L);
+
+        mockMvc.perform(get("/api/v1/test/user-auth-probe")
+                        .header("Authorization", "Bearer " + wrongToken))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // --- Token Type Validation (MEDIUM-2) ---
+
+    @Test
+    @DisplayName("Token with missing tokenType returns 401")
+    void tokenWithMissingTokenTypeReturns401() throws Exception {
+        String noTypeToken = io.jsonwebtoken.Jwts.builder()
+                .subject("9999")
+                .issuer("petcare-o2o-api-test")
+                .issuedAt(new java.util.Date())
+                .expiration(new java.util.Date(System.currentTimeMillis() + 3600000))
+                .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(
+                        "test-secret-key-for-unit-tests-at-least-32-chars"
+                                .getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+                .compact();
+
+        mockMvc.perform(get("/api/v1/test/user-auth-probe")
+                        .header("Authorization", "Bearer " + noTypeToken))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // --- Allowlist Tests (HIGH-3) ---
+
+    @Test
+    @DisplayName("test-login rejects ACTIVE user not in allowlist")
+    void testLoginRejectsActiveUserNotInAllowlist() throws Exception {
+        createUser("13800138999", "不在名单", "ACTIVE");
+
+        mockMvc.perform(post("/api/v1/auth/test-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phone\":\"13800138999\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("test-login rejects logically deleted user and does not create")
+    void testLoginRejectsDeletedUserAndDoesNotCreate() throws Exception {
+        User user = createUser("13800138012", "已删除用户", "ACTIVE");
+        userService.removeById(user.getId());
+        long countAfterDelete = userService.count();
+
+        mockMvc.perform(post("/api/v1/auth/test-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phone\":\"13800138012\"}"))
+                .andExpect(status().isUnauthorized());
+
+        assertThat(userService.count()).isEqualTo(countAfterDelete);
+    }
+
+    @Test
+    @DisplayName("test-login for allowlisted phone with non-existent user returns 401")
+    void testLoginAllowlistedPhoneNonExistentReturns401() throws Exception {
+        long countBefore = userService.count();
+
+        mockMvc.perform(post("/api/v1/auth/test-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phone\":\"13800138050\"}"))
+                .andExpect(status().isUnauthorized());
+
+        assertThat(userService.count()).isEqualTo(countBefore);
     }
 
     // === Helper ===

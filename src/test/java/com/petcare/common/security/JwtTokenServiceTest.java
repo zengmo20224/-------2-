@@ -215,4 +215,21 @@ class JwtTokenServiceTest {
         assertThatThrownBy(() -> jwtTokenService.parseToken(token))
                 .isInstanceOf(Exception.class);
     }
+
+    // === Issuer Validation (MEDIUM-2: Phase 11-01R) ===
+
+    @Test
+    @DisplayName("parseToken must reject token signed with wrong issuer")
+    void parseTokenMustRejectWrongIssuer() {
+        SecurityProperties wrongIssuerProps = new SecurityProperties(
+                "test-secret-key-for-unit-tests-at-least-32-chars",
+                "malicious-issuer",
+                120
+        );
+        JwtTokenService wrongService = new JwtTokenService(wrongIssuerProps);
+        String wrongIssuerToken = wrongService.signUserToken(8001L);
+
+        assertThatThrownBy(() -> jwtTokenService.parseToken(wrongIssuerToken))
+                .isInstanceOf(Exception.class);
+    }
 }
