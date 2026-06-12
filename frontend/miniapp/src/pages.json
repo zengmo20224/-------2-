@@ -1,0 +1,117 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "PetCare"
+      }
+    },
+    {
+      "path": "pages/services/index",
+      "style": {
+        "navigationBarTitleText": "服务"
+      }
+    },
+    {
+      "path": "pages/community/index",
+      "style": {
+        "navigationBarTitleText": "社区"
+      }
+    },
+    {
+      "path": "pages/products/index",
+      "style": {
+        "navigationBarTitleText": "商品"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages/booking",
+      "pages": [
+        { "path": "create", "style": { "navigationBarTitleText": "创建预约" } },
+        { "path": "success", "style": { "navigationBarTitleText": "预约提交成功" } },
+        { "path": "conflict", "style": { "navigationBarTitleText": "需要重新选择时间" } },
+        { "path": "list", "style": { "navigationBarTitleText": "我的预约" } },
+        { "path": "detail", "style": { "navigationBarTitleText": "预约详情" } }
+      ]
+    },
+    {
+      "root": "pages/order",
+      "pages": [
+        { "path": "cart", "style": { "navigationBarTitleText": "购物车" } },
+        { "path": "confirm", "style": { "navigationBarTitleText": "确认订单" } },
+        { "path": "list", "style": { "navigationBarTitleText": "我的订单" } },
+        { "path": "detail", "style": { "navigationBarTitleText": "订单详情" } }
+      ]
+    },
+    {
+      "root": "pages/community-post",
+      "pages": [
+        { "path": "create", "style": { "navigationBarTitleText": "发布帖子" } }
+      ]
+    },
+    {
+      "root": "pages/address-out",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "地址超范围" } }
+      ]
+    },
+    {
+      "root": "pages/ai",
+      "pages": [
+        { "path": "status", "style": { "navigationBarTitleText": "智能助手" } }
+      ]
+    }
+  ],
+  "tabBar": {
+    "color": "#71817D",
+    "selectedColor": "#11796F",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/icons/home.png",
+        "selectedIconPath": "static/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/services/index",
+        "text": "预约",
+        "iconPath": "static/icons/booking.png",
+        "selectedIconPath": "static/icons/booking-active.png"
+      },
+      {
+        "pagePath": "pages/community/index",
+        "text": "社区",
+        "iconPath": "static/icons/community.png",
+        "selectedIconPath": "static/icons/community-active.png"
+      },
+      {
+        "pagePath": "pages/products/index",
+        "text": "商品",
+        "iconPath": "static/icons/product.png",
+        "selectedIconPath": "static/icons/product-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "static/icons/profile.png",
+        "selectedIconPath": "static/icons/profile-active.png"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "PetCare",
+    "navigationBarBackgroundColor": "#11796F",
+    "backgroundColor": "#FAF8F3"
+  }
+}

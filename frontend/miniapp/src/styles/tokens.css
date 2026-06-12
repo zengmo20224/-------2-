@@ -1,0 +1,44 @@
+/**
+ * PetCare Miniapp Design Tokens
+ *
+ * Source of truth: docs/30-user-miniapp-frontend-design-spec.md Section 6
+ * User-facing color palette differs from admin-web.
+ */
+
+:root {
+  /* ─── User Color Palette ─── */
+
+  --pc-user-primary: #11796F;
+  --pc-user-dark: #0C4D48;
+  --pc-user-soft: #DFF2ED;
+  --pc-user-cream: #FAF8F3;
+  --pc-user-accent: #F5A623;
+  --pc-user-accent-soft: #FFF0D1;
+  --pc-user-danger: #D84D4D;
+  --pc-user-ink: #19322E;
+  --pc-user-muted: #71817D;
+  --pc-user-line: #E2E9E6;
+
+  /* ─── Spacing ─── */
+
+  --pc-page-padding: 20px;
+  --pc-card-gap: 14px;
+  --pc-section-gap: 28px;
+
+  /* ─── Border Radius ─── */
+
+  --pc-radius-card: 16px;
+  --pc-radius-card-lg: 20px;
+
+  /* ─── Typography ─── */
+
+  --pc-font-title: 24px;
+  --pc-font-card-title: 16px;
+  --pc-font-body: 14px;
+  --pc-font-caption: 11px;
+
+  /* ─── Sizing ─── */
+
+  --pc-btn-height: 48px;
+  --pc-tab-bar-height: 64px;
+}

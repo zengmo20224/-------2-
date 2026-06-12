@@ -1,0 +1,32 @@
+/**
+ * PetCare Miniapp global SCSS variables.
+ * Overrides uni-app defaults with PetCare design tokens.
+ */
+
+/* Primary colors — user-facing palette */
+$pc-user-primary: #11796F;
+$pc-user-dark: #0C4D48;
+$pc-user-soft: #DFF2ED;
+$pc-user-cream: #FAF8F3;
+$pc-user-accent: #F5A623;
+$pc-user-danger: #D84D4D;
+$pc-user-ink: #19322E;
+$pc-user-muted: #71817D;
+$pc-user-line: #E2E9E6;
+
+/* Override uni-app defaults */
+$uni-color-primary: #11796F;
+$uni-color-success: #2E7D32;
+$uni-color-warning: #F5A623;
+$uni-color-error: #D84D4D;
+$uni-text-color: #19322E;
+$uni-bg-color: #FAF8F3;
+$uni-border-color: #E2E9E6;
+
+/* Typography */
+$uni-font-size-base: 14px;
+$uni-font-size-sm: 12px;
+$uni-font-size-lg: 16px;
+
+/* Border Radius */
+$uni-border-radius-lg: 16px;

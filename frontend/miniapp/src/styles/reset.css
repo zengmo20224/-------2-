@@ -1,0 +1,16 @@
+/**
+ * Base style reset for PetCare miniapp.
+ */
+
+page {
+  background-color: var(--pc-user-cream);
+  color: var(--pc-user-ink);
+  font-size: var(--pc-font-body);
+  line-height: 1.6;
+}
+
+view,
+text,
+image {
+  box-sizing: border-box;
+}

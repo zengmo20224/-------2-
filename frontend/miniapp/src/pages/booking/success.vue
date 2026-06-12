@@ -1,0 +1,48 @@
+<template>
+  <view class="pc-page booking-success">
+    <view class="booking-success__content">
+      <text class="booking-success__icon">&#x2705;</text>
+      <text class="booking-success__title">预约提交成功</text>
+      <text class="booking-success__hint">我们将尽快确认您的预约</text>
+      <PcPrimaryButton text="查看我的预约" @tap="goMyBookings" />
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
+
+function goMyBookings() {
+  uni.navigateTo({ url: '/pages/booking/list' })
+}
+</script>
+
+<style scoped>
+.booking-success {
+  padding: var(--pc-page-padding);
+}
+
+.booking-success__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 60px;
+  gap: 12px;
+}
+
+.booking-success__icon {
+  font-size: 48px;
+}
+
+.booking-success__title {
+  font-size: var(--pc-font-title);
+  font-weight: 700;
+  color: var(--pc-user-ink);
+}
+
+.booking-success__hint {
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-muted);
+  margin-bottom: 24px;
+}
+</style>
