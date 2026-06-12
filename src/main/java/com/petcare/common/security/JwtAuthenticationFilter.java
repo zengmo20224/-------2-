@@ -31,6 +31,7 @@ import java.io.IOException;
  * - Token missing: does not error, lets Spring Security decide if auth is required
  * - Token invalid/expired: clears context, lets entry point return 401
  * - Token valid: sets authentication in SecurityContext
+ * - Authentication loading failure (disabled/deleted user): clears context, returns 401
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -64,25 +65,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(BEARER_PREFIX.length());
 
         try {
-            String tokenType = jwtTokenService.getTokenType(token);
+            JwtTokenService.TokenParseResult parseResult = jwtTokenService.parseTokenForFilter(token);
 
-            switch (tokenType) {
-                case "ADMIN" -> authenticateAdmin(token, request);
-                case "USER" -> authenticateUser(token, request);
-                default -> {
-                    // Unknown tokenType — do not set SecurityContext
-                }
+            if (parseResult == null) {
+                // Invalid or missing tokenType — do not set SecurityContext
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            switch (parseResult.tokenType()) {
+                case "ADMIN" -> authenticateAdmin(parseResult.subjectId(), request);
+                case "USER" -> authenticateUser(parseResult.subjectId(), request);
+                default -> SecurityContextHolder.clearContext();
             }
         } catch (JwtException | IllegalArgumentException e) {
             // Invalid or expired token — clear context and let entry point return 401
+            SecurityContextHolder.clearContext();
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            // User/admin loading failed (disabled, deleted) — clear context for 401
             SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private void authenticateAdmin(String token, HttpServletRequest request) {
-        Long adminId = jwtTokenService.getSubjectId(token);
+    private void authenticateAdmin(Long adminId, HttpServletRequest request) {
         UserDetails userDetails = adminUserDetailsService.loadUserByAdminId(adminId);
 
         UsernamePasswordAuthenticationToken authentication =
@@ -93,8 +101,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    private void authenticateUser(String token, HttpServletRequest request) {
-        Long userId = jwtTokenService.getSubjectId(token);
+    private void authenticateUser(Long userId, HttpServletRequest request) {
         UserPrincipal userPrincipal = userAuthLoadingService.loadActiveUserById(userId);
 
         UsernamePasswordAuthenticationToken authentication =

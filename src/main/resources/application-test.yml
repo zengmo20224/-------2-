@@ -22,3 +22,5 @@ petcare:
     jwt-secret: test-secret-key-for-unit-tests-at-least-32-chars
     jwt-issuer: petcare-o2o-api-test
     jwt-expiration-minutes: 120
+  test-login:
+    allowed-phones: "13800138001,13800138002,13800138003,13800138010,13800138011,13800138050"

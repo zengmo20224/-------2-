@@ -58,7 +58,7 @@ public final class SecurityContextHelper {
                 .orElse(Collections.emptyList());
     }
 
-    // --- User identity stubs (RED-1: will be implemented in GREEN-1) ---
+    // --- User identity ---
 
     /**
      * Returns the UserPrincipal if the current user is an authenticated user (not admin).

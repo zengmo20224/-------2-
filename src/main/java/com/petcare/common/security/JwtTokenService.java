@@ -82,17 +82,24 @@ public class JwtTokenService {
 
     /**
      * Parses and validates a JWT token.
+     * Verifies signature, expiration, and issuer.
      *
      * @param token the JWT string
      * @return parsed claims
-     * @throws JwtException if the token is invalid, expired, or has wrong signature
+     * @throws JwtException if the token is invalid, expired, has wrong signature, or wrong issuer
      */
     public Claims parseToken(String token) {
-        return Jwts.parser()
+        Claims claims = Jwts.parser()
                 .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+
+        if (!issuer.equals(claims.getIssuer())) {
+            throw new JwtException("Invalid token issuer");
+        }
+
+        return claims;
     }
 
     /**
@@ -179,11 +186,27 @@ public class JwtTokenService {
     }
 
     /**
-     * Extracts the subject ID from any valid token regardless of type.
+     * Parses token once and returns both tokenType and subject ID.
+     * Used by the filter for single-pass token processing.
+     *
+     * @return TokenParseResult with tokenType and subjectId, or null if tokenType is invalid
+     * @throws JwtException if the token is invalid, expired, or has wrong issuer
      */
-    public Long getSubjectId(String token) {
+    public TokenParseResult parseTokenForFilter(String token) {
         Claims claims = parseToken(token);
-        return Long.parseLong(claims.getSubject());
+        String tokenType = claims.get("tokenType", String.class);
+        if (tokenType == null
+                || (!TOKEN_TYPE_ADMIN.equals(tokenType) && !TOKEN_TYPE_USER.equals(tokenType))) {
+            return null;
+        }
+        Long subjectId = Long.parseLong(claims.getSubject());
+        return new TokenParseResult(tokenType, subjectId);
+    }
+
+    /**
+     * Single-pass token parse result for filter use.
+     */
+    public record TokenParseResult(String tokenType, Long subjectId) {
     }
 
     /**
