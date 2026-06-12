@@ -71,7 +71,7 @@ git switch -c fix/booking-admin-audit
 - `requestParams`：只保存目标预约 ID；改派可额外保存新员工 ID。禁止保存完整请求体、备注和取消原因
 - `errorMessage`：业务异常最多保留 1000 字符；未知异常固定写 `unexpected_error`
 
-当前 `admin_operation_log` 没有独立的 `target_resource_id` 和 `request_id` 字段。本任务禁止修改 `schema.sql`，目标预约 ID 暂时放入脱敏后的 `requestParams`。请求 ID 字段缺口只在交接中报告，不得自行扩表。
+按 D-017，V1 不扩展 `admin_operation_log` Schema。目标预约 ID 放入脱敏后的 `requestParams`，请求 ID 字段缺口只在交接中报告，不得自行扩表。
 
 ## 4. 允许修改范围
 

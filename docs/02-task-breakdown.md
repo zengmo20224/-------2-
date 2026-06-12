@@ -230,7 +230,7 @@
 - AI 不生成并执行 SQL，不直接修改核心业务状态。
 - Provider 原始错误、Prompt 和 API Key 不会泄露。
 - 使用 Mock Provider 的自动化测试通过。
-- D-008 未决项未决定前，不声称真实 DeepSeek 已接入。
+- D-008 已决定，但阶段 14B 未完成真实 Provider 验收前，不声称真实 DeepSeek 已接入。
 - 已提交 Git。
 
 ## 阶段 9：后台 API 完成

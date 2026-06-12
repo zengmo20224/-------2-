@@ -50,7 +50,7 @@
 - `BookingConcurrencyIT` 固定使用 `@ActiveProfiles("test")`，其注释中的 MySQL 运行命令不能将它真正切换到 MySQL。
 - H2 的 MySQL 兼容模式不能证明 SQL 在真实 MySQL 8 中可执行，也不能证明 InnoDB 行锁行为正确。
 - 扫描时工作区存在其他 Agent 或用户的未提交变更。后续 Agent 必须重新运行 `git status --short --branch` 和 `git diff --stat`，不能依赖本文档中的旧快照。
-- `docs/risk-management-report.md`、`frontend/package.json`、`frontend/package-lock.json` 在扫描时为未跟踪文件，禁止擅自删除、覆盖或提交。
+- 扫描时 `docs/risk-management-report.md`、`frontend/package.json`、`frontend/package-lock.json` 为未跟踪文件；其后根 package 文件被误混入历史提交。D-015 已决定只允许在 10F-R5 独立验证后删除，其他任务不得修改。
 
 ## 3. GLM-5.1 强制执行规则
 
@@ -81,7 +81,7 @@ RED 测试或失败证据计划：
 - 不允许一次同时修改后端、管理后台、小程序、数据库 Schema 和部署文件。
 - 跨层问题必须拆成后端契约任务、前端迁移任务和联调任务。
 - 当前 `10F-R2B` 未完成前，禁止直接开始后端缺陷修复、10G、小程序或发布任务，除非用户明确批准调整阶段顺序。
-- D-011、D-012 未决定前，禁止实现其相关代码。
+- D-011、D-012 已决定；相关代码仍必须按对应独立任务包和阶段门禁实施。
 
 ### 3.3 TDD 强制规则
 
@@ -380,7 +380,7 @@ fix(booking): lock booking during staff reassignment
 
 - 默认 Surefire 测试不会运行 `*IT`。
 - `BookingConcurrencyIT` 允许 1 到 2 个成功，断言不能证明防冲突规则。
-- 真实 MySQL 测试依赖手工环境，当前没有可复现门禁。
+- 真实 MySQL 测试当前没有可复现门禁；D-016 已决定使用 Testcontainers MySQL 8。
 
 允许修改：
 
@@ -399,9 +399,9 @@ fix(booking): lock booking during staff reassignment
 
 - 明确区分默认快速测试和真实 MySQL 集成测试。
 - 提供显式 Maven Profile 或等效命令运行 `*IT`。
-- CI 或本地门禁必须通过环境变量读取测试数据库连接信息。
-- 不得提交数据库密码。
-- MySQL 测试必须使用独立测试数据库，并提供可重复初始化和清理路径。
+- 使用固定版本的 Testcontainers MySQL 8 自动创建、初始化和清理隔离测试数据库。
+- CI 和本地专项门禁需要 Docker；Docker 不可用时必须明确报告未验证。
+- 不得提交数据库密码，不得连接生产数据库。
 - 并发测试必须有超时，失败时输出成功数、失败错误码和最终数据库记录数。
 
 必须验证：
@@ -461,9 +461,9 @@ git diff --check
 
 执行约束：
 
-- 真实 DeepSeek Provider 仍受 D-008 阻塞。
+- D-008 已决定，但真实 DeepSeek Provider 仍属于阶段 14B 独立任务。
 - 本任务只能加固已有领域安全策略、Mock Provider 测试和日志一致性。
-- 不允许实现真实 Provider、重试、流式输出或限流。
+- 本任务不允许顺带实现真实 Provider、重试或限流。
 
 问题证据：
 
@@ -697,13 +697,13 @@ npm run e2e
 | 管理员账号、角色和权限管理 API/页面 | 用户批准后的独立后台任务 | 必须遵守细粒度 RBAC 和操作日志 |
 | 服务分类、商品分类、员工不可用时间 API | 11-07 | 后端先完成契约与测试，前端后接入 |
 | 用户资料、宠物档案、地址管理 API | 11 | 必须有资源归属测试 |
-| 合法用户端 E2E 认证方案 | 11-01 | 未决定前禁止模拟生产登录 |
+| 合法用户端 E2E 认证方案 | 11-01 | 仅 `test` Profile 测试登录，非 test 环境必须不可达 |
 | OpenAPI 或真实接口清单 | 11-08 | 必须由真实 Controller/DTO 生成或核对 |
 | 可复现演示种子数据 | 11-06 | 不得包含生产秘密 |
 | 小程序工程与公开浏览 | 12 | 依赖前置后端和匿名访问策略 |
 | 小程序预约、订单、社区和 AI 流程 | 13 | 依赖合法用户认证 |
-| 文件上传 | 14A | 依赖 D-007 补全 |
-| 真实 DeepSeek Provider | 14B | 依赖 D-008 补全 |
+| 文件上传 | 14A | D-007 已决定，按阶段门禁实施 |
+| 真实 DeepSeek Provider | 14B | D-008 已决定，按阶段门禁实施 |
 | 真实 MySQL 全链路联调 | 15 | P0 预约和库存并发门禁必须通过 |
 | Docker Compose、环境示例和发布回滚 | 16 | 候选发布前完成 |
 | 营销活动展示和管理能力 | 用户确认范围后的独立任务 | 先核对 V1 原始需求和已有 API |

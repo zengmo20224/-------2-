@@ -47,7 +47,7 @@
 
 ### 3.2 当前特殊保护范围
 
-当前 `phase-10-frontend` 工作区中的 `frontend/package.json` 和 `frontend/package-lock.json` 为未确认归属的未跟踪文件，视为受保护进行中工作。
+`frontend/package.json` 和 `frontend/package-lock.json` 已确认是重复根依赖文件。按 D-015，只允许在独立的 `10F-R5` 清理任务中验证后删除；其他任务仍不得顺带修改或删除。
 
 后续 Agent 必须先按 `docs/23-phase-10f-review-fix-and-10g-quality-plan.md` 执行阶段 10F-R，不允许直接跳到质量基建、小程序、后端补缺或发布阶段。
 

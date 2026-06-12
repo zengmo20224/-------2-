@@ -16,15 +16,15 @@
 
 ## 2. 决策依赖状态
 
-本文档当前为草案。以下决策尚未全部获得用户明确批准，依赖它们的任务禁止开始：
+以下阶段 11 相关决策已经获得用户明确批准：
 
 | 决策 | 状态 | 对阶段 11 影响 |
 |------|------|----------------|
 | D-006 微信登录 | 已决定（存根） | 不接入真实微信，使用 D-013 替代 |
-| D-007 文件上传 | 部分决定 | 当前仅确定单文件不超过 10 MB |
-| D-008 AI Provider | 部分决定 | 当前仅确定 DeepSeek 与兼容协议边界 |
-| D-013 用户端 E2E 认证 | 未决 | 禁止实现测试登录端点 |
-| D-014 公开读取策略 | 未决 | 禁止修改匿名访问规则 |
+| D-007 文件上传 | 已决定 | 阶段 14A 按决定实施，不在阶段 11 提前实现 |
+| D-008 AI Provider | 已决定 | 阶段 14B 按决定实施，不在阶段 11 提前实现 |
+| D-013 用户端 E2E 认证 | 已决定 | 仅 `test` Profile 启用测试登录端点 |
+| D-014 公开读取策略 | 已决定 | 公开内容 GET 允许匿名读取 |
 
 ## 3. 建议分支
 
@@ -35,7 +35,7 @@
 阶段 11 有 8 个任务包，以下按依赖顺序排列。无依赖关系的任务包可以并行。
 
 ```text
-11-01 开发环境测试登录端点
+11-01 测试环境测试登录端点
 ├── 11-02 用户资料 API
 │   ├── 11-03 宠物档案 API
 │   └── 11-04 地址管理 API
@@ -49,11 +49,11 @@
 
 ## 5. 任务包详细规格
 
-### 11-01：开发环境测试登录端点
+### 11-01：测试环境测试登录端点
 
-**状态**：阻塞，等待用户明确批准 D-013。
+**状态**：已批准，可按 TDD 实施。
 
-**目标**：为开发和测试环境提供用户身份获取能力。
+**目标**：仅为自动化测试环境提供用户身份获取能力。
 
 **允许修改**：
 
@@ -71,30 +71,31 @@
 
 **实现要求**：
 
-1. 新增 `DevLoginController`，端点 `POST /api/v1/auth/dev-login`。
+1. 新增 `TestLoginController`，端点 `POST /api/v1/auth/test-login`。
 2. 请求体：`{ "phone": "13800138001" }`。
-3. 行为：按手机号查找 `user` 表，不存在则自动创建，签发用户 JWT。
-4. 使用 `@Profile("dev")` 注解，确保生产环境不存在此端点。
-5. Spring Security 配置放行此端点（仅 dev profile 时生效）。
-6. 添加应用启动时的 `dev` profile 检测日志警告。
+3. 行为：只允许按手机号查找预定义测试种子用户并签发 JWT；用户不存在时明确失败，禁止自动创建。
+4. 使用 `@Profile("test")` 注解，确保 `dev`、`prod` 和未指定 Profile 时不存在此端点。
+5. Spring Security 配置放行此端点，仅在 `test` Profile 相关配置加载时生效。
+6. 测试种子用户必须可重复初始化和清理，不包含生产秘密。
 
 **D-013 安全约束**：
 
-- 生产环境绝对不能暴露此端点。
-- `prod` profile 下该 Controller 不加载（不是返回 403，是完全不可达）。
+- 非 `test` 环境绝对不能暴露此端点。
+- `dev`、`prod` 和未指定 Profile 时该 Controller 不加载（不是返回 403，是完全不可达）。
 - 测试使用种子数据中定义的预设手机号。
+- 禁止通过测试登录端点任意创建用户。
 
 **RED 测试**：
 
-- `dev` profile 下，使用预设手机号能获得合法 JWT。
-- `dev` profile 下，不存在的手机号能自动创建用户并获得 JWT。
-- 非 `dev` profile 下，该端点不可达（返回 404）。
+- `test` profile 下，使用预设手机号能获得合法 JWT。
+- `test` profile 下，不存在的手机号登录失败且不会创建用户。
+- 非 `test` profile 下，该端点不可达（返回 404）。
 - 获得的 JWT 能通过 `/api/v1/user/profile` 等用户接口验证。
 
 **完成验证**：
 
 ```powershell
-mvn test -pl . -Dtest="DevLoginControllerTest"
+mvn test -pl . -Dtest="TestLoginControllerTest"
 mvn test
 git diff --check
 ```
@@ -141,7 +142,7 @@ UserProfileResponse {
 // 修改请求
 UpdateProfileRequest {
     @NotBlank String nickname;
-    String avatarUrl;  // 可选，D-007 决定后实现上传
+    String avatarUrl;  // 可选；真实上传仍在阶段 14A 实现
 }
 ```
 
@@ -315,7 +316,7 @@ git diff --check
 
 ### 11-05：配置公开读取接口匿名访问
 
-**状态**：阻塞，等待用户明确批准 D-014。
+**状态**：已批准，可按 TDD 实施。
 
 **目标**：按照 D-014 决策，放行公开资源的 GET 读取接口。
 
@@ -336,7 +337,7 @@ git diff --check
 
 **实现要求**：
 
-1. 修改 Spring Security 配置，放行以下 GET 端点：
+1. 扫描真实 Controller 后，按 HTTP GET 和真实路径逐项放行公开内容读取端点，至少覆盖：
 
    - `/api/v1/services/**`（GET）
    - `/api/v1/products/**`（GET）
@@ -347,6 +348,7 @@ git diff --check
 2. 确认帖子列表只返回审核通过状态的内容。
 3. 确认匿名访问不泄露用户私有信息。
 4. 管理后台接口不受影响。
+5. 禁止使用 `/api/v1/**` 等过宽匿名规则。
 
 **D-014 安全约束**：
 
@@ -395,13 +397,13 @@ git diff --check
 **实现要求**：
 
 1. 创建种子数据 SQL 文件，包含：
-   - 测试用户（对应 dev-login 预设手机号）。
+   - 测试用户（对应 test-login 预设手机号）。
    - 测试宠物。
    - 测试地址。
    - 基础服务分类和服务项目。
    - 基础商品分类和商品。
    - 基础话题。
-2. 使用 `@Profile("dev")` 或独立 Spring Boot 命令初始化。
+2. 使用 `@Profile("test")` 或测试专用初始化方案。
 3. 提供清理方法。
 4. 种子数据不包含真实密码、密钥或生产信息。
 
@@ -491,8 +493,8 @@ git diff --check
 ## 6. 阶段 11 退出门禁
 
 - [ ] 用户、宠物和地址 API 有授权和归属校验集成测试。
-- [ ] 开发环境测试登录端点仅在 `dev` profile 可用。
-- [ ] 生产环境启动时 dev-login 不可达（有验证测试）。
+- [ ] 测试登录端点仅在 `test` Profile 可用。
+- [ ] `dev`、`prod` 和未指定 Profile 时 test-login 不可达（有验证测试）。
 - [ ] 公开读取接口按 D-014 决策放行，匿名访问测试通过。
 - [ ] 演示数据可重复创建和清理。
 - [ ] API 接口清单与真实 Controller 一致。
@@ -505,8 +507,8 @@ git diff --check
 ## 7. 每个任务包的提交规范
 
 ```text
-test(auth): add dev-login controller tests
-feat(auth): implement dev-login endpoint for development environment
+test(auth): add test-login controller tests
+feat(auth): implement test-profile login endpoint
 
 test(user): add user profile controller tests
 feat(user): implement user profile API with ownership validation
@@ -521,7 +523,7 @@ test(security): add public access integration tests
 feat(security): configure anonymous access for public read endpoints
 
 test(data): add seed data integration tests
-feat(data): add reproducible demo seed data for dev profile
+feat(data): add reproducible seed data for test profile
 
 feat(catalog): add service category management API
 feat(catalog): add product category management API

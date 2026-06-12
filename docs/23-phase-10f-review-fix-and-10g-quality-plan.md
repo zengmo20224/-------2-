@@ -83,7 +83,7 @@ npm run build
 
 ### 3.3 工程质量问题
 
-- `frontend/package.json` 和 `frontend/package-lock.json` 与 `frontend/admin-web/package.json` 重复，必须先确认是否作为 workspace 根目录使用。
+- `frontend/package.json` 和 `frontend/package-lock.json` 与子项目依赖重复；D-015 已决定不采用 workspace，必须在 10F-R5 独立验证后删除。
 - 没有自动化前端测试。
 - 没有 Lint 和独立类型检查命令。
 - 多个页面依赖全局拦截器提示后使用空 `catch`，没有页面级错误状态和重试入口。
@@ -246,17 +246,17 @@ fix(admin-web): remove invalid API assumptions
 
 目标：清理工程边界，但不误删其他 Agent 文件。
 
-必须先决定：
+已决定：
 
-- `frontend/package.json` 是否作为 workspace 根配置。
-- `frontend/package-lock.json` 是否与根配置配套。
-- 当前项目统一从仓库根、`frontend/` 还是 `frontend/admin-web/` 执行 npm 命令。
+- 不采用 `frontend/` npm workspace。
+- 删除重复的 `frontend/package.json` 和 `frontend/package-lock.json`。
+- 管理后台与小程序分别从各自目录执行 npm 命令。
 
 处理规则：
 
-- 未确认前，不删除两个未跟踪文件。
-- 如果不采用 workspace，保留 `frontend/admin-web/package.json` 作为唯一管理后台依赖入口。
-- 如果采用 workspace，必须补充明确的 workspace 配置和运行文档。
+- 删除前先验证管理后台与小程序均不依赖根 package 文件。
+- 保留 `frontend/admin-web/package.json` 和 `frontend/miniapp/package.json` 及各自锁文件。
+- 根 package 删除与其他代码修改分开提交。
 - 删除未使用模板资源前，先通过引用搜索证明无使用方。
 
 退出门禁：
