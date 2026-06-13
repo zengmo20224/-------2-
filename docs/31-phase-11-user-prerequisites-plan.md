@@ -42,7 +42,7 @@
 ├── 11-06 演示种子数据
 └── 11-07 补齐后台 API
 
-11-05 公开读取策略（可与 11-01 并行）
+11-05 公开读取策略（当前按阶段门禁顺序执行）
 
 11-08 API 接口清单（依赖 11-01 至 11-07 全部完成）
 ```
@@ -177,7 +177,7 @@ git diff --check
 
 ### 11-03：宠物档案 API
 
-**状态**：首轮编码已完成，Review 未通过；必须先执行 11-03R。
+**状态**：11-03R Review 已通过，任务关闭。
 
 **GLM5.1 详细执行任务书**：`docs/37-phase-11-03-glm5-pet-profile-api-brief.md`
 
@@ -260,9 +260,11 @@ git diff --check
 
 ### 11-04：地址管理 API
 
-**状态**：已规划，当前锁定；11-03R 全部门禁通过后解锁。
+**状态**：首轮编码已完成，Review 未通过；必须先执行 11-04R。
 
 **GLM5.1 详细执行任务书**：`docs/39-phase-11-04-glm5-address-api-brief.md`
+
+**Review 与修复任务书**：`docs/40-phase-11-04-review-and-remediation-plan.md`
 
 **目标**：实现用户地址的 CRUD 接口。
 
@@ -345,11 +347,13 @@ git diff --check
 
 ### 11-05：配置公开读取接口匿名访问
 
-**状态**：已批准，可按 TDD 实施。
+**状态**：已规划，当前锁定；11-04R 全部门禁通过后解锁。
+
+**GLM5.1 详细执行任务书**：`docs/41-phase-11-05-glm5-public-read-access-brief.md`
 
 **目标**：按照 D-014 决策，放行公开资源的 GET 读取接口。
 
-**可与 11-01 并行执行。**
+当前不得与其他阶段任务并行实施；必须等待 11-04R 门禁通过。
 
 **允许修改**：
 
@@ -368,11 +372,12 @@ git diff --check
 
 1. 扫描真实 Controller 后，按 HTTP GET 和真实路径逐项放行公开内容读取端点，至少覆盖：
 
-   - `/api/v1/services/**`（GET）
-   - `/api/v1/products/**`（GET）
-   - `/api/v1/community/topics/**`（GET）
-   - `/api/v1/community/posts/**`（GET）
-   - `/api/v1/community/comments/**`（GET）
+   - 服务分类与服务项目真实 GET 路径
+   - 商品分类与商品真实 GET 路径
+   - 话题、帖子和帖子评论真实 GET 路径
+
+真实路径、公开 DTO 隔离和完整安全门禁以
+`docs/41-phase-11-05-glm5-public-read-access-brief.md` 为准，禁止沿用旧虚构路径。
 
 2. 确认帖子列表只返回审核通过状态的内容。
 3. 确认匿名访问不泄露用户私有信息。
@@ -387,11 +392,9 @@ git diff --check
 
 **RED 测试**：
 
-- 未认证请求 `GET /api/v1/services` 返回 200 和数据。
-- 未认证请求 `GET /api/v1/products` 返回 200 和数据。
-- 未认证请求 `GET /api/v1/community/topics` 返回 200 和数据。
-- 未认证请求 `GET /api/v1/community/posts` 返回 200 和数据。
-- 未认证请求 `GET /api/v1/community/posts` 不包含审核未通过的帖子。
+- 未认证请求访问真实服务分类、服务项目、商品分类和商品 GET 路径返回公开数据。
+- 未认证请求访问真实话题、帖子和帖子评论 GET 路径返回公开数据。
+- 未认证请求访问帖子与评论时不包含审核未通过内容。
 - 未认证请求 POST/PUT/DELETE 返回 401。
 - 未认证请求管理后台接口返回 401。
 
@@ -566,6 +569,6 @@ docs: update API contract list for user endpoints
 - 每个 Agent 一次只能领取一个任务包。
 - 任务包开始前必须完成 AGENTS.md 规定的开工汇报。
 - 任务包完成后必须完成 AGENTS.md 规定的交接。
-- 11-01 和 11-05 可以并行，但文件范围不重叠。
+- 11-05 当前必须等待 11-04R 门禁通过，不再与早期任务并行。
 - 11-02、11-03、11-04 必须按顺序执行（依赖关系）。
 - 11-08 必须等 11-01 至 11-07 全部完成后才能开始。

@@ -2,9 +2,9 @@
 
 日期：2026-06-13
 
-状态：已规划，当前锁定
+状态：首轮编码已完成，Review 未通过；下一步执行 11-04R
 
-解锁条件：`docs/38-phase-11-03-review-and-remediation-plan.md` 全部门禁通过
+Review 修复任务：`docs/40-phase-11-04-review-and-remediation-plan.md`
 
 执行对象：GLM5.1
 
