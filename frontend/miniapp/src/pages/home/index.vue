@@ -64,6 +64,30 @@
       </PcStatePanel>
     </view>
 
+    <!-- Marketing Activities -->
+    <view class="pc-section">
+      <view class="home-section-header">
+        <text class="home-section-title">优惠活动</text>
+        <text class="home-section-more" @tap="goActivities">查看全部</text>
+      </view>
+      <PcStatePanel :status="activitiesStatus" empty-text="暂无活动" error-message="">
+        <view class="home-posts">
+          <view
+            v-for="act in recentActivities"
+            :key="act.id"
+            class="home-post-item"
+            @tap="goActivityDetail(act.id)"
+          >
+            <text class="home-post-title">{{ act.title }}</text>
+            <view class="home-post-meta">
+              <text v-if="act.productNames.length > 0" class="home-post-stat">{{ act.productNames.length }} 件商品</text>
+              <text v-if="act.serviceNames.length > 0" class="home-post-stat">{{ act.serviceNames.length }} 项服务</text>
+            </view>
+          </view>
+        </view>
+      </PcStatePanel>
+    </view>
+
     <!-- AI Status -->
     <view class="pc-section">
       <PcBlockedFeature title="智能助手暂未开放" reason="AI 能力正在开发中，敬请期待" />
@@ -77,10 +101,15 @@ import PcHeroCard from '@/components/PcHeroCard.vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcBlockedFeature from '@/components/PcBlockedFeature.vue'
 import { getPosts } from '@/api/community'
+import { getActivities } from '@/api/activity'
 import type { PostItem } from '@/types/community'
+import type { ActivityItem } from '@/types/activity'
 
 const recentPosts = ref<PostItem[]>([])
 const postsStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
+
+const recentActivities = ref<ActivityItem[]>([])
+const activitiesStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 
 async function loadRecentPosts() {
   postsStatus.value = 'loading'
@@ -96,6 +125,20 @@ async function loadRecentPosts() {
   postsStatus.value = recentPosts.value.length > 0 ? 'success' : 'empty'
 }
 
+async function loadRecentActivities() {
+  activitiesStatus.value = 'loading'
+
+  const res = await getActivities({ size: 3 })
+
+  if (!res.success || !res.data) {
+    activitiesStatus.value = 'error'
+    return
+  }
+
+  recentActivities.value = res.data.items
+  activitiesStatus.value = recentActivities.value.length > 0 ? 'success' : 'empty'
+}
+
 function goBooking() {
   uni.navigateTo({ url: '/pages/booking/create' })
 }
@@ -108,7 +151,16 @@ function goPostDetail(id: string) {
   uni.navigateTo({ url: `/pages/community/detail?id=${id}` })
 }
 
+function goActivities() {
+  uni.navigateTo({ url: '/pages/activity/index' })
+}
+
+function goActivityDetail(id: string) {
+  uni.navigateTo({ url: `/pages/activity/detail?id=${id}` })
+}
+
 loadRecentPosts()
+loadRecentActivities()
 </script>
 
 <style scoped>
@@ -139,6 +191,22 @@ loadRecentPosts()
   font-weight: 700;
   color: var(--pc-user-ink);
   margin-bottom: 12px;
+}
+
+.home-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.home-section-header .home-section-title {
+  margin-bottom: 0;
+}
+
+.home-section-more {
+  font-size: var(--pc-font-caption);
+  color: var(--pc-user-primary);
 }
 
 .home-shortcuts {

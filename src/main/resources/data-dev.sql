@@ -162,3 +162,24 @@ VALUES
 (14001, '营业时间是什么时候？', '我们的营业时间是每天 9:00 到 21:00。', 'STORE', 'ACTIVE'),
 (14002, '上门服务的范围是多少？', '上门服务范围是门店周围 5 公里内。', 'BOOKING', 'ACTIVE'),
 (14003, '如何取消预约？', '请在服务开始前至少 4 小时在订单中取消。', 'BOOKING', 'ACTIVE');
+
+-- ============================================================================
+-- 15. 营销活动（ACTIVE 状态可在 H5 公开浏览）
+-- ============================================================================
+INSERT INTO `marketing_activity` (`id`, `title`, `activity_type`, `description`, `start_time`, `end_time`, `status`)
+VALUES
+(15001, '夏季洗护特惠', 'SERVICE', '夏季来临，全部洗护服务享特价体验，名额有限！', NOW() - INTERVAL 10 DAY, NOW() + INTERVAL 20 DAY, 'ACTIVE'),
+(15002, '宠物食品节', 'PRODUCT', '精选主粮零食满减优惠，到店自提更方便。', NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 15 DAY, 'ACTIVE');
+
+INSERT INTO `activity_service` (`id`, `activity_id`, `service_item_id`)
+VALUES
+(16001, 15001, 3001),
+(16002, 15001, 3002),
+(16003, 15001, 3003);
+
+INSERT INTO `activity_product` (`id`, `activity_id`, `product_id`)
+VALUES
+(17001, 15002, 5001),
+(17002, 15002, 5002),
+(17003, 15002, 5004),
+(17004, 15002, 5005);

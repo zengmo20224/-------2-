@@ -68,6 +68,13 @@
       "pages": [
         { "path": "status", "style": { "navigationBarTitleText": "智能助手" } }
       ]
+    },
+    {
+      "root": "pages/activity",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "优惠活动" } },
+        { "path": "detail", "style": { "navigationBarTitleText": "活动详情" } }
+      ]
     }
   ],
   "tabBar": {
