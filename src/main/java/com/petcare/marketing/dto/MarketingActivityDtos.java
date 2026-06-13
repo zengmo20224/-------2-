@@ -47,8 +47,8 @@ public final class MarketingActivityDtos {
             LocalDateTime startTime,
             LocalDateTime endTime,
             String status,
-            List<@JsonSerialize(using = SnowflakeIdSerializer.class) Long> productIds,
-            List<@JsonSerialize(using = SnowflakeIdSerializer.class) Long> serviceItemIds
+            @JsonSerialize(contentUsing = SnowflakeIdSerializer.class) List<Long> productIds,
+            @JsonSerialize(contentUsing = SnowflakeIdSerializer.class) List<Long> serviceItemIds
     ) {}
 
     /** Create/update request */

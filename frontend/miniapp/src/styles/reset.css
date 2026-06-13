@@ -14,3 +14,13 @@ text,
 image {
   box-sizing: border-box;
 }
+
+/* Responsive: constrain content width on tablet/desktop */
+@media (min-width: 768px) {
+  page,
+  #app,
+  uni-page-body {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
