@@ -158,11 +158,10 @@ public class PostController {
     }
 
     /**
-     * Resolves current user ID from security context.
-     * Returns 401 if no user identity available.
+     * Resolves current user ID from the security context.
      */
     private Long resolveCurrentUserId() {
-        throw new BusinessException(ErrorCode.UNAUTHORIZED,
-                "用户端功能暂未开放，请等待用户登录功能上线");
+        return com.petcare.common.security.SecurityContextHelper.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "请先登录"));
     }
 }

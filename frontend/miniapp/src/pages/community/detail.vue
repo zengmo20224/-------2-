@@ -24,11 +24,28 @@
             <text class="community-detail__stat">{{ post.commentCount }} 评论</text>
             <text class="community-detail__stat">{{ post.viewCount }} 浏览</text>
           </view>
+
+          <!-- Action Buttons -->
+          <view class="community-detail__actions">
+            <view class="community-detail__action-btn" @tap="handleLike">
+              <text>{{ hasLiked ? '❤️' : '🤍' }} 赞</text>
+            </view>
+            <view class="community-detail__action-btn" @tap="handleFavorite">
+              <text>{{ hasFavorited ? '⭐' : '☆' }} 收藏</text>
+            </view>
+          </view>
         </view>
 
         <!-- Comments Section -->
         <view class="community-detail__comments">
           <text class="community-detail__comments-title">评论</text>
+
+          <!-- Comment Input -->
+          <view v-if="isLoggedIn" class="community-detail__comment-input">
+            <PcFormField label="" placeholder="写下你的评论..." v-model="commentInput" />
+            <PcPrimaryButton text="发送" :loading="commenting" @tap="handleComment" />
+          </view>
+
           <PcStatePanel :status="commentsStatus" empty-text="暂无评论">
             <view class="community-detail__comment-list">
               <view v-for="comment in comments" :key="comment.id" class="community-detail__comment">
@@ -44,25 +61,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
-import { getPostDetail, getPostComments } from '@/api/community'
+import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
+import PcFormField from '@/components/PcFormField.vue'
+import {
+  getPostDetail, getPostComments,
+  createComment, likePost, unlikePost, favoritePost, unfavoritePost,
+} from '@/api/community'
+import { useUserStore } from '@/store/user'
 import type { PostDetail, CommentItem } from '@/types/community'
+
+const userStore = useUserStore()
+const isLoggedIn = computed(() => userStore.isLoggedIn)
 
 const post = ref<PostDetail | null>(null)
 const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 const comments = ref<CommentItem[]>([])
 const commentsStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 
+const hasLiked = ref(false)
+const hasFavorited = ref(false)
+const commentInput = ref('')
+const commenting = ref(false)
+
 async function loadDetail() {
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1] as any
   const id = currentPage?.options?.id
 
-  if (!id) {
-    pageStatus.value = 'empty'
-    return
-  }
+  if (!id) { pageStatus.value = 'empty'; return }
 
   pageStatus.value = 'loading'
 
@@ -84,6 +112,59 @@ async function loadDetail() {
     commentsStatus.value = comments.value.length > 0 ? 'success' : 'empty'
   } else {
     commentsStatus.value = 'error'
+  }
+}
+
+async function handleLike() {
+  if (!isLoggedIn.value || !post.value) {
+    uni.showToast({ title: '请先登录', icon: 'none' }); return
+  }
+  const id = post.value.id
+  if (hasLiked.value) {
+    await unlikePost(id)
+    hasLiked.value = false
+    if (post.value) post.value.likeCount--
+  } else {
+    const res = await likePost(id)
+    if (res.success) {
+      hasLiked.value = true
+      if (post.value) post.value.likeCount++
+    }
+  }
+}
+
+async function handleFavorite() {
+  if (!isLoggedIn.value || !post.value) {
+    uni.showToast({ title: '请先登录', icon: 'none' }); return
+  }
+  const id = post.value.id
+  if (hasFavorited.value) {
+    await unfavoritePost(id)
+    hasFavorited.value = false
+    uni.showToast({ title: '已取消收藏', icon: 'none' })
+  } else {
+    const res = await favoritePost(id)
+    if (res.success) {
+      hasFavorited.value = true
+      uni.showToast({ title: '已收藏', icon: 'success' })
+    }
+  }
+}
+
+async function handleComment() {
+  if (!isLoggedIn.value || !post.value) {
+    uni.showToast({ title: '请先登录', icon: 'none' }); return
+  }
+  if (!commentInput.value.trim()) return
+
+  commenting.value = true
+  const res = await createComment(post.value.id, commentInput.value)
+  commenting.value = false
+
+  if (res.success) {
+    commentInput.value = ''
+    uni.showToast({ title: '评论成功', icon: 'success' })
+    await loadDetail()
   }
 }
 
@@ -138,6 +219,29 @@ loadDetail()
 .community-detail__stat {
   font-size: var(--pc-font-caption);
   color: var(--pc-user-muted);
+}
+
+.community-detail__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pc-user-line);
+}
+
+.community-detail__action-btn {
+  padding: 6px 16px;
+  border-radius: 16px;
+  background: var(--pc-user-soft);
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-primary);
+}
+
+.community-detail__comment-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .community-detail__comments {
