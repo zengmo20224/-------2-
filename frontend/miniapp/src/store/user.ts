@@ -7,10 +7,12 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { testLogin as apiTestLogin, getUserProfile, type UserProfile } from '@/api/user'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(loadToken())
-  const isLoggedIn = computed(() => !!token)
+  const isLoggedIn = computed(() => !!token.value)
+  const profile = ref<UserProfile | null>(null)
 
   /** WeChat login availability flag — deferred until H5 stabilizes */
   const isWechatLoginEnabled = ref(false)
@@ -40,9 +42,31 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  function logout(): void {
-    setToken(null)
+  /** Attempt test login with phone number */
+  async function doTestLogin(phone: string): Promise<boolean> {
+    const res = await apiTestLogin(phone)
+    if (res.success && res.data) {
+      setToken(res.data.accessToken)
+      return true
+    }
+    return false
   }
 
-  return { token, isLoggedIn, isWechatLoginEnabled, setToken, logout }
+  /** Fetch current user profile */
+  async function fetchProfile(): Promise<boolean> {
+    if (!token.value) return false
+    const res = await getUserProfile()
+    if (res.success && res.data) {
+      profile.value = res.data
+      return true
+    }
+    return false
+  }
+
+  function logout(): void {
+    setToken(null)
+    profile.value = null
+  }
+
+  return { token, isLoggedIn, isWechatLoginEnabled, profile, setToken, doTestLogin, fetchProfile, logout }
 })

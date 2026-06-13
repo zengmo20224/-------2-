@@ -67,11 +67,10 @@ public class ProductOrderController {
 
     /**
      * Resolves current user ID from the security context.
-     * Returns 401 if no user identity is available.
      */
     private Long resolveCurrentUserId() {
-        throw new BusinessException(
-                ErrorCode.UNAUTHORIZED,
-                "用户端订单功能暂未开放，请等待用户登录功能上线");
+        return com.petcare.common.security.SecurityContextHelper.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.UNAUTHORIZED, "请先登录"));
     }
 }

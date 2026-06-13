@@ -76,6 +76,8 @@ public class SecurityConfig {
                         // Anonymous public marketing activity reads (GET only)
                         .requestMatchers(HttpMethod.GET, "/api/v1/activities").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/activities/{id}").permitAll()
+                        // Anonymous availability query (GET only)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bookings/availability").permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().authenticated()
                 )

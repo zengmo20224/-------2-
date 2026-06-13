@@ -7,7 +7,10 @@ import com.petcare.booking.dto.BookingCreateRequest;
 import com.petcare.booking.dto.BookingResponse;
 import com.petcare.booking.service.BookingApplicationService;
 import com.petcare.common.api.ApiResponse;
+import com.petcare.common.exception.BusinessException;
+import com.petcare.common.exception.ErrorCode;
 import com.petcare.common.pagination.PageResponse;
+import com.petcare.common.security.SecurityContextHelper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * User-facing booking endpoints.
- *
- * Note: User JWT is not yet implemented. User mutation endpoints will return 401
- * until user authentication is added in a future phase.
- * Service layer accepts currentUserId as a parameter, keeping it decoupled from auth.
+ * Requires authenticated user identity (USER role JWT).
+ * Availability query is public (no auth required).
  */
 @RestController
 @RequestMapping("/api/v1/bookings")
@@ -38,6 +39,7 @@ public class BookingController {
 
     /**
      * Query available time slots for a service.
+     * Public endpoint — no authentication required.
      */
     @GetMapping("/availability")
     public ResponseEntity<ApiResponse<BookingAvailabilityResponse>> getAvailability(
@@ -54,7 +56,6 @@ public class BookingController {
     /**
      * Create a new booking.
      * currentUserId comes from the security context, not the request body.
-     * Returns 401 if no user identity is available.
      */
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
@@ -102,13 +103,9 @@ public class BookingController {
 
     /**
      * Resolves current user ID from the security context.
-     * Returns 401 if no user identity is available (admin tokens are not accepted as user identity).
      */
     private Long resolveCurrentUserId() {
-        // Currently only admin JWT exists. User JWT will be added in a future phase.
-        // For now, check if there's an admin identity and reject it for user operations.
-        throw new com.petcare.common.exception.BusinessException(
-                com.petcare.common.exception.ErrorCode.UNAUTHORIZED,
-                "用户端预约功能暂未开放，请等待用户登录功能上线");
+        return SecurityContextHelper.getCurrentUserId()
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "请先登录"));
     }
 }

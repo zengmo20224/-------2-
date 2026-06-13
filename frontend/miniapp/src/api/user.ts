@@ -7,10 +7,31 @@
 import { http } from './request'
 import type { ApiResponse } from '@/types/api'
 
-/** WeChat login — not yet implemented (D-006) */
+/** Test login response */
+export interface TestLoginResult {
+  tokenType: string
+  accessToken: string
+  expiresIn: number
+  user: { id: string; nickname: string }
+}
+
+/** User profile */
+export interface UserProfile {
+  id: string
+  nickname: string
+  avatarUrl: string | null
+  phone: string | null
+  gender: number | null
+  status: string
+}
+
+/** Test login (only available in test profile) */
+export function testLogin(phone: string): Promise<ApiResponse<TestLoginResult>> {
+  return http.post<TestLoginResult>('/api/v1/auth/test-login', { phone })
+}
+
+/** WeChat login — not yet implemented */
 export function wechatLogin(_code: string): Promise<ApiResponse<{ token: string }>> {
-  // This function exists as an interface boundary.
-  // Actual implementation requires a valid WeChat AppID.
   return Promise.resolve({
     success: false,
     error: { code: 'WECHAT_LOGIN_DISABLED', message: '微信登录尚未启用' },
@@ -18,6 +39,11 @@ export function wechatLogin(_code: string): Promise<ApiResponse<{ token: string 
 }
 
 /** Get current user profile */
-export function getUserProfile(): Promise<ApiResponse<unknown>> {
-  return http.get('/api/v1/user/profile')
+export function getUserProfile(): Promise<ApiResponse<UserProfile>> {
+  return http.get<UserProfile>('/api/v1/user/profile')
+}
+
+/** Update current user profile */
+export function updateUserProfile(data: { nickname?: string; avatarUrl?: string; gender?: number }): Promise<ApiResponse<UserProfile>> {
+  return http.put<UserProfile>('/api/v1/user/profile', data as any)
 }
