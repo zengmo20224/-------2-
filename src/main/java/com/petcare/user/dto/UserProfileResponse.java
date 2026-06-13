@@ -32,13 +32,14 @@ public record UserProfileResponse(
 
     /**
      * Masks a phone number: 13800138001 -> 138****8001.
-     * Returns null for null/blank/short values.
+     * Only accepts valid Chinese mainland format ^1\\d{10}$.
+     * Returns null for null, blank, wrong length, or non-digit values.
      */
     static String maskPhone(String phone) {
         if (phone == null || phone.isBlank()) {
             return null;
         }
-        if (phone.length() < 7) {
+        if (!phone.matches("^1\\d{10}$")) {
             return null;
         }
         return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
