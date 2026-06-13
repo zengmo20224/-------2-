@@ -30,11 +30,58 @@ export interface ProductDetail {
   imageUrls: string[]
 }
 
-/** Cart item */
+/** Cart item as returned by cart API */
 export interface CartItem {
+  id: string
   productId: string
   productName: string
+  productCoverUrl: string | null
+  productPrice: number
+  productStock: number
+  quantity: number
+  checked: boolean
+  subtotal: number
+}
+
+/** Product order as returned by order list API */
+export interface OrderItem {
+  id: string
+  orderNo: string
+  totalAmount: number
+  paymentMethod: string | null
+  paymentStatus: string
+  pickupStatus: string
+  status: string
+  contactName: string
+  contactPhone: string
+  remark: string | null
+  createTime: string
+}
+
+/** Order detail with line items */
+export interface OrderDetail {
+  id: string
+  orderNo: string
+  totalAmount: number
+  paymentMethod: string | null
+  paymentStatus: string
+  pickupStatus: string
+  status: string
+  contactName: string
+  contactPhone: string
+  remark: string | null
+  merchantRemark: string | null
+  createTime: string
+  items: OrderLineItem[]
+}
+
+/** Order line item snapshot */
+export interface OrderLineItem {
+  id: string
+  productId: string
+  productName: string
+  productCoverUrl: string | null
   price: number
   quantity: number
-  imageUrl?: string
+  totalAmount: number
 }

@@ -29,11 +29,15 @@ import { ref, computed } from 'vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
 import { getProductDetail } from '@/api/product'
+import { addCartItem } from '@/api/cart'
+import { useUserStore } from '@/store/user'
 import type { ProductDetail } from '@/types/product'
 import { formatYuan } from '@/utils/format'
 
+const userStore = useUserStore()
 const product = ref<ProductDetail | null>(null)
 const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
+const adding = ref(false)
 
 const priceText = computed(() => formatYuan(product.value?.price ?? 0))
 
@@ -59,8 +63,20 @@ async function loadDetail() {
   pageStatus.value = 'success'
 }
 
-function addToCart() {
-  uni.showToast({ title: '请先登录', icon: 'none' })
+async function addToCart() {
+  if (!userStore.isLoggedIn) {
+    uni.showToast({ title: '请先登录', icon: 'none' })
+    return
+  }
+  if (!product.value) return
+
+  adding.value = true
+  const res = await addCartItem(product.value.id, 1)
+  adding.value = false
+
+  if (res.success) {
+    uni.showToast({ title: '已加入购物车', icon: 'success' })
+  }
 }
 
 loadDetail()
