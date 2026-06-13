@@ -691,6 +691,63 @@ class AddressControllerTest {
         }
     }
 
+    // ======================== MEDIUM-1: Disabled user 401 ========================
+
+    @Nested
+    @DisplayName("Disabled user write operations return 401")
+    class DisabledUserReturns401 {
+
+        @Test
+        @DisplayName("disabled user create address returns 401 unauthorized")
+        void disabledUserCreateReturns401() throws Exception {
+            User user = createUser("13800138901", "禁用用户", "DISABLED");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(post("/api/v1/user/addresses")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(validAddressJson()))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.error.code").value("unauthorized"));
+        }
+
+        @Test
+        @DisplayName("disabled user update address returns 401 unauthorized")
+        void disabledUserUpdateReturns401() throws Exception {
+            User user = createUser("13800138902", "禁用用户", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "地址", "13800138902");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            // Disable user after token was issued
+            user.setStatus("DISABLED");
+            userService.updateById(user);
+
+            mockMvc.perform(put("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(validAddressJson()))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.error.code").value("unauthorized"));
+        }
+
+        @Test
+        @DisplayName("disabled user delete address returns 401 unauthorized")
+        void disabledUserDeleteReturns401() throws Exception {
+            User user = createUser("13800138903", "禁用用户", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "地址", "13800138903");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            // Disable user after token was issued
+            user.setStatus("DISABLED");
+            userService.updateById(user);
+
+            mockMvc.perform(delete("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.error.code").value("unauthorized"));
+        }
+    }
+
     // ======================== Helpers ========================
 
     private User createUser(String phone, String nickname, String status) {

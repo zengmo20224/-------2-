@@ -15,7 +15,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User lockActiveUser(Long userId) {
         User user = getBaseMapper().selectActiveForUpdate(userId);
         if (user == null) {
-            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "用户不存在或已禁用");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "认证失败,请先登录");
         }
         return user;
     }
