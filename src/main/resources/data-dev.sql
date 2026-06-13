@@ -77,17 +77,18 @@ VALUES
 -- ============================================================================
 -- 6. 用户（手机号 + 密码登录）
 -- 密码: user123456 (BCrypt strength=12)
+-- 安全问题答案: 豆豆
 -- ============================================================================
 INSERT INTO `user` (`id`, `openid`, `nickname`, `avatar_url`, `phone`, `password_hash`, `gender`, `status`)
 VALUES
-(10001, NULL, '爱狗的小李', NULL, '13800138001', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 1, 'ACTIVE'),
-(10002, NULL, '猫奴小王',   NULL, '13800138002', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 2, 'ACTIVE');
+(10001, NULL, '爱狗的小李', NULL, '13800138001', '$2a$12$jxklq2BhbNK80U8pJpH.fegUD0RdFXA.4yzAAvt.0wH.2B0bI379G', 1, 'ACTIVE'),
+(10002, NULL, '猫奴小王',   NULL, '13800138002', '$2a$12$jxklq2BhbNK80U8pJpH.fegUD0RdFXA.4yzAAvt.0wH.2B0bI379G', 2, 'ACTIVE');
 
--- 安全问题（找回密码用）
+-- 安全问题（找回密码用，答案均为"豆豆"）
 INSERT INTO `user_security_question` (`id`, `user_id`, `question`, `answer_hash`, `sort`) VALUES
-(13001, 10001, '你的宠物叫什么名字？', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 0),
-(13002, 10001, '你最喜欢的食物？', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 1),
-(13003, 10002, '你的宠物叫什么名字？', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 0);
+(13001, 10001, '你的宠物叫什么名字？', '$2a$12$6Jk6nGh5lP7ZxzkDEvcABOFJ9Fxot8DycuNYdPEW7nxpAXiKguvKO', 0),
+(13002, 10001, '你最喜欢的食物？', '$2a$12$6Jk6nGh5lP7ZxzkDEvcABOFJ9Fxot8DycuNYdPEW7nxpAXiKguvKO', 1),
+(13003, 10002, '你的宠物叫什么名字？', '$2a$12$6Jk6nGh5lP7ZxzkDEvcABOFJ9Fxot8DycuNYdPEW7nxpAXiKguvKO', 0);
 
 -- ============================================================================
 -- 7. 宠物档案
