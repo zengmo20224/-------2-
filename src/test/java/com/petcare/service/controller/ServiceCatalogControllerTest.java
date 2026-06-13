@@ -178,10 +178,24 @@ class ServiceCatalogControllerTest {
     }
 
     @Test
-    @DisplayName("Unauthenticated request to service-items returns 401")
-    void unauthenticatedReturns401() throws Exception {
+    @DisplayName("Anonymous request to service-items returns 200 (public read)")
+    void anonymousReturns200() throws Exception {
         mockMvc.perform(get("/api/v1/service-items"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @DisplayName("Anonymous GET /service-items excludes OFF_SALE items")
+    void anonymousExcludesOffSale() throws Exception {
+        ServiceCategory cat = createCategory("美容_anonF_sccT", 1);
+        createItem(cat.getId(), "在售_anonF_sccT", "STORE", new BigDecimal("99.00"), 60, "ON_SALE");
+        createItem(cat.getId(), "下架_anonF_sccT", "STORE", new BigDecimal("50.00"), 30, "OFF_SALE");
+
+        mockMvc.perform(get("/api/v1/service-items"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[?(@.name=='在售_anonF_sccT')]").exists())
+                .andExpect(jsonPath("$.data.items[?(@.name=='下架_anonF_sccT')]").doesNotExist());
     }
 
     // --- helper methods ---
