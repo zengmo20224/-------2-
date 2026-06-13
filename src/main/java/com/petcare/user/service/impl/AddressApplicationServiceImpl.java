@@ -9,6 +9,7 @@ import com.petcare.user.dto.AddressUpsertRequest;
 import com.petcare.user.entity.UserAddress;
 import com.petcare.user.service.AddressApplicationService;
 import com.petcare.user.service.UserAddressService;
+import com.petcare.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +18,9 @@ import java.util.List;
 
 /**
  * Application service for current user address CRUD.
- * Operates through UserAddressService (not mapper directly).
+ * Operates through UserAddressService and UserService (not mapper directly).
  * Enforces ownership on all read, update, and delete operations.
+ * Default address invariant: user with addresses always has exactly one default.
  */
 @Service
 public class AddressApplicationServiceImpl implements AddressApplicationService {
@@ -30,9 +32,11 @@ public class AddressApplicationServiceImpl implements AddressApplicationService 
     private static final int MAX_COORDINATE_SCALE = 6;
 
     private final UserAddressService addressService;
+    private final UserService userService;
 
-    public AddressApplicationServiceImpl(UserAddressService addressService) {
+    public AddressApplicationServiceImpl(UserAddressService addressService, UserService userService) {
         this.addressService = addressService;
+        this.userService = userService;
     }
 
     @Override
@@ -49,6 +53,9 @@ public class AddressApplicationServiceImpl implements AddressApplicationService 
     @Transactional
     public AddressResponse createCurrentUserAddress(Long currentUserId, AddressUpsertRequest request) {
         validateRequest(request);
+
+        // Lock user row to serialize default address changes
+        userService.lockActiveUser(currentUserId);
 
         UserAddress address = new UserAddress();
         address.setUserId(currentUserId);
@@ -75,25 +82,108 @@ public class AddressApplicationServiceImpl implements AddressApplicationService 
     @Override
     @Transactional
     public AddressResponse updateCurrentUserAddress(Long currentUserId, Long addressId, AddressUpsertRequest request) {
-        // Full implementation in GREEN-2 with default address logic
-        throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "地址不存在");
+        validateRequest(request);
+
+        // Lock user row to serialize default address changes
+        userService.lockActiveUser(currentUserId);
+
+        // Verify existence and ownership
+        UserAddress existing = findUserAddress(currentUserId, addressId);
+
+        // Update with explicit field whitelist
+        LambdaUpdateWrapper<UserAddress> wrapper = new LambdaUpdateWrapper<UserAddress>()
+                .eq(UserAddress::getId, addressId)
+                .eq(UserAddress::getUserId, currentUserId)
+                .set(UserAddress::getContactName, request.contactName().trim())
+                .set(UserAddress::getContactPhone, request.contactPhone().trim())
+                .set(UserAddress::getProvince, request.province().trim())
+                .set(UserAddress::getCity, request.city().trim())
+                .set(UserAddress::getDistrict, normalizeBlank(request.district()))
+                .set(UserAddress::getDetailAddress, request.detailAddress().trim())
+                .set(UserAddress::getLongitude, request.longitude())
+                .set(UserAddress::getLatitude, request.latitude());
+
+        // Handle default address change
+        boolean wantsDefault = request.isDefault() != null && request.isDefault();
+        if (wantsDefault && existing.getIsDefault() != 1) {
+            // Setting a non-default address as default: unset others
+            unsetOtherDefaults(currentUserId, addressId);
+            wrapper.set(UserAddress::getIsDefault, 1);
+        } else if (!wantsDefault && existing.getIsDefault() == 1) {
+            // Trying to unset the current default: keep it as default
+            wrapper.set(UserAddress::getIsDefault, 1);
+        } else if (wantsDefault) {
+            wrapper.set(UserAddress::getIsDefault, 1);
+        } else {
+            wrapper.set(UserAddress::getIsDefault, existing.getIsDefault());
+        }
+
+        if (!addressService.update(wrapper)) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "地址不存在");
+        }
+
+        return AddressResponse.from(findUserAddress(currentUserId, addressId));
     }
 
     @Override
     @Transactional
     public void deleteCurrentUserAddress(Long currentUserId, Long addressId) {
-        // Full implementation in GREEN-2 with default address logic
-        throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "地址不存在");
+        // Lock user row to serialize default address changes
+        userService.lockActiveUser(currentUserId);
+
+        // Verify existence and ownership
+        UserAddress existing = findUserAddress(currentUserId, addressId);
+
+        boolean removed = addressService.remove(new LambdaQueryWrapper<UserAddress>()
+                .eq(UserAddress::getId, addressId)
+                .eq(UserAddress::getUserId, currentUserId));
+        if (!removed) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "地址不存在");
+        }
+
+        // If deleted address was default, promote next
+        if (existing.getIsDefault() == 1) {
+            promoteNextDefault(currentUserId);
+        }
     }
 
     // ======================== Private helpers ========================
+
+    private UserAddress findUserAddress(Long currentUserId, Long addressId) {
+        UserAddress addr = addressService.getOne(new LambdaQueryWrapper<UserAddress>()
+                .eq(UserAddress::getId, addressId)
+                .eq(UserAddress::getUserId, currentUserId));
+        if (addr == null) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "地址不存在");
+        }
+        return addr;
+    }
+
+    private void promoteNextDefault(Long currentUserId) {
+        // Find remaining addresses sorted by createTime DESC, id DESC
+        List<UserAddress> remaining = addressService.list(new LambdaQueryWrapper<UserAddress>()
+                .eq(UserAddress::getUserId, currentUserId)
+                .orderByDesc(UserAddress::getCreateTime)
+                .orderByDesc(UserAddress::getId)
+                .last("LIMIT 1"));
+
+        if (!remaining.isEmpty()) {
+            UserAddress next = remaining.get(0);
+            if (!addressService.update(new LambdaUpdateWrapper<UserAddress>()
+                    .eq(UserAddress::getId, next.getId())
+                    .eq(UserAddress::getUserId, currentUserId)
+                    .set(UserAddress::getIsDefault, 1))) {
+                throw new IllegalStateException("默认地址提升失败");
+            }
+        }
+        // If no remaining addresses, nothing to promote
+    }
 
     private void validateRequest(AddressUpsertRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "请求不能为空");
         }
 
-        // Required field checks at service layer
         if (request.contactName() == null || request.contactName().isBlank()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "联系人姓名不能为空");
         }
@@ -110,7 +200,6 @@ public class AddressApplicationServiceImpl implements AddressApplicationService 
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "详细地址不能为空");
         }
 
-        // Coordinate pair validation: both or neither
         boolean hasLng = request.longitude() != null;
         boolean hasLat = request.latitude() != null;
         if (hasLng != hasLat) {
