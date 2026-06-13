@@ -51,6 +51,8 @@
 41. `docs/39-phase-11-04-glm5-address-api-brief.md`
 42. `docs/40-phase-11-04-review-and-remediation-plan.md`
 43. `docs/41-phase-11-05-glm5-public-read-access-brief.md`
+44. `docs/42-phase-11-05-review-and-remediation-plan.md`
+45. `docs/43-phase-11-06-glm5-demo-seed-data-brief.md`
 
 如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
 

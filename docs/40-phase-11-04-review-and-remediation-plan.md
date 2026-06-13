@@ -2,7 +2,7 @@
 
 日期：2026-06-13
 
-状态：11-03R Review 通过；11-04 Review 未通过
+状态：11-04R Review 已通过，任务关闭
 
 执行对象：GLM5.1
 
@@ -25,7 +25,7 @@ e825208 feat: add current user address create and list api
 
 11-04 已实现地址 CRUD、归属隔离、逻辑删除、默认地址基础事务和用户行锁，接口与真实 Schema 一致。但写入失败检查、禁用用户错误语义、事务回滚测试和真实 MySQL 并发验证未达到 `docs/39-phase-11-04-glm5-address-api-brief.md` 的退出门禁。
 
-当前禁止开始 11-05，下一项只能执行 `11-04R`。
+历史结论：11-04 首轮 Review 未通过；上述 Findings 已由 11-04R 关闭。当前阶段状态以 `docs/42-phase-11-05-review-and-remediation-plan.md` 为准。
 
 ## 2. 已验证结果
 
@@ -206,7 +206,7 @@ git status --short --branch
 - 定向、完整、构建、MySQL 和 `git diff --check` 全部通过。
 - `.claude/` 未进入提交。
 
-全部通过后，才允许执行 `docs/41-phase-11-05-glm5-public-read-access-brief.md`。
+11-04R 已满足本节退出门禁并通过 Review；11-05 已执行。当前不得重复领取 11-04R。
 
 ## 11. 强制交接格式
 

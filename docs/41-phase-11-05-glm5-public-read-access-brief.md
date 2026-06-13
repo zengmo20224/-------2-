@@ -2,9 +2,9 @@
 
 日期：2026-06-13
 
-状态：已规划，当前锁定
+状态：首轮编码已完成，Review 未通过；当前只能执行 11-05R
 
-解锁条件：`docs/40-phase-11-04-review-and-remediation-plan.md` 全部门禁通过
+Review 与修复任务书：`docs/42-phase-11-05-review-and-remediation-plan.md`
 
 执行对象：GLM5.1
 
@@ -214,7 +214,7 @@ fix: isolate public community responses
 - 定向、完整、构建、MySQL 和 `git diff --check` 全部通过。
 - `.claude/` 未进入提交。
 
-通过后才允许开始 11-06 可复现演示种子数据任务。
+首轮 Review 发现非 Bearer Authorization 请求头会在公开 GET 降级为匿名。必须先按 `docs/42-phase-11-05-review-and-remediation-plan.md` 完成 11-05R；门禁与 Review 通过后才允许开始 11-06。
 
 ## 13. 强制交接格式
 

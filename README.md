@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 `11-03R` 已通过 Review；阶段 `11-04` 已完成首轮编码但 Review 未通过。下一任务为 `11-04R` 地址默认值事务与并发修复；当前只能在 `phase-11-user-prerequisites` 分支执行，禁止提前开始 `11-05`。
+当前状态：阶段 `11-04R` 已通过 Review；阶段 `11-05` 首轮编码 Review 未通过。下一任务为 `11-05R` Authorization 失败关闭修复；当前只能在 `phase-11-user-prerequisites` 分支执行，禁止提前开始 `11-06`。
 
 ## AI Agent 强制入口
 
@@ -45,6 +45,8 @@
 - [docs/39-phase-11-04-glm5-address-api-brief.md](docs/39-phase-11-04-glm5-address-api-brief.md)
 - [docs/40-phase-11-04-review-and-remediation-plan.md](docs/40-phase-11-04-review-and-remediation-plan.md)
 - [docs/41-phase-11-05-glm5-public-read-access-brief.md](docs/41-phase-11-05-glm5-public-read-access-brief.md)
+- [docs/42-phase-11-05-review-and-remediation-plan.md](docs/42-phase-11-05-review-and-remediation-plan.md)
+- [docs/43-phase-11-06-glm5-demo-seed-data-brief.md](docs/43-phase-11-06-glm5-demo-seed-data-brief.md)
 
 ## 原始需求基线
 
@@ -76,11 +78,11 @@
 
 ## 当前最近一步
 
-当前最近一步为阶段 11-04 Review 修复：
+当前最近一步为阶段 11-05 Review 修复：
 
-1. 11-03R 宠物写入失败和服务层空值语义修复已通过 Review。
-2. 11-04 地址 CRUD、归属、逻辑删除和默认地址基础事务已完成首轮编码。
-3. Review 发现取消旧默认地址忽略写入失败、禁用用户错误语义不一致，并缺少事务回滚与真实 MySQL 并发测试。
-4. GLM5.1 当前只能执行 [阶段 11-04 Review 结论与修复任务书](docs/40-phase-11-04-review-and-remediation-plan.md)。
-5. [阶段 11-05 公开读取任务书](docs/41-phase-11-05-glm5-public-read-access-brief.md) 已准备，但必须等待 11-04R 全部门禁通过。
+1. 11-04R 地址写入失败、身份错误语义、事务回滚和真实 MySQL 并发问题已通过 Review。
+2. 11-05 已完成公开 GET 白名单、公开内容过滤和社区公开 DTO 隔离。
+3. Review 发现非 Bearer Authorization 请求头会在公开 GET 降级为匿名，违反失败关闭规则。
+4. GLM5.1 当前只能执行 [阶段 11-05 Review 结论与修复任务书](docs/42-phase-11-05-review-and-remediation-plan.md)。
+5. [阶段 11-06 演示种子数据任务书](docs/43-phase-11-06-glm5-demo-seed-data-brief.md) 已准备，但必须等待 11-05R 全部门禁和 Review 通过。
 6. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。

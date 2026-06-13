@@ -50,8 +50,8 @@
 强制约束：
 
 - 阶段 10 管理后台核心流程、预约管理员审计质量任务、根 package 清理和 Testcontainers MySQL 门禁已完成。
-- 阶段 11 的 D-013、D-014 决策阻塞已解除；11-03R 已通过 Review，11-04 首轮编码已完成但 Review 未通过，当前只允许按 `docs/40-phase-11-04-review-and-remediation-plan.md` 执行 11-04R。
-- 11-05 详细任务书为 `docs/41-phase-11-05-glm5-public-read-access-brief.md`，在 11-04R 完整门禁通过前保持锁定。
+- 阶段 11 的 D-013、D-014 决策阻塞已解除；11-04R 已通过 Review，11-05 首轮编码 Review 未通过，当前只允许按 `docs/42-phase-11-05-review-and-remediation-plan.md` 执行 11-05R。
+- 11-06 详细任务书为 `docs/43-phase-11-06-glm5-demo-seed-data-brief.md`，在 11-05R 完整门禁和 Review 通过前保持锁定。
 - 禁止跳过阶段 11 门禁直接开始阶段 12 或后续阶段。
 
 ## 3. 总体阶段依赖
@@ -210,8 +210,8 @@ npm run e2e
 
 - 阶段 10H 管理后台核心流程已完成。
 - D-007、D-008、D-013、D-014 已决定。
-- 11-03R 已通过 Review；11-04 首轮编码 Review 未通过。
-- 当前只能执行 `docs/40-phase-11-04-review-and-remediation-plan.md`，11-05 保持锁定。
+- 11-04R 已通过 Review；11-05 首轮编码 Review 未通过。
+- 当前只能执行 `docs/42-phase-11-05-review-and-remediation-plan.md`，11-06 保持锁定。
 
 任务包：
 
@@ -220,9 +220,9 @@ npm run e2e
 | 11-01 | 实现仅 `test` Profile 可用的用户端 E2E 测试登录 | 只允许预定义种子用户，非 test Profile 必须 404 |
 | 11-02 | 实现用户资料 API | 必须校验资源归属 |
 | 11-03 | 实现宠物档案 API | 必须校验资源归属 |
-| 11-04 | 实现地址管理 API | 必须校验资源归属 |
-| 11-05 | 配置公开内容 GET 匿名读取策略 | 必须验证私有数据隔离和写操作拒绝 |
-| 11-06 | 提供可复现演示种子数据方案 | 不在 `schema.sql` 中混入生产测试账号秘密 |
+| 11-04 | 实现地址管理 API | 11-04R 已通过 Review |
+| 11-05 | 配置公开内容 GET 匿名读取策略 | 首轮 Review 未通过；当前只允许 11-05R |
+| 11-06 | 提供可复现演示种子数据方案 | 详细任务书已准备，等待 11-05R 通过 |
 | 11-07 | 补齐服务分类、商品分类、员工不可用时间等必要后台 API | 只实现小程序或后台真实依赖 |
 | 11-08 | 建立 API 接口清单或 OpenAPI 输出 | 必须与真实 Controller 一致 |
 
