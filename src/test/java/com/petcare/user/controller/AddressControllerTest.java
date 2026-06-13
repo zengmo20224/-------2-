@@ -322,8 +322,10 @@ class AddressControllerTest {
         @DisplayName("list sorted by isDefault DESC, createTime DESC, id DESC")
         void listSortedCorrectly() throws Exception {
             User user = createUser("13800138001", "用户A", "ACTIVE");
-            // First address is auto-default
-            createAddress(user.getId(), "地址1", "13800138001");
+            // First address is the default
+            UserAddress addr1 = createAddress(user.getId(), "地址1", "13800138001");
+            addr1.setIsDefault(1);
+            addressService.updateById(addr1);
             createAddress(user.getId(), "地址2", "13800138002");
             createAddress(user.getId(), "地址3", "13800138003");
 
