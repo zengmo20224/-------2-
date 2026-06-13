@@ -5,7 +5,7 @@
  * Focus: no fake endpoints, correct DTO shapes, correct method/path,
  * required request fields, and nullable response fields.
  *
- * Backend source of truth: docs/25-admin-web-api-contract.md
+ * Backend controllers and request/response DTOs are the source of truth.
  */
 
 import { describe, it, expect, vi } from 'vitest'

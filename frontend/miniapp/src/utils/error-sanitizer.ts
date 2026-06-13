@@ -1,9 +1,9 @@
 /**
- * Error message sanitizer for user-facing miniapp.
+ * Error message sanitizer for the user-facing H5 app.
  *
  * Ensures backend error details (SQL, stack traces, provider keys)
  * never reach the user interface. Adapted from admin-web with
- * additional patterns for miniapp context.
+ * additional patterns for the user app context.
  */
 
 const GENERIC_MESSAGE = '操作失败，请稍后重试'

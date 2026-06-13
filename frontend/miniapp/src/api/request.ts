@@ -8,10 +8,13 @@ import { sanitizeErrorMessage } from '@/utils/error-sanitizer'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
+type RequestData = Exclude<UniNamespace.RequestOptions['data'], undefined>
+type RequestMethod = Exclude<UniNamespace.RequestOptions['method'], undefined>
+
 interface RequestOptions {
   url: string
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  data?: unknown
+  method?: RequestMethod
+  data?: RequestData
   params?: Record<string, unknown>
   header?: Record<string, string>
 }
@@ -130,16 +133,12 @@ export const http = {
     return request<T>({ url, method: 'GET', params })
   },
 
-  post<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
+  post<T>(url: string, data?: RequestData): Promise<ApiResponse<T>> {
     return request<T>({ url, method: 'POST', data })
   },
 
-  put<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
+  put<T>(url: string, data?: RequestData): Promise<ApiResponse<T>> {
     return request<T>({ url, method: 'PUT', data })
-  },
-
-  patch<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
-    return request<T>({ url, method: 'PATCH', data })
   },
 
   delete<T>(url: string): Promise<ApiResponse<T>> {

@@ -1,176 +1,99 @@
-# PetCare O2O AI Agent 强制规则
+# PetCare O2O Agent 执行规则
 
-本文件是本项目所有 AI Agent 的最高优先级项目内规则。
+本文件是项目内 Agent 的最高优先级执行规则。目标是以尽量少的流程成本，持续交付可运行、可验证的 H5 产品。
 
-任何 AI Agent 在分析、规划、生成 SQL、修改代码、运行命令或提交 Git 前，都必须先阅读并遵守本文件。
+## 1. 开工前只读检查
 
-## 1. 开工前强制阅读
-
-开始任何任务前，必须按顺序阅读：
+每次任务开始时只需按顺序阅读：
 
 1. `AGENTS.md`
 2. `README.md`
-3. `docs/requirements-source.md`
-4. `docs/00-project-boundary.md`
-5. `docs/01-architecture-design.md`
-6. `docs/02-task-breakdown.md`
-7. `docs/03-glm5-implementation-plan.md`
-8. `docs/04-code-standards.md`
-9. `docs/05-testing-and-verification.md`
-10. `docs/06-git-safety-workflow.md`
-11. `docs/07-integration-gates.md`
-12. `docs/08-pending-decisions.md`
-13. `docs/09-booking-concurrency-control.md`
-14. `docs/10-admin-permission-design.md`
-15. `docs/11-phase-2-backend-skeleton-brief.md`
-16. `docs/12-phase-3-entities-mappers-plan.md`
-17. `docs/13-phase-4-auth-authorization-plan.md`
-18. `docs/14-phase-5-booking-scheduling-plan.md`
-19. `docs/15-phase-6-community-moderation-plan.md`
-20. `docs/16-phase-7-product-orders-plan.md`
-21. `docs/17-phase-8-ai-provider-functions-plan.md`
-22. `docs/19-phase-9-admin-api-handoff.md`
-23. `docs/20-phase-10-frontend-integration-design.md`
-24. `docs/21-remaining-development-roadmap.md`
-25. `docs/22-continuous-agent-development-rules.md`
-26. `docs/23-phase-10f-review-fix-and-10g-quality-plan.md`
-27. `docs/24-phase-10f-r2-api-contract-cleanup-plan.md`
-28. `docs/25-admin-web-api-contract.md`
-29. `docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md`
-30. `docs/27-glm5-risk-remediation-and-test-plan.md`
-31. `docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md`
-32. `docs/29-frontend-figma-design-and-glm-long-running-plan.md`
-33. `docs/30-user-miniapp-frontend-design-spec.md`
-34. `docs/31-phase-11-user-prerequisites-plan.md`
-35. `docs/33-phase-11-01-glm5-test-login-implementation-brief.md`
-36. `docs/34-phase-11-01-review-and-remediation-plan.md`
-37. `docs/35-phase-11-02-glm5-user-profile-api-brief.md`
-38. `docs/36-phase-11-02-review-and-remediation-plan.md`
-39. `docs/37-phase-11-03-glm5-pet-profile-api-brief.md`
-40. `docs/38-phase-11-03-review-and-remediation-plan.md`
-41. `docs/39-phase-11-04-glm5-address-api-brief.md`
-42. `docs/40-phase-11-04-review-and-remediation-plan.md`
-43. `docs/41-phase-11-05-glm5-public-read-access-brief.md`
-44. `docs/42-phase-11-05-review-and-remediation-plan.md`
-45. `docs/43-phase-11-06-glm5-demo-seed-data-brief.md`
+3. `docs/00-project-boundary.md`
+4. `docs/02-task-breakdown.md`
+5. 与当前任务直接相关的代码和文档
+6. 仅当任务涉及未决事项时阅读 `docs/08-pending-decisions.md`
 
-如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
-
-## 2. 开工前强制检查
-
-修改任何文件前必须运行：
+修改文件前运行：
 
 ```powershell
 git status --short --branch
 git log --oneline -5
 ```
 
-然后先汇报：
+随后简要汇报当前目标、修改范围、不修改范围、风险和验证方式。无需重复汇报已知项目历史。
+
+## 2. 当前产品定位
+
+- 用户端首先交付响应式 H5 Web 应用。
+- `frontend/miniapp` 暂时保留目录名，但当前主构建目标是 H5。
+- 微信登录和微信小程序适配延后，不得阻塞 H5 交付。
+- AI 功能保持禁用和占位，不进入当前开发路线。
+- 商品、购物车和订单必须使用真实后端规则，不能用静态假数据冒充完成。
+- 社区只保留发帖、浏览、点赞、评论和收藏。
+- 营销活动保留基础展示、管理和商品/服务关联，不实现优惠券、复杂定价或 AI 营销。
+- V1 仍是单门店模块化单体，不改成微服务。
+
+详细边界见 `docs/00-project-boundary.md`。
+
+## 3. 快速交付方式
+
+- 一次任务领取一个可端到端验收的纵向功能切片，而不是一个极小文件或单接口。
+- 直接完成“分析、实现、测试、Review 修复、交接”，不为每一步新增独立计划文档。
+- 除非发现真实阻塞、需求冲突或未决事项，否则 Agent 应继续推进到可验证结果。
+- 优先复用现有实现，不做无关重构、不随意改名、不重复造轮子。
+- 文档只维护本文件和 `docs/` 中的核心执行文档，不创建阶段性 brief、review 或 handoff 文档。
+- 有意义的已验证功能切片可以形成提交；禁止为了展示 RED/GREEN 过程强制制造碎片提交。
+- 禁止直接向远程推送、合并或修改第三方资源，除非用户明确授权。
+
+## 4. 工程底线
+
+- 不覆盖、回退或删除用户及其他 Agent 的未提交变更。
+- 禁止 `git reset --hard`、`git clean -fd`、`git checkout -- .`。
+- 所有外部输入必须校验；错误响应不得泄露 SQL、堆栈、密钥或 Provider 原始错误。
+- 密码、Token、API Key 和数据库凭据不得硬编码或提交。
+- Controller 不得直接调用 Mapper 完成业务流程。
+- 多表状态变更、库存扣减、订单金额和预约占用必须使用事务并由服务端校验。
+- 预约并发、距离限制、状态流转、权限、订单金额、库存和社区隐私必须有直接测试。
+- AI 不得直接访问数据库，也不得提供疾病诊断、药物处方或治疗承诺。
+
+## 5. 风险驱动测试
+
+- Bug 修复和高风险业务规则优先先写失败测试，再实现修复。
+- 简单 UI、文档和配置变更可以直接实现后验证。
+- 关键变更逻辑目标覆盖率不低于 80%；不再使用全仓统一覆盖率作为每个任务的阻塞门禁。
+- 先运行受影响模块的快速测试，发布前再运行全量构建、测试和关键 E2E。
+- 只修改文档时，不要求运行应用全量测试，但必须检查引用、格式和 Git 差异。
+
+详细命令见 `docs/05-testing-and-verification.md`。
+
+## 6. Git 与变更范围
+
+- 不在 `main` 分支直接开发业务功能。
+- 当前已有非 `main` 工作分支时可继续使用，不强制为每个小任务新建分支。
+- 修改前后检查工作区；只修改当前任务所需文件。
+- 提交前至少运行相关验证、`git diff --check` 和 `git status --short --branch`。
+- 不得自行改变核心业务状态、字段、API 或数据库规则；需要改变时先说明影响。
+
+## 7. 未决事项
+
+只有 `docs/08-pending-decisions.md` 中标记为“未决”且直接影响当前任务的事项才需要停止实现并请求用户决定。与当前切片无关的未决事项不得阻塞交付。
+
+## 8. 完成交接
+
+完成任务时使用简洁交接：
 
 ```text
-已阅读文档：
-当前阶段：
-当前分支：
-计划修改范围：
-不会修改的范围：
-待决策或阻塞项：
-验证计划：
-```
-
-没有完成以上汇报前，不允许修改项目文件。
-
-## 3. 禁止自行决定的事项
-
-`docs/08-pending-decisions.md` 中标记为“未决”的事项，任何 Agent 都不能自行选型或实现。
-
-遇到未决事项时必须：
-
-1. 停止相关实现。
-2. 给出可选方案、优缺点和推荐方案。
-3. 等待用户明确决定。
-4. 用户决定后，先更新对应规划文档，再开始实现。
-
-## 4. 项目边界
-
-- V1 是面向单体宠物门店的模块化单体应用。
-- 不允许擅自改成微服务。
-- 不允许提前实现 V2、V3 功能。
-- 不允许擅自加入微信支付、多门店、会员积分、优惠券、独立员工端。
-- 不允许让 AI 直接访问数据库。
-- 不允许让 AI 提供宠物疾病诊断、药物处方或治疗承诺。
-- 不允许改变原始需求中的核心业务规则。
-
-## 5. 阶段约束
-
-- 当前阶段未通过门禁前，禁止开始依赖它的下一阶段。
-- 阶段 1 只实现并验证 `schema.sql`，不写前端和完整业务代码。
-- 任何阶段完成后，必须对照 `docs/07-integration-gates.md` 检查。
-- 没有验证证据，不能声称“已完成”“已可用”或“已接入”。
-
-## 6. Git 强制规则
-
-- 禁止直接在 `main` 分支实现业务功能。
-- 每个阶段使用 `docs/06-git-safety-workflow.md` 中规定的独立分支。
-- 修改前检查工作区，不能覆盖或回退其他 Agent、用户已有的变更。
-- 每个可验证节点都要提交 Git。
-- 提交前必须运行 `git diff --check` 和对应验证命令。
-- 禁止使用 `git reset --hard`、`git clean -fd`、`git checkout -- .`，除非用户明确授权。
-- 禁止强制推送、重写历史或删除分支，除非用户明确授权。
-
-## 7. 代码与测试强制规则
-
-- 非平凡业务逻辑必须执行 TDD：RED、GREEN、重构。
-- 业务逻辑目标覆盖率不低于 80%。
-- 预约排班、距离校验、状态流转、内容风控、订单金额、AI 安全边界必须有直接测试。
-- 所有外部输入必须校验。
-- 密码、Token、API Key、数据库凭据不能硬编码或提交到 Git。
-- Controller 不能直接调用 Mapper 完成业务流程。
-- 多表状态变更必须使用事务。
-- 错误响应不能泄露 SQL、堆栈、密钥或 Provider 原始错误。
-
-## 8. 变更范围约束
-
-- 只修改当前任务明确要求的文件和模块。
-- 不做无关重构。
-- 不擅自重命名业务状态、表、字段或 API。
-- 如果必须调整原始设计，先说明原因、影响范围和迁移方案，等待用户批准。
-- 如果发现需求冲突，停止冲突部分实现并报告，不能自行选择其中一方。
-
-## 9. 完成任务前强制验证
-
-任务结束前必须：
-
-1. 运行当前阶段要求的构建、测试、数据库或 E2E 验证。
-2. 运行 `git diff --check`。
-3. 运行 `git status --short --branch`。
-4. 对照集成门禁。
-5. 明确列出未验证内容和已知风险。
-
-## 10. 强制交接格式
-
-每个 Agent 完成工作时必须使用以下格式：
-
-```text
-任务：
-阶段：
-分支：
-提交：
+目标：
 已完成：
-未完成：
 变更文件：
-验证命令：
-验证结果：
-覆盖率：
-已知风险：
-待决策事项：
-下一步允许执行的任务：
+验证：
+未完成或风险：
+下一步：
 ```
 
-## 11. 规则冲突处理
+没有验证证据时，不得声称功能已完成、已可用或已接入。
 
-如果用户最新明确指令与本文档冲突，以用户最新明确指令为准，但 Agent 必须在执行前指出冲突和风险。
-
-如果不同项目文档之间冲突，优先级如下：
+## 9. 文档优先级
 
 ```text
 用户最新明确指令
@@ -179,16 +102,5 @@ git log --oneline -5
 > docs/00-project-boundary.md
 > docs/01-architecture-design.md
 > docs/02-task-breakdown.md
-> 当前阶段实施计划
-> 其他项目文档
+> 其他核心文档
 ```
-
-任何无法确定的冲突都必须停止相关实现并请求用户决策。
-
-## 12. 可持续编程强制规则
-
-- 后续阶段必须按 `docs/21-remaining-development-roadmap.md` 执行。
-- 每个 Agent 一次只能领取一个可独立验收的任务包。
-- 当前工作区存在其他 Agent 的未提交变更时，必须按 `docs/22-continuous-agent-development-rules.md` 保护和交接。
-- 禁止跳过当前阶段门禁直接开始后续阶段。
-- 没有测试、Review、验证和 Git 提交证据时，禁止声明任务包完成。

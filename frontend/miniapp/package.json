@@ -1,9 +1,11 @@
 {
-  "name": "petcare-miniapp",
+  "name": "petcare-user-h5",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "dev": "uni",
+    "build": "uni build",
     "dev:mp-weixin": "uni -p mp-weixin",
     "build:mp-weixin": "uni build -p mp-weixin",
     "dev:h5": "uni",

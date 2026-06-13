@@ -1,5 +1,5 @@
 /**
- * Platform adaptation utilities for miniapp.
+ * Platform adaptation utilities for the H5-first user app.
  */
 
 /** Check if current platform is WeChat mini program */

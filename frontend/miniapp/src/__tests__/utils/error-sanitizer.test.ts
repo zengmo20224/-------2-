@@ -42,7 +42,7 @@ describe('sanitizeErrorMessage', () => {
     expect(sanitizeErrorMessage('OpenAI API failed')).toBe('操作失败，请稍后重试')
   })
 
-  it('filters miniapp-specific sensitive data', () => {
+  it('filters user-app-specific sensitive data', () => {
     expect(sanitizeErrorMessage('openid=xxx')).toBe('操作失败，请稍后重试')
     expect(sanitizeErrorMessage('session_key leaked')).toBe('操作失败，请稍后重试')
     expect(sanitizeErrorMessage('access_token expired')).toBe('操作失败，请稍后重试')

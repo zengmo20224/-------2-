@@ -236,7 +236,7 @@ CREATE TABLE `staff_unavailable_time` (
 
 -- 员工预约锁定点表
 -- 用于预约并发防冲突方案：为同一员工同一日期提供稳定的数据库锁定点
--- 设计依据：docs/09-booking-concurrency-control.md
+-- 设计依据：docs/00-project-boundary.md 与 docs/01-architecture-design.md
 CREATE TABLE `staff_booking_lock` (
   `id`           BIGINT   NOT NULL COMMENT '主键，雪花 ID',
   `staff_id`     BIGINT   NOT NULL COMMENT '员工 ID',
@@ -727,7 +727,7 @@ CREATE TABLE `admin_user` (
 
 -- 管理员角色定义表
 -- 细粒度 RBAC：角色定义
--- 设计依据：docs/10-admin-permission-design.md
+-- 设计依据：docs/00-project-boundary.md 与 docs/01-architecture-design.md
 CREATE TABLE `admin_role` (
   `id`          BIGINT      NOT NULL COMMENT '主键，雪花 ID',
   `role_code`   VARCHAR(64) NOT NULL COMMENT '角色编码',
@@ -744,7 +744,7 @@ CREATE TABLE `admin_role` (
 -- 管理员权限码表
 -- 细粒度 RBAC：权限码定义
 -- 权限码格式：模块:资源:动作，例如 booking:booking:confirm
--- 设计依据：docs/10-admin-permission-design.md
+-- 设计依据：docs/00-project-boundary.md 与 docs/01-architecture-design.md
 CREATE TABLE `admin_permission` (
   `id`              BIGINT       NOT NULL COMMENT '主键，雪花 ID',
   `permission_code` VARCHAR(128) NOT NULL COMMENT '权限码，格式：模块:资源:动作',
@@ -763,7 +763,7 @@ CREATE TABLE `admin_permission` (
 
 -- 管理员角色权限关联表
 -- 细粒度 RBAC：角色与权限的多对多关系
--- 设计依据：docs/10-admin-permission-design.md
+-- 设计依据：docs/00-project-boundary.md 与 docs/01-architecture-design.md
 CREATE TABLE `admin_role_permission` (
   `id`             BIGINT   NOT NULL COMMENT '主键，雪花 ID',
   `role_id`        BIGINT   NOT NULL COMMENT '角色 ID',

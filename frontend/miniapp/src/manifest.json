@@ -1,7 +1,7 @@
 {
   "name": "PetCare",
   "appid": "",
-  "description": "PetCare O2O 宠物护理小程序",
+  "description": "PetCare O2O 响应式 H5 用户端",
   "versionName": "1.0.0",
   "versionCode": "100",
   "transformPx": false,

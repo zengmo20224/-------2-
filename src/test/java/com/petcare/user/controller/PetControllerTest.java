@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * RED-1 / RED-2: Integration tests for current user pet profile API.
- * Contract defined in docs/37-phase-11-03-glm5-pet-profile-api-brief.md.
+ * Contract defined by the current user API and docs/requirements-source.md.
  */
 @SpringBootTest
 @AutoConfigureMockMvc

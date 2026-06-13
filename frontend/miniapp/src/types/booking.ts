@@ -1,5 +1,5 @@
 /**
- * Booking-related types for user-facing miniapp.
+ * Booking-related types for the user-facing H5 app.
  * Backend source: com.petcare.booking.dto.*
  */
 

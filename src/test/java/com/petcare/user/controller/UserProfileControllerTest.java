@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * RED-1 / RED-2: Integration tests for current user profile API.
- * Contract defined in docs/35-phase-11-02-glm5-user-profile-api-brief.md.
+ * Contract defined by the current user API and docs/requirements-source.md.
  */
 @SpringBootTest
 @AutoConfigureMockMvc

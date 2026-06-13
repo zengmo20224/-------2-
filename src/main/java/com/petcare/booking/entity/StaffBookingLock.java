@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 /**
  * Entity for table `staff_booking_lock`.
  * Does NOT extend BaseEntity because this table has no deleted field.
- * Used for booking concurrency control (see docs/09-booking-concurrency-control.md).
+ * Used for booking concurrency control (see docs/01-architecture-design.md).
  */
 @Getter
 @Setter
