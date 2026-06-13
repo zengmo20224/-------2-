@@ -21,6 +21,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Public endpoints:
  * - GET /api/v1/system/health
  * - POST /api/v1/admin/auth/login
+ * - POST /api/v1/auth/register
+ * - POST /api/v1/auth/login
+ * - POST /api/v1/auth/forgot-password/*
  * - POST /api/v1/auth/wechat-login
  * - POST /api/v1/auth/test-login (only active in test profile)
  * - Anonymous GET on public catalog/community whitelist (service/product/topic/post reads)
@@ -58,6 +61,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/system/health").permitAll()
                         .requestMatchers("/api/v1/admin/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/register").permitAll()
+                        .requestMatchers("/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/forgot-password/**").permitAll()
                         .requestMatchers("/api/v1/auth/wechat-login").permitAll()
                         .requestMatchers("/api/v1/auth/test-login").permitAll()
                         // Anonymous public catalog reads (GET only, explicit real paths)

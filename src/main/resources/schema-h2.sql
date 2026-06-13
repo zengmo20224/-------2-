@@ -9,12 +9,26 @@ CREATE TABLE IF NOT EXISTS `user` (
   `nickname`        VARCHAR(64)     DEFAULT NULL,
   `avatar_url`      VARCHAR(255)    DEFAULT NULL,
   `phone`           VARCHAR(20)     DEFAULT NULL,
+  `password_hash`   VARCHAR(128)    DEFAULT NULL,
   `gender`          TINYINT         DEFAULT NULL,
   `status`          VARCHAR(32)     NOT NULL DEFAULT 'ACTIVE',
   `last_login_time` TIMESTAMP       DEFAULT NULL,
   `create_time`     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time`     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted`         TINYINT         NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE (`phone`)
+);
+
+CREATE TABLE IF NOT EXISTS `user_security_question` (
+  `id`          BIGINT       NOT NULL,
+  `user_id`     BIGINT       NOT NULL,
+  `question`    VARCHAR(255) NOT NULL,
+  `answer_hash` VARCHAR(128) NOT NULL,
+  `sort`        INT          NOT NULL DEFAULT 0,
+  `create_time` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted`     TINYINT      NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 );
 

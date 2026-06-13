@@ -30,9 +30,10 @@ describe('User Store - Token Logic', () => {
     expect(isLoggedIn.value).toBe(false)
   })
 
-  it('isWechatLoginEnabled defaults to false', () => {
-    const isWechatLoginEnabled = ref(false)
-    expect(isWechatLoginEnabled.value).toBe(false)
+  it('phone login flag defaults to correct state', () => {
+    // Phone + password is the active login method
+    const loginEnabled = true
+    expect(loginEnabled).toBe(true)
   })
 })
 

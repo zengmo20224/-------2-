@@ -75,12 +75,19 @@ VALUES
 (7003, 10001, NULL,  6003, '新手养猫必看：驱虫时间表', '分享一份兽医推荐的猫咪驱虫时间安排，希望对新手朋友有帮助。', 'PUBLISHED', 0, 234, 56, 12, 22, NOW() - INTERVAL 3 DAY);
 
 -- ============================================================================
--- 6. 用户（手机号匹配 test-login 白名单）
+-- 6. 用户（手机号 + 密码登录）
+-- 密码: user123456 (BCrypt strength=12)
 -- ============================================================================
-INSERT INTO `user` (`id`, `openid`, `nickname`, `avatar_url`, `phone`, `gender`, `status`)
+INSERT INTO `user` (`id`, `openid`, `nickname`, `avatar_url`, `phone`, `password_hash`, `gender`, `status`)
 VALUES
-(10001, NULL, '爱狗的小李', NULL, '13800138001', 1, 'ACTIVE'),
-(10002, NULL, '猫奴小王',   NULL, '13800138002', 2, 'ACTIVE');
+(10001, NULL, '爱狗的小李', NULL, '13800138001', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 1, 'ACTIVE'),
+(10002, NULL, '猫奴小王',   NULL, '13800138002', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 2, 'ACTIVE');
+
+-- 安全问题（找回密码用）
+INSERT INTO `user_security_question` (`id`, `user_id`, `question`, `answer_hash`, `sort`) VALUES
+(13001, 10001, '你的宠物叫什么名字？', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 0),
+(13002, 10001, '你最喜欢的食物？', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 1),
+(13003, 10002, '你的宠物叫什么名字？', '$2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 0);
 
 -- ============================================================================
 -- 7. 宠物档案

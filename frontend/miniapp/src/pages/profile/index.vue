@@ -5,11 +5,13 @@
     <!-- Not logged in -->
     <view v-if="!isLoggedIn" class="profile-login">
       <text class="profile-login__hint">登录后享受预约、下单和社区互动</text>
-      <view class="profile-login__form">
-        <PcFormField label="手机号" placeholder="输入测试手机号" v-model="phoneInput" />
-        <PcPrimaryButton text="测试登录" :loading="loginLoading" @tap="handleLogin" />
+      <view class="profile-login__btn" @tap="goLogin">
+        <text class="profile-login__btn-text">手机号登录</text>
       </view>
-      <text class="profile-login__tip">开发环境测试手机号：13800138001 / 13800138002</text>
+      <view class="profile-login__links">
+        <text class="profile-login__link" @tap="goRegister">新用户注册</text>
+        <text class="profile-login__link" @tap="goForgotPassword">忘记密码</text>
+      </view>
     </view>
 
     <!-- Logged in -->
@@ -49,36 +51,25 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import PcPageHeader from '@/components/PcPageHeader.vue'
-import PcStatePanel from '@/components/PcStatePanel.vue'
-import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
-import PcFormField from '@/components/PcFormField.vue'
 import PcBlockedFeature from '@/components/PcBlockedFeature.vue'
 import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isLoggedIn)
-const phoneInput = ref('')
-const loginLoading = ref(false)
 
 const displayName = computed(() => userStore.profile?.nickname || '用户')
 const displayPhone = computed(() => userStore.profile?.phone || '')
 
-async function handleLogin() {
-  if (!phoneInput.value) {
-    uni.showToast({ title: '请输入手机号', icon: 'none' })
-    return
-  }
+function goLogin() {
+  uni.navigateTo({ url: '/pages/auth/login' })
+}
 
-  loginLoading.value = true
-  const ok = await userStore.doTestLogin(phoneInput.value)
-  loginLoading.value = false
+function goRegister() {
+  uni.navigateTo({ url: '/pages/auth/register' })
+}
 
-  if (ok) {
-    uni.showToast({ title: '登录成功', icon: 'success' })
-    await userStore.fetchProfile()
-  } else {
-    uni.showToast({ title: '登录失败', icon: 'none' })
-  }
+function goForgotPassword() {
+  uni.navigateTo({ url: '/pages/auth/forgot-password' })
 }
 
 function handleLogout() {
@@ -115,16 +106,30 @@ onMounted(() => {
   color: var(--pc-user-muted);
 }
 
-.profile-login__form {
-  width: 100%;
+.profile-login__btn {
+  height: var(--pc-btn-height);
+  background: var(--pc-user-primary);
+  border-radius: var(--pc-radius-card);
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
-.profile-login__tip {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-muted);
+.profile-login__btn-text {
+  color: #fff;
+  font-size: var(--pc-font-card-title);
+  font-weight: 600;
+}
+
+.profile-login__links {
+  display: flex;
+  gap: 24px;
+}
+
+.profile-login__link {
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-primary);
 }
 
 .profile-content {

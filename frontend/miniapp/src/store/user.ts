@@ -1,21 +1,16 @@
 /**
  * User store — authentication boundary.
- *
- * WeChat login deferred per H5-first strategy.
- * This store manages token persistence for user JWT.
+ * Phone + password is the primary authentication method.
  */
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { testLogin as apiTestLogin, getUserProfile, type UserProfile } from '@/api/user'
+import { login as apiLogin, getUserProfile, type UserProfile } from '@/api/user'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(loadToken())
   const isLoggedIn = computed(() => !!token.value)
   const profile = ref<UserProfile | null>(null)
-
-  /** WeChat login availability flag — deferred until H5 stabilizes */
-  const isWechatLoginEnabled = ref(false)
 
   function loadToken(): string | null {
     try {
@@ -42,14 +37,19 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  /** Attempt test login with phone number */
-  async function doTestLogin(phone: string): Promise<boolean> {
-    const res = await apiTestLogin(phone)
+  /** Login with phone + password */
+  async function doLogin(phone: string, password: string): Promise<boolean> {
+    const res = await apiLogin({ phone, password })
     if (res.success && res.data) {
       setToken(res.data.accessToken)
       return true
     }
     return false
+  }
+
+  /** Set token directly (used by register flow) */
+  function setAuthToken(newToken: string): void {
+    setToken(newToken)
   }
 
   /** Fetch current user profile */
@@ -68,5 +68,5 @@ export const useUserStore = defineStore('user', () => {
     profile.value = null
   }
 
-  return { token, isLoggedIn, isWechatLoginEnabled, profile, setToken, doTestLogin, fetchProfile, logout }
+  return { token, isLoggedIn, profile, setToken, setAuthToken, doLogin, fetchProfile, logout }
 })

@@ -1,17 +1,16 @@
 /**
  * User / authentication API.
- * WeChat login deferred per H5-first strategy.
- * Test login available in test profile only.
+ * Phone + password login is the primary authentication method.
  */
 
 import { http } from './request'
 import type { ApiResponse } from '@/types/api'
 
-/** Test login response */
-export interface TestLoginResult {
+/** Login / register response */
+export interface AuthResult {
   tokenType: string
   accessToken: string
-  expiresIn: number
+  expiresInSeconds: number
   user: { id: string; nickname: string }
 }
 
@@ -25,9 +24,39 @@ export interface UserProfile {
   status: string
 }
 
-/** Test login (only available in test profile) */
-export function testLogin(phone: string): Promise<ApiResponse<TestLoginResult>> {
-  return http.post<TestLoginResult>('/api/v1/auth/test-login', { phone })
+/** Security question for password recovery */
+export interface SecurityQuestion {
+  id: string
+  question: string
+}
+
+/** Register with phone + password + security questions */
+export function register(data: {
+  phone: string
+  password: string
+  nickname: string
+  securityQuestions: { question: string; answer: string }[]
+}): Promise<ApiResponse<AuthResult>> {
+  return http.post<AuthResult>('/api/v1/auth/register', data as any)
+}
+
+/** Login with phone + password */
+export function login(data: { phone: string; password: string }): Promise<ApiResponse<AuthResult>> {
+  return http.post<AuthResult>('/api/v1/auth/login', data as any)
+}
+
+/** Get security questions for password recovery */
+export function getSecurityQuestions(phone: string): Promise<ApiResponse<SecurityQuestion[]>> {
+  return http.post<SecurityQuestion[]>('/api/v1/auth/forgot-password/questions', { phone })
+}
+
+/** Reset password by answering security questions */
+export function resetPassword(data: {
+  phone: string
+  answers: { questionId: string; answer: string }[]
+  newPassword: string
+}): Promise<ApiResponse<void>> {
+  return http.post<void>('/api/v1/auth/forgot-password/reset', data as any)
 }
 
 /** WeChat login — not yet implemented */

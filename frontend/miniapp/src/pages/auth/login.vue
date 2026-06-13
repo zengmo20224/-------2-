@@ -1,0 +1,78 @@
+<template>
+  <view class="pc-page auth-page">
+    <PcPageHeader title="登录" />
+
+    <view class="auth-form">
+      <PcFormField label="手机号" placeholder="请输入手机号" v-model="phoneInput" />
+      <PcFormField label="密码" placeholder="请输入密码" v-model="passwordInput" />
+
+      <view class="auth-links">
+        <text class="auth-link" @tap="goRegister">没有账号？去注册</text>
+        <text class="auth-link" @tap="goForgotPassword">忘记密码</text>
+      </view>
+
+      <PcPrimaryButton text="登录" :loading="loginLoading" @tap="handleLogin" />
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import PcPageHeader from '@/components/PcPageHeader.vue'
+import PcFormField from '@/components/PcFormField.vue'
+import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
+import { useUserStore } from '@/store/user'
+
+const userStore = useUserStore()
+const phoneInput = ref('')
+const passwordInput = ref('')
+const loginLoading = ref(false)
+
+async function handleLogin() {
+  if (!phoneInput.value || !passwordInput.value) {
+    uni.showToast({ title: '请填写手机号和密码', icon: 'none' })
+    return
+  }
+
+  loginLoading.value = true
+  const ok = await userStore.doLogin(phoneInput.value, passwordInput.value)
+  loginLoading.value = false
+
+  if (ok) {
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    await userStore.fetchProfile()
+    uni.switchTab({ url: '/pages/profile/index' })
+  }
+}
+
+function goRegister() {
+  uni.navigateTo({ url: '/pages/auth/register' })
+}
+
+function goForgotPassword() {
+  uni.navigateTo({ url: '/pages/auth/forgot-password' })
+}
+</script>
+
+<style scoped>
+.auth-page {
+  padding: var(--pc-page-padding);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+}
+
+.auth-link {
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-primary);
+}
+</style>

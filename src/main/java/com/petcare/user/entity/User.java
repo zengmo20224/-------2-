@@ -34,6 +34,9 @@ public class User extends BaseEntity {
     @TableField("phone")
     private String phone;
 
+    @TableField("password_hash")
+    private String passwordHash;
+
     @TableField("gender")
     private Integer gender;
 

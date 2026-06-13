@@ -26,6 +26,7 @@ CREATE TABLE `user` (
   `nickname`        VARCHAR(64)     DEFAULT NULL COMMENT '用户昵称',
   `avatar_url`      VARCHAR(255)    DEFAULT NULL COMMENT '头像地址',
   `phone`           VARCHAR(20)     DEFAULT NULL COMMENT '手机号',
+  `password_hash`   VARCHAR(128)    DEFAULT NULL COMMENT 'BCrypt 密码哈希',
   `gender`          TINYINT         DEFAULT NULL COMMENT '性别：0-未知 1-男 2-女',
   `status`          VARCHAR(32)     NOT NULL DEFAULT 'ACTIVE' COMMENT '状态：ACTIVE / DISABLED',
   `last_login_time` DATETIME        DEFAULT NULL COMMENT '最后登录时间',
@@ -34,10 +35,24 @@ CREATE TABLE `user` (
   `deleted`         TINYINT         NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-正常 1-已删除',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_openid` (`openid`),
-  KEY `idx_phone` (`phone`),
+  UNIQUE KEY `uk_phone` (`phone`),
   KEY `idx_status` (`status`),
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+
+-- 用户安全问题表（找回密码用）
+CREATE TABLE `user_security_question` (
+  `id`          BIGINT       NOT NULL COMMENT '主键，雪花 ID',
+  `user_id`     BIGINT       NOT NULL COMMENT '所属用户 ID',
+  `question`    VARCHAR(255) NOT NULL COMMENT '安全问题题目',
+  `answer_hash` VARCHAR(128) NOT NULL COMMENT '答案 BCrypt 哈希',
+  `sort`        INT          NOT NULL DEFAULT 0 COMMENT '排序序号',
+  `create_time` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`     TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-正常 1-已删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户安全问题表';
 
 -- 宠物档案表
 CREATE TABLE `pet` (

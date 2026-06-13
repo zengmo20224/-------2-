@@ -17,6 +17,12 @@ public final class ErrorCode {
     public static final String UNAUTHORIZED = "unauthorized";
     public static final String FORBIDDEN = "forbidden";
     public static final String WECHAT_LOGIN_NOT_ENABLED = "wechat_login_not_enabled";
+
+    // Auth error codes
+    public static final String PHONE_ALREADY_REGISTERED = "phone_already_registered";
+    public static final String INVALID_CREDENTIALS = "invalid_credentials";
+    public static final String SECURITY_QUESTION_NOT_SET = "security_question_not_set";
+    public static final String SECURITY_ANSWER_INCORRECT = "security_answer_incorrect";
     public static final String INVALID_TOKEN = "invalid_token";
     public static final String EXPIRED_TOKEN = "expired_token";
     public static final String INTERNAL_ERROR = "internal_error";

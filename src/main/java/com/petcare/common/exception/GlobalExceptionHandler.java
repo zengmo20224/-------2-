@@ -177,11 +177,15 @@ public class GlobalExceptionHandler {
                  ErrorCode.COMMUNITY_SENSITIVE_WORD_DUPLICATE,
                  ErrorCode.PRODUCT_STOCK_INSUFFICIENT,
                  ErrorCode.PRODUCT_ORDER_STATUS_INVALID -> HttpStatus.CONFLICT;
-            case ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
+            case ErrorCode.UNAUTHORIZED,
+                 ErrorCode.INVALID_CREDENTIALS -> HttpStatus.UNAUTHORIZED;
             case ErrorCode.FORBIDDEN,
                  ErrorCode.CART_ITEM_FORBIDDEN,
                  ErrorCode.PRODUCT_ORDER_FORBIDDEN -> HttpStatus.FORBIDDEN;
-            case ErrorCode.WECHAT_LOGIN_NOT_ENABLED -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case ErrorCode.WECHAT_LOGIN_NOT_ENABLED,
+                 ErrorCode.PHONE_ALREADY_REGISTERED,
+                 ErrorCode.SECURITY_QUESTION_NOT_SET,
+                 ErrorCode.SECURITY_ANSWER_INCORRECT -> HttpStatus.UNPROCESSABLE_ENTITY;
             case ErrorCode.BOOKING_SLOT_UNAVAILABLE,
                  ErrorCode.BOOKING_SERVICE_UNAVAILABLE,
                  ErrorCode.BOOKING_DATE_OUT_OF_RANGE,

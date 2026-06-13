@@ -75,6 +75,14 @@
         { "path": "index", "style": { "navigationBarTitleText": "优惠活动" } },
         { "path": "detail", "style": { "navigationBarTitleText": "活动详情" } }
       ]
+    },
+    {
+      "root": "pages/auth",
+      "pages": [
+        { "path": "login", "style": { "navigationBarTitleText": "登录" } },
+        { "path": "register", "style": { "navigationBarTitleText": "注册" } },
+        { "path": "forgot-password", "style": { "navigationBarTitleText": "找回密码" } }
+      ]
     }
   ],
   "tabBar": {
