@@ -251,6 +251,31 @@ class ProductCatalogControllerTest {
         }
     }
 
+    // ==================== Anonymous (public) reads ====================
+
+    @Nested
+    @DisplayName("Anonymous public reads")
+    class AnonymousReads {
+
+        @Test
+        @DisplayName("GET /api/v1/products excludes OFF_SALE items without a token")
+        void anonymousExcludesOffSale() throws Exception {
+            mockMvc.perform(get("/api/v1/products"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.items[?(@.name=='皇家猫粮_catalogTest')]").exists())
+                    .andExpect(jsonPath("$.data.items[?(@.name=='下架商品_catalogTest')]").doesNotExist());
+        }
+
+        @Test
+        @DisplayName("GET /api/v1/product-categories excludes INACTIVE categories without a token")
+        void anonymousExcludesInactiveCategory() throws Exception {
+            mockMvc.perform(get("/api/v1/product-categories"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data[?(@.name=='猫粮_catalogTest')]").exists())
+                    .andExpect(jsonPath("$.data[?(@.name=='下架分类_catalogTest')]").doesNotExist());
+        }
+    }
+
     // ==================== Helper Methods ====================
 
     private Long createTestAdmin(String username, String rawPassword, String role) {

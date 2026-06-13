@@ -5,6 +5,7 @@ import com.petcare.common.security.RestAccessDeniedHandler;
 import com.petcare.common.security.RestAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,8 +23,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * - POST /api/v1/admin/auth/login
  * - POST /api/v1/auth/wechat-login
  * - POST /api/v1/auth/test-login (only active in test profile)
+ * - Anonymous GET on public catalog/community whitelist (service/product/topic/post reads)
  *
  * All other /api/v1/** endpoints require authentication.
+ * Writes, user-private resources, admin backend and AI endpoints stay authenticated.
  * Method-level security enabled via @EnableMethodSecurity.
  */
 @Configuration
@@ -57,6 +60,19 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/auth/login").permitAll()
                         .requestMatchers("/api/v1/auth/wechat-login").permitAll()
                         .requestMatchers("/api/v1/auth/test-login").permitAll()
+                        // Anonymous public catalog reads (GET only, explicit real paths)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/service-categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/service-items").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/service-items/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/product-categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/{id}").permitAll()
+                        // Anonymous public community reads (GET only, explicit real paths)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/topics").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/topics/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/{postId}/comments").permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().authenticated()
                 )
