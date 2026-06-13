@@ -7,8 +7,10 @@ import com.petcare.common.pagination.PageResponse;
 import com.petcare.community.dto.CommentCreateRequest;
 import com.petcare.community.dto.CommentResponse;
 import com.petcare.community.dto.PostCreateRequest;
-import com.petcare.community.dto.PostDetailResponse;
 import com.petcare.community.dto.PostResponse;
+import com.petcare.community.dto.PublicCommentResponse;
+import com.petcare.community.dto.PublicPostDetailResponse;
+import com.petcare.community.dto.PublicPostSummaryResponse;
 import com.petcare.community.dto.ReportPostRequest;
 import com.petcare.community.service.CommunityInteractionService;
 import com.petcare.community.service.CommunityPostApplicationService;
@@ -45,23 +47,24 @@ public class PostController {
 
     /**
      * List published posts with optional topic filter and pagination.
+     * Returns the public summary view (no private identifiers or internal status).
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<PostResponse>>> listPosts(
+    public ResponseEntity<ApiResponse<PageResponse<PublicPostSummaryResponse>>> listPosts(
             @RequestParam(required = false) Long topicId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        PageResponse<PostResponse> result = postService.listPosts(topicId, page, size);
+        PageResponse<PublicPostSummaryResponse> result = postService.listPublicPosts(topicId, page, size);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     /**
-     * Get post detail. Only published posts or own non-deleted posts are visible.
+     * Get published post detail. Only PUBLISHED posts are visible; everything else
+     * resolves to a safe 404 so existence and audit status are never leaked.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(@PathVariable Long id) {
-        Long currentUserId = resolveCurrentUserIdOrNull();
-        PostDetailResponse result = postService.getPostDetail(currentUserId, id);
+    public ResponseEntity<ApiResponse<PublicPostDetailResponse>> getPostDetail(@PathVariable Long id) {
+        PublicPostDetailResponse result = postService.getPublicPostDetail(id);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
@@ -77,14 +80,16 @@ public class PostController {
     }
 
     /**
-     * List comments for a post.
+     * List published comments for a published post. The parent post must be
+     * PUBLISHED; otherwise a safe 404 is returned. Only PUBLISHED comments are
+     * returned, without private identifiers or internal status.
      */
     @GetMapping("/{postId}/comments")
-    public ResponseEntity<ApiResponse<PageResponse<CommentResponse>>> listComments(
+    public ResponseEntity<ApiResponse<PageResponse<PublicCommentResponse>>> listComments(
             @PathVariable Long postId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        PageResponse<CommentResponse> result = postService.listComments(postId, page, size);
+        PageResponse<PublicCommentResponse> result = postService.listPublicComments(postId, page, size);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
@@ -159,13 +164,5 @@ public class PostController {
     private Long resolveCurrentUserId() {
         throw new BusinessException(ErrorCode.UNAUTHORIZED,
                 "用户端功能暂未开放，请等待用户登录功能上线");
-    }
-
-    /**
-     * Resolves current user ID, returning null if not available.
-     * Used for read operations where unauthenticated access is partially allowed.
-     */
-    private Long resolveCurrentUserIdOrNull() {
-        return null;
     }
 }

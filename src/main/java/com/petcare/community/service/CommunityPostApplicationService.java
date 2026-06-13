@@ -12,6 +12,9 @@ import com.petcare.community.dto.CommentResponse;
 import com.petcare.community.dto.PostCreateRequest;
 import com.petcare.community.dto.PostDetailResponse;
 import com.petcare.community.dto.PostResponse;
+import com.petcare.community.dto.PublicCommentResponse;
+import com.petcare.community.dto.PublicPostDetailResponse;
+import com.petcare.community.dto.PublicPostSummaryResponse;
 import com.petcare.community.dto.TopicResponse;
 import com.petcare.community.entity.Post;
 import com.petcare.community.entity.PostComment;
@@ -285,6 +288,90 @@ public class CommunityPostApplicationService {
         return PageResponse.of(items, pageResult.getTotal(), page, size);
     }
 
+    // ==================== Public (anonymous) Reads ====================
+
+    /**
+     * Lists published posts for anonymous readers. Only PUBLISHED, non-deleted posts
+     * are returned, without private identifiers or internal status.
+     */
+    public PageResponse<PublicPostSummaryResponse> listPublicPosts(Long topicId, int page, int size) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
+                .eq(Post::getStatus, "PUBLISHED")
+                .eq(Post::getDeleted, 0);
+
+        if (topicId != null) {
+            wrapper.eq(Post::getTopicId, topicId);
+        }
+        wrapper.orderByDesc(Post::getPublishTime);
+
+        Page<Post> pageResult = postMapper.selectPage(new Page<>(page, size), wrapper);
+        List<PublicPostSummaryResponse> items = pageResult.getRecords().stream()
+                .map(this::toPublicPostSummary)
+                .toList();
+        return PageResponse.of(items, pageResult.getTotal(), page, size);
+    }
+
+    /**
+     * Gets a published post detail for anonymous readers. Non-published, deleted or
+     * non-existent posts all resolve to COMMUNITY_POST_NOT_FOUND (404) so existence
+     * and audit status are never leaked.
+     */
+    public PublicPostDetailResponse getPublicPostDetail(Long postId) {
+        Post post = postMapper.selectOne(
+                new LambdaQueryWrapper<Post>()
+                        .eq(Post::getId, postId)
+                        .eq(Post::getStatus, "PUBLISHED")
+                        .eq(Post::getDeleted, 0)
+        );
+        if (post == null) {
+            throw new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND, "帖子不存在");
+        }
+
+        List<String> imageUrls = imageMapper.selectList(
+                new LambdaQueryWrapper<PostImage>()
+                        .eq(PostImage::getPostId, postId)
+                        .orderByAsc(PostImage::getSort)
+        ).stream().map(PostImage::getImageUrl).toList();
+
+        return new PublicPostDetailResponse(
+                post.getId(), post.getTopicId(),
+                post.getTitle(), post.getContent(),
+                post.getViewCount(), post.getLikeCount(), post.getCommentCount(),
+                post.getFavoriteCount(), post.getPublishTime(), post.getCreateTime(),
+                imageUrls
+        );
+    }
+
+    /**
+     * Lists published comments under a published post for anonymous readers.
+     * The parent post must be PUBLISHED and non-deleted; otherwise a safe 404 is
+     * returned so pending/rejected/hidden posts cannot be probed via comments.
+     * Only PUBLISHED, non-deleted comments are returned.
+     */
+    public PageResponse<PublicCommentResponse> listPublicComments(Long postId, int page, int size) {
+        Long postCount = postMapper.selectCount(
+                new LambdaQueryWrapper<Post>()
+                        .eq(Post::getId, postId)
+                        .eq(Post::getStatus, "PUBLISHED")
+                        .eq(Post::getDeleted, 0)
+        );
+        if (postCount == 0) {
+            throw new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND, "帖子不存在");
+        }
+
+        LambdaQueryWrapper<PostComment> wrapper = new LambdaQueryWrapper<PostComment>()
+                .eq(PostComment::getPostId, postId)
+                .eq(PostComment::getStatus, "PUBLISHED")
+                .eq(PostComment::getDeleted, 0)
+                .orderByAsc(PostComment::getCreateTime);
+
+        Page<PostComment> pageResult = commentMapper.selectPage(new Page<>(page, size), wrapper);
+        List<PublicCommentResponse> items = pageResult.getRecords().stream()
+                .map(this::toPublicCommentResponse)
+                .toList();
+        return PageResponse.of(items, pageResult.getTotal(), page, size);
+    }
+
     // ==================== Private Helpers ====================
 
     private PostResponse toPostResponse(Post post) {
@@ -301,6 +388,22 @@ public class CommunityPostApplicationService {
                 comment.getId(), comment.getPostId(), comment.getUserId(),
                 comment.getParentId(), comment.getContent(), comment.getStatus(),
                 comment.getLikeCount(), comment.getCreateTime()
+        );
+    }
+
+    private PublicPostSummaryResponse toPublicPostSummary(Post post) {
+        return new PublicPostSummaryResponse(
+                post.getId(), post.getTopicId(),
+                post.getTitle(), post.getContent(),
+                post.getViewCount(), post.getLikeCount(), post.getCommentCount(),
+                post.getFavoriteCount(), post.getPublishTime(), post.getCreateTime()
+        );
+    }
+
+    private PublicCommentResponse toPublicCommentResponse(PostComment comment) {
+        return new PublicCommentResponse(
+                comment.getId(), comment.getParentId(),
+                comment.getContent(), comment.getLikeCount(), comment.getCreateTime()
         );
     }
 

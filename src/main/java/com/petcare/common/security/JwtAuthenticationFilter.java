@@ -29,9 +29,10 @@ import java.io.IOException;
  * Behavior:
  * - Only processes Authorization: Bearer <token>
  * - Token missing: does not error, lets Spring Security decide if auth is required
- * - Token invalid/expired: clears context, lets entry point return 401
+ *   (anonymous access still works on permitAll public reads)
+ * - Token present but invalid/expired/disabled: rejected with 401 via the entry
+ *   point and NEVER downgraded to anonymous (Phase 11-05 §6)
  * - Token valid: sets authentication in SecurityContext
- * - Authentication loading failure (disabled/deleted user): clears context, returns 401
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -42,13 +43,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService jwtTokenService;
     private final AdminUserDetailsService adminUserDetailsService;
     private final UserAuthLoadingService userAuthLoadingService;
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
 
     public JwtAuthenticationFilter(JwtTokenService jwtTokenService,
                                    AdminUserDetailsService adminUserDetailsService,
-                                   UserAuthLoadingService userAuthLoadingService) {
+                                   UserAuthLoadingService userAuthLoadingService,
+                                   RestAuthenticationEntryPoint authenticationEntryPoint) {
         this.jwtTokenService = jwtTokenService;
         this.adminUserDetailsService = adminUserDetailsService;
         this.userAuthLoadingService = userAuthLoadingService;
+        this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
     @Override
@@ -58,36 +62,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader(AUTHORIZATION_HEADER);
 
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            // No Bearer token present: anonymous path. Let Spring Security decide
+            // (permitAll public reads succeed; protected endpoints get 401).
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = authHeader.substring(BEARER_PREFIX.length());
 
+        // A Bearer token is present, so it MUST authenticate successfully. Any failure
+        // (malformed, bad signature, expired, disabled/deleted subject, unknown type)
+        // is rejected with 401 and never downgraded to anonymous (Phase 11-05 §6).
         try {
             JwtTokenService.TokenParseResult parseResult = jwtTokenService.parseTokenForFilter(token);
 
             if (parseResult == null) {
-                // Invalid or missing tokenType — do not set SecurityContext
-                SecurityContextHolder.clearContext();
-                filterChain.doFilter(request, response);
+                rejectInvalidToken(request, response);
                 return;
             }
 
             switch (parseResult.tokenType()) {
                 case "ADMIN" -> authenticateAdmin(parseResult.subjectId(), request);
                 case "USER" -> authenticateUser(parseResult.subjectId(), request);
-                default -> SecurityContextHolder.clearContext();
+                default -> {
+                    rejectInvalidToken(request, response);
+                    return;
+                }
             }
         } catch (JwtException | IllegalArgumentException e) {
-            // Invalid or expired token — clear context and let entry point return 401
-            SecurityContextHolder.clearContext();
+            rejectInvalidToken(request, response);
+            return;
         } catch (org.springframework.security.core.AuthenticationException e) {
-            // User/admin loading failed (disabled, deleted) — clear context for 401
-            SecurityContextHolder.clearContext();
+            rejectInvalidToken(request, response);
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Rejects a request that carried a Bearer token that failed to authenticate.
+     * Clears any partial security context and lets the REST entry point write the
+     * unified 401 response, then stops the chain so the request never reaches the
+     * controller as anonymous.
+     */
+    private void rejectInvalidToken(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        SecurityContextHolder.clearContext();
+        authenticationEntryPoint.commence(request, response,
+                new org.springframework.security.authentication.BadCredentialsException("无效或过期的令牌"));
     }
 
     private void authenticateAdmin(Long adminId, HttpServletRequest request) {
