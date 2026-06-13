@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -20,6 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -47,6 +50,7 @@ class PetControllerTest {
     private UserService userService;
 
     @Autowired
+    @SpyBean
     private PetService petService;
 
     @Autowired
@@ -281,6 +285,33 @@ class PetControllerTest {
                             .content("{\"name\":\"团子\",\"type\":\"CAT\",\"sterilized\":3}"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.error.code").value("validation_error"));
+        }
+    }
+
+    // ======================== 11-03R LOW: internal_error 500 ========================
+
+    @Nested
+    @DisplayName("POST /api/v1/user/pets — internal error")
+    class InternalError {
+
+        @Test
+        @DisplayName("save failure returns 500 internal_error")
+        void saveFailureReturns500() throws Exception {
+            User user = createUser("13800138001", "宠物主人", "ACTIVE");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            // Stub save to return false, triggering IllegalStateException
+            doReturn(false).when(petService).save(any());
+
+            mockMvc.perform(post("/api/v1/user/pets")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(validPetJson("团子", "CAT")))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.error.code").value("internal_error"));
+
+            // Verify no pet was persisted
+            assertThat(petService.list()).isEmpty();
         }
     }
 
