@@ -1,7 +1,6 @@
 /**
  * Booking API.
- * Note: Most booking endpoints require authentication.
- * These are placeholder definitions — actual calls will fail until auth is ready.
+ * Requires authentication (user JWT via test-login or future H5 login).
  */
 
 import { http } from './request'
@@ -10,10 +9,10 @@ import type { BookingItem } from '@/types/booking'
 
 /** List user bookings (requires auth) */
 export function getMyBookings(params?: PageParams): Promise<ApiResponse<PageResponse<BookingItem>>> {
-  return http.get<PageResponse<BookingItem>>('/api/user/bookings', params as Record<string, unknown>)
+  return http.get<PageResponse<BookingItem>>('/api/v1/bookings/my', params as Record<string, unknown>)
 }
 
 /** Get booking detail (requires auth) */
 export function getBookingDetail(id: string): Promise<ApiResponse<BookingItem>> {
-  return http.get<BookingItem>(`/api/user/bookings/${id}`)
+  return http.get<BookingItem>(`/api/v1/bookings/${id}`)
 }

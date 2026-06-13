@@ -20,10 +20,12 @@
           class="community-card"
           @tap="goDetail(post.id)"
         >
+          <text class="community-card__title">{{ post.title }}</text>
           <text class="community-card__content">{{ post.content }}</text>
           <view class="community-card__meta">
             <text class="community-card__stat">{{ post.likeCount }} 赞</text>
             <text class="community-card__stat">{{ post.commentCount }} 评论</text>
+            <text class="community-card__stat">{{ post.viewCount }} 浏览</text>
           </view>
         </view>
       </view>
@@ -35,13 +37,24 @@
 import { ref } from 'vue'
 import PcPageHeader from '@/components/PcPageHeader.vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
+import { getPosts } from '@/api/community'
 import type { PostItem } from '@/types/community'
 
-const listStatus = ref<'loading' | 'empty' | 'success' | 'error'>('empty')
+const listStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 const posts = ref<PostItem[]>([])
 
-function loadPosts() {
-  listStatus.value = 'empty'
+async function loadPosts() {
+  listStatus.value = 'loading'
+
+  const res = await getPosts({ size: 20 })
+
+  if (!res.success || !res.data) {
+    listStatus.value = 'error'
+    return
+  }
+
+  posts.value = res.data.items
+  listStatus.value = posts.value.length > 0 ? 'success' : 'empty'
 }
 
 function goDetail(id: string) {
@@ -51,6 +64,8 @@ function goDetail(id: string) {
 function goCreatePost() {
   uni.navigateTo({ url: '/pages/community-post/create' })
 }
+
+loadPosts()
 </script>
 
 <style scoped>
@@ -83,11 +98,22 @@ function goCreatePost() {
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
 
+.community-card__title {
+  font-size: var(--pc-font-card-title);
+  font-weight: 700;
+  color: var(--pc-user-ink);
+  margin-bottom: 6px;
+}
+
 .community-card__content {
   font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  color: var(--pc-user-muted);
   line-height: 1.6;
   margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .community-card__meta {

@@ -1,88 +1,91 @@
-# PetCare O2O 项目规划
+# PetCare O2O H5
 
-本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
+PetCare O2O 是面向单体宠物门店的模块化单体应用。当前目标是先交付一个可在手机和桌面浏览器使用的响应式 H5 Web 应用，再考虑微信登录和微信小程序适配。
 
-当前状态：阶段 `11-04R` 已通过 Review；阶段 `11-05` 首轮编码 Review 未通过。下一任务为 `11-05R` Authorization 失败关闭修复；当前只能在 `phase-11-user-prerequisites` 分支执行，禁止提前开始 `11-06`。
+## 当前方向
 
-## AI Agent 强制入口
+- 用户端：响应式 H5，覆盖公开浏览、预约、商品订单、社区和营销活动。
+- 管理端：PC Web，管理服务、预约、商品、订单、内容和基础营销活动。
+- 后端：Spring Boot 模块化单体，MySQL 持久化，真实执行业务规则。
+- AI：当前禁用并延后，不阻塞核心业务上线。
+- 微信：微信登录和小程序适配在 H5 稳定后实施。
 
-任何 AI Agent 接手本项目时，必须先完整阅读并遵守：
+`frontend/miniapp` 已具备 UniApp H5 构建能力。为避免无价值的目录迁移，当前继续使用该目录，并将 `build:h5` 作为用户端主构建目标。
 
-- [AGENTS.md](AGENTS.md)
-- [docs/08-pending-decisions.md](docs/08-pending-decisions.md)
+## V1 核心范围
 
-未完成强制阅读、Git 状态检查和开工前汇报前，不允许修改项目文件。
+- 服务浏览、宠物档案、地址和预约。
+- 商品浏览、购物车、下单和订单状态流转。
+- 社区发帖、浏览、点赞、评论和收藏。
+- 营销活动列表、详情、管理及商品/服务关联。
+- 后台业务管理和必要的风控审核。
 
-## 给 GLM5.1 的主要交接文档
+不在当前范围：在线支付、多门店、优惠券、积分、独立员工端、AI 助手、AI 营销、医疗诊断。
 
-- [docs/03-glm5-implementation-plan.md](docs/03-glm5-implementation-plan.md)
-- [docs/11-phase-2-backend-skeleton-brief.md](docs/11-phase-2-backend-skeleton-brief.md)
-- [docs/12-phase-3-entities-mappers-plan.md](docs/12-phase-3-entities-mappers-plan.md)
-- [docs/13-phase-4-auth-authorization-plan.md](docs/13-phase-4-auth-authorization-plan.md)
-- [docs/14-phase-5-booking-scheduling-plan.md](docs/14-phase-5-booking-scheduling-plan.md)
-- [docs/15-phase-6-community-moderation-plan.md](docs/15-phase-6-community-moderation-plan.md)
-- [docs/16-phase-7-product-orders-plan.md](docs/16-phase-7-product-orders-plan.md)
-- [docs/17-phase-8-ai-provider-functions-plan.md](docs/17-phase-8-ai-provider-functions-plan.md)
-- [docs/19-phase-9-admin-api-handoff.md](docs/19-phase-9-admin-api-handoff.md)
-- [docs/20-phase-10-frontend-integration-design.md](docs/20-phase-10-frontend-integration-design.md)
-- [docs/21-remaining-development-roadmap.md](docs/21-remaining-development-roadmap.md)
-- [docs/22-continuous-agent-development-rules.md](docs/22-continuous-agent-development-rules.md)
-- [docs/23-phase-10f-review-fix-and-10g-quality-plan.md](docs/23-phase-10f-review-fix-and-10g-quality-plan.md)
-- [docs/24-phase-10f-r2-api-contract-cleanup-plan.md](docs/24-phase-10f-r2-api-contract-cleanup-plan.md)
-- [docs/25-admin-web-api-contract.md](docs/25-admin-web-api-contract.md)
-- [docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md](docs/26-phase-10f-r2b-frontend-contract-cleanup-plan.md)
-- [docs/27-glm5-risk-remediation-and-test-plan.md](docs/27-glm5-risk-remediation-and-test-plan.md)
-- [docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md](docs/28-phase-10f-r2c-r2e-cross-layer-contract-plan.md)
-- [docs/29-frontend-figma-design-and-glm-long-running-plan.md](docs/29-frontend-figma-design-and-glm-long-running-plan.md)
-- [docs/30-user-miniapp-frontend-design-spec.md](docs/30-user-miniapp-frontend-design-spec.md)
-- [docs/31-phase-11-user-prerequisites-plan.md](docs/31-phase-11-user-prerequisites-plan.md)
-- [docs/33-phase-11-01-glm5-test-login-implementation-brief.md](docs/33-phase-11-01-glm5-test-login-implementation-brief.md)
-- [docs/34-phase-11-01-review-and-remediation-plan.md](docs/34-phase-11-01-review-and-remediation-plan.md)
-- [docs/35-phase-11-02-glm5-user-profile-api-brief.md](docs/35-phase-11-02-glm5-user-profile-api-brief.md)
-- [docs/36-phase-11-02-review-and-remediation-plan.md](docs/36-phase-11-02-review-and-remediation-plan.md)
-- [docs/37-phase-11-03-glm5-pet-profile-api-brief.md](docs/37-phase-11-03-glm5-pet-profile-api-brief.md)
-- [docs/38-phase-11-03-review-and-remediation-plan.md](docs/38-phase-11-03-review-and-remediation-plan.md)
-- [docs/39-phase-11-04-glm5-address-api-brief.md](docs/39-phase-11-04-glm5-address-api-brief.md)
-- [docs/40-phase-11-04-review-and-remediation-plan.md](docs/40-phase-11-04-review-and-remediation-plan.md)
-- [docs/41-phase-11-05-glm5-public-read-access-brief.md](docs/41-phase-11-05-glm5-public-read-access-brief.md)
-- [docs/42-phase-11-05-review-and-remediation-plan.md](docs/42-phase-11-05-review-and-remediation-plan.md)
-- [docs/43-phase-11-06-glm5-demo-seed-data-brief.md](docs/43-phase-11-06-glm5-demo-seed-data-brief.md)
+## 当前实际状态
 
-## 原始需求基线
+- 后端已具备大量预约、商品订单、社区和后台能力及测试。
+- 管理端已有主要页面和接口接入。
+- 用户端仍需要按 H5 纵向流程完成真实联调。
+- 营销活动已有后端基础模型，但仍需补齐可用的 API 和界面。
+- AI Provider 保持禁用。
+- 已知认证风险和后续里程碑见 `docs/02-task-breakdown.md`。
 
-- [docs/requirements-source.md](docs/requirements-source.md)
+以上是代码库现状说明，不代表所有用户流程已完成验收。
 
-## 核心规划文档
+## 快速启动
 
-- [docs/00-project-boundary.md](docs/00-project-boundary.md)
-- [docs/01-architecture-design.md](docs/01-architecture-design.md)
-- [docs/02-task-breakdown.md](docs/02-task-breakdown.md)
-- [docs/04-code-standards.md](docs/04-code-standards.md)
-- [docs/05-testing-and-verification.md](docs/05-testing-and-verification.md)
-- [docs/06-git-safety-workflow.md](docs/06-git-safety-workflow.md)
-- [docs/07-integration-gates.md](docs/07-integration-gates.md)
-- [docs/08-pending-decisions.md](docs/08-pending-decisions.md)
-- [docs/09-booking-concurrency-control.md](docs/09-booking-concurrency-control.md)
-- [docs/10-admin-permission-design.md](docs/10-admin-permission-design.md)
+### 数据库初始化
 
-## 项目目标
+```powershell
+mysql -u root -p < schema.sql
+mysql -u root -p petcare_o2o < src/main/resources/data-dev.sql
+```
 
-构建一个简历展示价值较高，同时具备真实单体宠物店试运营潜力的平台：
+### 后端
 
-- 用户端微信小程序
-- 商家 PC 管理后台
-- Spring Boot 3 REST API
-- MySQL 8 主数据库
-- V2 可选引入 Redis
-- 统一 AI Provider 适配层，用于 AI 客服、AI 宠物陪伴、AI 发帖辅助和 AI 经营分析
+```powershell
+mvn spring-boot:run
+```
 
-## 当前最近一步
+默认管理员账号：`admin` / `admin123456`（仅开发环境）。
 
-当前最近一步为阶段 11-05 Review 修复：
+### 管理端
 
-1. 11-04R 地址写入失败、身份错误语义、事务回滚和真实 MySQL 并发问题已通过 Review。
-2. 11-05 已完成公开 GET 白名单、公开内容过滤和社区公开 DTO 隔离。
-3. Review 发现非 Bearer Authorization 请求头会在公开 GET 降级为匿名，违反失败关闭规则。
-4. GLM5.1 当前只能执行 [阶段 11-05 Review 结论与修复任务书](docs/42-phase-11-05-review-and-remediation-plan.md)。
-5. [阶段 11-06 演示种子数据任务书](docs/43-phase-11-06-glm5-demo-seed-data-brief.md) 已准备，但必须等待 11-05R 全部门禁和 Review 通过。
-6. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。
+```powershell
+cd frontend/admin-web
+npm install
+npm run dev
+```
+
+### 用户 H5
+
+```powershell
+cd frontend/miniapp
+npm install
+npm run dev:h5
+```
+
+构建 H5：
+
+```powershell
+cd frontend/miniapp
+npm run build:h5
+```
+
+具体环境变量和数据库要求以现有配置示例为准，禁止提交真实凭据。
+
+## 核心文档
+
+| 文档 | 用途 |
+|---|---|
+| `AGENTS.md` | Agent 快速执行规则 |
+| `docs/requirements-source.md` | 当前产品需求基线 |
+| `docs/00-project-boundary.md` | V1 范围和不可突破的业务边界 |
+| `docs/01-architecture-design.md` | 当前系统架构和关键技术约束 |
+| `docs/02-task-breakdown.md` | 加速后的交付路线图和当前优先级 |
+| `docs/04-code-standards.md` | 必须遵守的代码与安全规则 |
+| `docs/05-testing-and-verification.md` | 风险驱动验证方式 |
+| `docs/08-pending-decisions.md` | 只记录真正需要用户决定的事项 |
+
+历史阶段计划、Review 文档和详细交接记录已从工作区移除，需要时从 Git 历史查询。

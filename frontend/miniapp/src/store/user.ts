@@ -1,9 +1,8 @@
 /**
  * User store — authentication boundary.
  *
- * WeChat login is not yet enabled (D-006).
- * This store only manages token persistence.
- * No mock login or fake user data allowed.
+ * WeChat login deferred per H5-first strategy.
+ * This store manages token persistence for user JWT.
  */
 
 import { defineStore } from 'pinia'
@@ -13,7 +12,7 @@ export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(loadToken())
   const isLoggedIn = computed(() => !!token)
 
-  /** WeChat login availability flag — always false in V1 skeleton */
+  /** WeChat login availability flag — deferred until H5 stabilizes */
   const isWechatLoginEnabled = ref(false)
 
   function loadToken(): string | null {

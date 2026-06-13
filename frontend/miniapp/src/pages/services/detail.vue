@@ -15,7 +15,7 @@
         </view>
         <view class="service-detail__info">
           <text class="service-detail__label">时长：{{ durationText }}</text>
-          <text v-if="service.priceMin != null" class="service-detail__price">
+          <text class="service-detail__price">
             {{ priceText }}起
           </text>
         </view>
@@ -32,22 +32,41 @@ import { ref, computed } from 'vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcStatusTag from '@/components/PcStatusTag.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
+import { getServiceDetail } from '@/api/service'
 import type { ServiceItem } from '@/types/service'
 import { formatDuration, formatYuan } from '@/utils/format'
 
 const service = ref<ServiceItem | null>(null)
-const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('empty')
+const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 
 const modeLabel = computed(() => {
   const map: Record<string, string> = { STORE: '到店', HOME: '上门', BOTH: '到店/上门' }
-  return map[service.value?.mode ?? ''] ?? ''
+  return map[service.value?.serviceMode ?? ''] ?? ''
 })
 
 const durationText = computed(() => formatDuration(service.value?.durationMinutes))
-const priceText = computed(() => formatYuan(service.value?.priceMin))
+const priceText = computed(() => formatYuan(service.value?.price ?? 0))
 
-function loadDetail() {
-  pageStatus.value = 'empty'
+async function loadDetail() {
+  const pages = getCurrentPages()
+  const currentPage = pages[pages.length - 1] as any
+  const id = currentPage?.options?.id
+
+  if (!id) {
+    pageStatus.value = 'empty'
+    return
+  }
+
+  pageStatus.value = 'loading'
+  const res = await getServiceDetail(String(id))
+
+  if (!res.success || !res.data) {
+    pageStatus.value = 'error'
+    return
+  }
+
+  service.value = res.data
+  pageStatus.value = 'success'
 }
 
 function goBooking() {
@@ -55,6 +74,8 @@ function goBooking() {
     uni.navigateTo({ url: `/pages/booking/create?serviceId=${service.value.id}` })
   }
 }
+
+loadDetail()
 </script>
 
 <style scoped>

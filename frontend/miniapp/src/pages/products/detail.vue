@@ -6,8 +6,8 @@
       @retry="loadDetail"
     >
       <template v-if="product">
-        <view v-if="product.imageUrl" class="product-detail__image-wrap">
-          <image class="product-detail__image" :src="product.imageUrl" mode="aspectFill" />
+        <view v-if="product.coverUrl" class="product-detail__image-wrap">
+          <image class="product-detail__image" :src="product.coverUrl" mode="aspectFill" />
         </view>
         <view class="product-detail__info">
           <text class="product-detail__name">{{ product.name }}</text>
@@ -28,21 +28,42 @@
 import { ref, computed } from 'vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
-import type { ProductItem } from '@/types/product'
+import { getProductDetail } from '@/api/product'
+import type { ProductDetail } from '@/types/product'
 import { formatYuan } from '@/utils/format'
 
-const product = ref<ProductItem | null>(null)
-const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('empty')
+const product = ref<ProductDetail | null>(null)
+const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 
-const priceText = computed(() => formatYuan(product.value?.price))
+const priceText = computed(() => formatYuan(product.value?.price ?? 0))
 
-function loadDetail() {
-  pageStatus.value = 'empty'
+async function loadDetail() {
+  const pages = getCurrentPages()
+  const currentPage = pages[pages.length - 1] as any
+  const id = currentPage?.options?.id
+
+  if (!id) {
+    pageStatus.value = 'empty'
+    return
+  }
+
+  pageStatus.value = 'loading'
+  const res = await getProductDetail(String(id))
+
+  if (!res.success || !res.data) {
+    pageStatus.value = 'error'
+    return
+  }
+
+  product.value = res.data
+  pageStatus.value = 'success'
 }
 
 function addToCart() {
   uni.showToast({ title: '请先登录', icon: 'none' })
 }
+
+loadDetail()
 </script>
 
 <style scoped>

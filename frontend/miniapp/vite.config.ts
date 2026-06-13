@@ -6,4 +6,12 @@ const uni = (UniPlugin as any).default || UniPlugin
 
 export default defineConfig({
   plugins: [uni()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
 })

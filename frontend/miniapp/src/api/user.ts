@@ -1,7 +1,7 @@
 /**
  * User / authentication API.
- * Boundary placeholder — WeChat login not yet enabled (D-006).
- * No mock login allowed.
+ * WeChat login deferred per H5-first strategy.
+ * Test login available in test profile only.
  */
 
 import { http } from './request'
@@ -17,7 +17,7 @@ export function wechatLogin(_code: string): Promise<ApiResponse<{ token: string 
   })
 }
 
-/** Get current user profile — placeholder */
+/** Get current user profile */
 export function getUserProfile(): Promise<ApiResponse<unknown>> {
-  return http.get('/api/user/profile')
+  return http.get('/api/v1/user/profile')
 }

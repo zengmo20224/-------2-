@@ -20,7 +20,7 @@ const props = defineProps<{
   name: string
   mode: string
   durationMinutes?: number
-  priceMin?: number
+  price?: number
 }>()
 
 defineEmits<{
@@ -33,7 +33,7 @@ const modeLabel = computed(() => {
 })
 
 const durationText = computed(() => formatDuration(props.durationMinutes))
-const priceText = computed(() => props.priceMin != null ? `${formatYuan(props.priceMin)}起` : '')
+const priceText = computed(() => props.price != null ? `${formatYuan(props.price)}起` : '')
 </script>
 
 <style scoped>

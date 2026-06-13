@@ -1,16 +1,42 @@
 /**
- * Community-related types for user-facing miniapp.
- * Backend source: com.petcare.community.dto.*
+ * Community-related types for the user-facing H5 app.
+ * Backend source: com.petcare.community.dto.PublicPostSummaryResponse / PublicPostDetailResponse / PublicCommentResponse
  */
 
-/** Post as shown in feed/detail */
+/** Post summary as returned by public list API */
 export interface PostItem {
   id: string
-  authorName?: string
+  topicId: string
+  title: string
   content: string
-  imageUrl?: string
+  viewCount: number
   likeCount: number
   commentCount: number
-  status: string
-  createdAt: string
+  favoriteCount: number
+  publishTime: string
+  createTime: string
+}
+
+/** Post detail as returned by public detail API */
+export interface PostDetail {
+  id: string
+  topicId: string
+  title: string
+  content: string
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  favoriteCount: number
+  publishTime: string
+  createTime: string
+  imageUrls: string[]
+}
+
+/** Public comment as returned by comment list API */
+export interface CommentItem {
+  id: string
+  parentId: string | null
+  content: string
+  likeCount: number
+  createTime: string
 }

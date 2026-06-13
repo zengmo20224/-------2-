@@ -4,14 +4,14 @@
 
 import { http } from './request'
 import type { ApiResponse, PageResponse, PageParams } from '@/types/api'
-import type { ProductItem } from '@/types/product'
+import type { ProductItem, ProductDetail } from '@/types/product'
 
 /** List products (paginated) */
-export function getProducts(params?: PageParams): Promise<ApiResponse<PageResponse<ProductItem>>> {
-  return http.get<PageResponse<ProductItem>>('/api/user/products', params as Record<string, unknown>)
+export function getProducts(params?: PageParams & { categoryId?: string }): Promise<ApiResponse<PageResponse<ProductItem>>> {
+  return http.get<PageResponse<ProductItem>>('/api/v1/products', params as Record<string, unknown>)
 }
 
 /** Get product detail */
-export function getProductDetail(id: string): Promise<ApiResponse<ProductItem>> {
-  return http.get<ProductItem>(`/api/user/products/${id}`)
+export function getProductDetail(id: string): Promise<ApiResponse<ProductDetail>> {
+  return http.get<ProductDetail>(`/api/v1/products/${id}`)
 }
