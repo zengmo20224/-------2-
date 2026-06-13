@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -59,7 +60,9 @@ public class PetApplicationServiceImpl implements PetApplicationService {
         pet.setUserId(currentUserId);
         setPetFields(pet, request);
 
-        petService.save(pet);
+        if (!petService.save(pet)) {
+            throw new IllegalStateException("宠物档案保存失败");
+        }
         return PetResponse.from(pet);
     }
 
@@ -129,6 +132,18 @@ public class PetApplicationServiceImpl implements PetApplicationService {
     }
 
     private void validatePetRequest(PetUpsertRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "请求不能为空");
+        }
+
+        if (request.name() == null || request.name().isBlank()) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "宠物名称不能为空");
+        }
+
+        if (request.type() == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "宠物类型不能为空");
+        }
+
         if (!VALID_TYPES.contains(request.type())) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "宠物类型必须是 DOG、CAT 或 OTHER");
         }
@@ -168,7 +183,7 @@ public class PetApplicationServiceImpl implements PetApplicationService {
     private String validateAndNormalizeAvatarUrl(String avatarUrl) {
         String normalized = normalizeBlank(avatarUrl);
         if (normalized != null) {
-            String lower = normalized.toLowerCase();
+            String lower = normalized.toLowerCase(Locale.ROOT);
             if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
                 throw new BusinessException(ErrorCode.VALIDATION_ERROR, "头像URL只允许http或https协议");
             }
