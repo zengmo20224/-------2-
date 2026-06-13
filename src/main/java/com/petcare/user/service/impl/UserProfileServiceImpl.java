@@ -1,5 +1,6 @@
 package com.petcare.user.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
@@ -45,13 +46,14 @@ public class UserProfileServiceImpl implements UserProfileService {
         validateAvatarUrl(request.avatarUrl());
 
         // Only update allowed fields using explicit LambdaUpdateWrapper
-        // This ensures null avatarUrl is written to DB (clearing the field)
+        // ACTIVE condition ensures disabled/deleted users cannot be modified
         LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<User>()
                 .eq(User::getId, user.getId())
+                .eq(User::getStatus, "ACTIVE")
                 .set(User::getNickname, trimmedNickname)
                 .set(User::getAvatarUrl, request.avatarUrl());
         if (!userService.update(updateWrapper)) {
-            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "资料更新失败，请重试");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户不存在或已禁用");
         }
 
         // Return latest data
@@ -70,7 +72,11 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     private User getActiveUser(Long userId) {
-        User user = userService.getById(userId);
+        User user = userService.getOne(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getId, userId)
+                        .eq(User::getStatus, "ACTIVE")
+        );
         if (user == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户不存在或已禁用");
         }
