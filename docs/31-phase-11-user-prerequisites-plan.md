@@ -109,7 +109,7 @@ git diff --check
 
 ### 11-02：用户资料 API
 
-**状态**：首轮编码已完成，Review 未通过；必须先执行 11-02R。
+**状态**：11-02R Review 已通过，任务关闭。
 
 **GLM5.1 详细执行任务书**：`docs/35-phase-11-02-glm5-user-profile-api-brief.md`
 
@@ -177,13 +177,15 @@ git diff --check
 
 ### 11-03：宠物档案 API
 
-**状态**：已规划，当前锁定；11-02R 全部门禁通过后解锁。
+**状态**：首轮编码已完成，Review 未通过；必须先执行 11-03R。
 
 **GLM5.1 详细执行任务书**：`docs/37-phase-11-03-glm5-pet-profile-api-brief.md`
 
+**Review 与修复任务书**：`docs/38-phase-11-03-review-and-remediation-plan.md`
+
 **目标**：实现用户宠物档案的 CRUD 接口。
 
-**依赖**：11-02
+**依赖**：11-02R
 
 **允许修改**：
 
@@ -239,11 +241,11 @@ PetUpsertRequest {
 
 **RED 测试**：
 
-- 用户能创建宠物，返回包含自己的 userId。
+- 用户能创建宠物，响应不泄露 `userId`。
 - 用户能列出自己的宠物。
 - 用户能修改自己的宠物。
 - 用户能删除自己的宠物。
-- 用户 A 不能查看/修改/删除用户 B 的宠物，返回 403 或 404。
+- 用户 A 不能查看/修改/删除用户 B 的宠物，统一返回 404。
 - 必填字段缺失返回 400 `validation_error`。
 
 **完成验证**：
@@ -258,9 +260,13 @@ git diff --check
 
 ### 11-04：地址管理 API
 
+**状态**：已规划，当前锁定；11-03R 全部门禁通过后解锁。
+
+**GLM5.1 详细执行任务书**：`docs/39-phase-11-04-glm5-address-api-brief.md`
+
 **目标**：实现用户地址的 CRUD 接口。
 
-**依赖**：11-02
+**依赖**：11-03R
 
 **允许修改**：
 
@@ -288,32 +294,34 @@ git diff --check
 // 响应
 AddressResponse {
     String addressId;
-    String label;        // 家、公司等
     String contactName;
     String contactPhone;
     String province;
     String city;
     String district;
-    String detail;
-    Double latitude;
-    Double longitude;
+    String detailAddress;
+    BigDecimal latitude;
+    BigDecimal longitude;
     Boolean isDefault;
 }
 
 // 创建/修改请求
 AddressRequest {
-    String label;
     @NotBlank String contactName;
     @NotBlank String contactPhone;
     @NotBlank String province;
     @NotBlank String city;
     String district;
-    @NotBlank String detail;
-    Double latitude;
-    Double longitude;
+    @NotBlank String detailAddress;
+    BigDecimal latitude;
+    BigDecimal longitude;
     Boolean isDefault;
 }
 ```
+
+真实字段、默认地址不变量、并发串行化和完整门禁以
+`docs/39-phase-11-04-glm5-address-api-brief.md` 为准。现有 Schema 不包含 `label`，
+坐标必须使用 `BigDecimal` 对应 `DECIMAL(10,6)`。
 
 **RED 测试**：
 

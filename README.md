@@ -2,7 +2,7 @@
 
 本仓库用于规划和逐步实现“AI 增强型宠物门店 O2O 服务预约与客户运营平台”。
 
-当前状态：阶段 `11-01R` 已通过 Review；阶段 `11-02` 已完成首轮编码但 Review 未通过。下一任务为 `11-02R` 用户资料状态边界和隐私修复；当前只能在 `phase-11-user-prerequisites` 分支执行，禁止提前开始 `11-03`。
+当前状态：阶段 `11-02R` 已通过 Review；阶段 `11-03` 已完成首轮编码但 Review 未通过。下一任务为 `11-03R` 宠物档案写入失败语义修复；当前只能在 `phase-11-user-prerequisites` 分支执行，禁止提前开始 `11-04`。
 
 ## AI Agent 强制入口
 
@@ -41,6 +41,8 @@
 - [docs/35-phase-11-02-glm5-user-profile-api-brief.md](docs/35-phase-11-02-glm5-user-profile-api-brief.md)
 - [docs/36-phase-11-02-review-and-remediation-plan.md](docs/36-phase-11-02-review-and-remediation-plan.md)
 - [docs/37-phase-11-03-glm5-pet-profile-api-brief.md](docs/37-phase-11-03-glm5-pet-profile-api-brief.md)
+- [docs/38-phase-11-03-review-and-remediation-plan.md](docs/38-phase-11-03-review-and-remediation-plan.md)
+- [docs/39-phase-11-04-glm5-address-api-brief.md](docs/39-phase-11-04-glm5-address-api-brief.md)
 
 ## 原始需求基线
 
@@ -72,11 +74,11 @@
 
 ## 当前最近一步
 
-当前最近一步为阶段 11-02 Review 修复：
+当前最近一步为阶段 11-03 Review 修复：
 
-1. 11-01R 认证安全、角色隔离、测试登录允许名单和完整测试门禁已通过。
-2. 11-02 用户资料读取与修改 API 已完成首轮编码。
-3. Review 发现资料服务未强制 ACTIVE 状态、异常手机号脱敏可能泄露，以及服务层测试缺失。
-4. GLM5.1 当前只能执行 [阶段 11-02 Review 结论与修复任务书](docs/36-phase-11-02-review-and-remediation-plan.md)。
-5. [阶段 11-03 宠物档案 API 任务书](docs/37-phase-11-03-glm5-pet-profile-api-brief.md) 已准备，但必须等待 11-02R 全部门禁通过。
+1. 11-02R ACTIVE 用户状态边界和手机号隐私修复已通过 Review。
+2. 11-03 宠物档案 CRUD、授权、归属和逻辑删除已完成首轮编码。
+3. Review 发现创建写入返回 `false` 时可能伪造成功，以及服务层必填字段失败语义不稳定。
+4. GLM5.1 当前只能执行 [阶段 11-03 Review 结论与修复任务书](docs/38-phase-11-03-review-and-remediation-plan.md)。
+5. [阶段 11-04 用户地址 API 任务书](docs/39-phase-11-04-glm5-address-api-brief.md) 已准备，但必须等待 11-03R 全部门禁通过。
 6. 所有后续 Agent 必须遵守 [可持续编程与交接规则](docs/22-continuous-agent-development-rules.md)。
