@@ -19,6 +19,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -444,6 +446,251 @@ class AddressControllerTest {
         }
     }
 
+    // ======================== RED-2: Update Contract ========================
+
+    @Nested
+    @DisplayName("PUT /api/v1/user/addresses/{addressId} — update")
+    class UpdateAddress {
+
+        @Test
+        @DisplayName("user updates own address")
+        void userUpdatesOwnAddress() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "张三", "13800138001");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(put("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{" +
+                                    "\"contactName\":\"李四\"," +
+                                    "\"contactPhone\":\"13900139000\"," +
+                                    "\"province\":\"北京市\"," +
+                                    "\"city\":\"北京市\"," +
+                                    "\"detailAddress\":\"朝阳区1号\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.contactName").value("李四"))
+                    .andExpect(jsonPath("$.data.province").value("北京市"))
+                    .andExpect(jsonPath("$.data.addressId").value(String.valueOf(addr.getId())));
+        }
+
+        @Test
+        @DisplayName("request cannot modify userId, id, or deleted in update")
+        void requestCannotModifyProtectedFields() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "张三", "13800138001");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(put("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{" +
+                                    "\"contactName\":\"更新名\"," +
+                                    "\"contactPhone\":\"13800138000\"," +
+                                    "\"province\":\"广东省\"," +
+                                    "\"city\":\"深圳市\"," +
+                                    "\"detailAddress\":\"科技园1号\"," +
+                                    "\"userId\":999999,\"deleted\":1}"))
+                    .andExpect(status().isOk());
+
+            UserAddress dbAddr = addressService.getById(addr.getId());
+            assertThat(dbAddr.getUserId()).isEqualTo(user.getId());
+            assertThat(dbAddr.getDeleted()).isEqualTo(0);
+            assertThat(dbAddr.getContactName()).isEqualTo("更新名");
+        }
+
+        @Test
+        @DisplayName("deleted address update returns 404")
+        void deletedAddressUpdateReturns404() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "张三", "13800138001");
+            addressService.removeById(addr.getId());
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(put("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(validAddressJson()))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    // ======================== RED-2: Delete Contract ========================
+
+    @Nested
+    @DisplayName("DELETE /api/v1/user/addresses/{addressId} — delete")
+    class DeleteAddress {
+
+        @Test
+        @DisplayName("user soft-deletes own address")
+        void userSoftDeletesOwnAddress() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "张三", "13800138001");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(delete("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            assertThat(addressService.getById(addr.getId())).isNull();
+        }
+
+        @Test
+        @DisplayName("already deleted address delete returns 404")
+        void alreadyDeletedAddressDeleteReturns404() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "张三", "13800138001");
+            addressService.removeById(addr.getId());
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(delete("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    // ======================== RED-2: Default Address Invariant ========================
+
+    @Nested
+    @DisplayName("Default address invariant")
+    class DefaultAddressInvariant {
+
+        @Test
+        @DisplayName("setting new default unsets old default")
+        void settingNewDefaultUnsetsOld() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            createDefaultAddress(user.getId(), "地址1", "13800138001");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            // Create second address as default
+            mockMvc.perform(post("/api/v1/user/addresses")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{" +
+                                    "\"contactName\":\"地址2\"," +
+                                    "\"contactPhone\":\"13800138002\"," +
+                                    "\"province\":\"广东省\"," +
+                                    "\"city\":\"深圳市\"," +
+                                    "\"detailAddress\":\"科技园2号\"," +
+                                    "\"isDefault\":true}"))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.data.isDefault").value(true));
+
+            // Verify only one default
+            List<UserAddress> all = addressService.list(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserAddress>()
+                    .eq(UserAddress::getUserId, user.getId()));
+            long defaultCount = all.stream().filter(a -> a.getIsDefault() == 1).count();
+            assertThat(defaultCount).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("updating current default to isDefault=false still keeps it default")
+        void updatingDefaultToFalseKeepsDefault() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress defaultAddr = createDefaultAddress(user.getId(), "默认地址", "13800138001");
+            createAddress(user.getId(), "其他地址", "13800138002");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(put("/api/v1/user/addresses/" + defaultAddr.getId())
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{" +
+                                    "\"contactName\":\"更新名\"," +
+                                    "\"contactPhone\":\"13800138000\"," +
+                                    "\"province\":\"广东省\"," +
+                                    "\"city\":\"深圳市\"," +
+                                    "\"detailAddress\":\"科技园1号\"," +
+                                    "\"isDefault\":false}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.isDefault").value(true));
+
+            // Verify still only one default
+            UserAddress dbAddr = addressService.getById(defaultAddr.getId());
+            assertThat(dbAddr.getIsDefault()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("deleting non-default address does not change default")
+        void deletingNonDefaultKeepsDefault() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress defaultAddr = createDefaultAddress(user.getId(), "默认地址", "13800138001");
+            UserAddress otherAddr = createAddress(user.getId(), "其他地址", "13800138002");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(delete("/api/v1/user/addresses/" + otherAddr.getId())
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+
+            UserAddress dbDefault = addressService.getById(defaultAddr.getId());
+            assertThat(dbDefault.getIsDefault()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("deleting default address promotes next by createTime DESC, id DESC")
+        void deletingDefaultPromotesNext() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress defaultAddr = createDefaultAddress(user.getId(), "默认", "13800138001");
+            // Create second and third — they'll have later createTime
+            UserAddress addr2 = createAddress(user.getId(), "地址2", "13800138002");
+            UserAddress addr3 = createAddress(user.getId(), "地址3", "13800138003");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(delete("/api/v1/user/addresses/" + defaultAddr.getId())
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+
+            // addr3 should be promoted (latest createTime)
+            UserAddress promoted = addressService.getById(addr3.getId());
+            assertThat(promoted.getIsDefault()).isEqualTo(1);
+
+            UserAddress other = addressService.getById(addr2.getId());
+            assertThat(other.getIsDefault()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("deleting last address leaves no addresses")
+        void deletingLastAddressLeavesNone() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress addr = createDefaultAddress(user.getId(), "唯一地址", "13800138001");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(delete("/api/v1/user/addresses/" + addr.getId())
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(get("/api/v1/user/addresses")
+                            .header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isEmpty());
+        }
+
+        @Test
+        @DisplayName("updating other address to isDefault=true unsets old default")
+        void updatingOtherToDefaultUnsetsOld() throws Exception {
+            User user = createUser("13800138001", "用户A", "ACTIVE");
+            UserAddress defaultAddr = createDefaultAddress(user.getId(), "默认", "13800138001");
+            UserAddress otherAddr = createAddress(user.getId(), "其他", "13800138002");
+            String token = jwtTokenService.signUserToken(user.getId());
+
+            mockMvc.perform(put("/api/v1/user/addresses/" + otherAddr.getId())
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{" +
+                                    "\"contactName\":\"其他\"," +
+                                    "\"contactPhone\":\"13800138002\"," +
+                                    "\"province\":\"广东省\"," +
+                                    "\"city\":\"深圳市\"," +
+                                    "\"detailAddress\":\"科技园2号\"," +
+                                    "\"isDefault\":true}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.isDefault").value(true));
+
+            UserAddress oldDefault = addressService.getById(defaultAddr.getId());
+            assertThat(oldDefault.getIsDefault()).isEqualTo(0);
+        }
+    }
+
     // ======================== Helpers ========================
 
     private User createUser(String phone, String nickname, String status) {
@@ -466,6 +713,19 @@ class AddressControllerTest {
         addr.setCity("深圳市");
         addr.setDetailAddress("科技园1号");
         addr.setIsDefault(0);
+        addressService.save(addr);
+        return addr;
+    }
+
+    private UserAddress createDefaultAddress(Long userId, String contactName, String phone) {
+        UserAddress addr = new UserAddress();
+        addr.setUserId(userId);
+        addr.setContactName(contactName);
+        addr.setContactPhone(phone);
+        addr.setProvince("广东省");
+        addr.setCity("深圳市");
+        addr.setDetailAddress("科技园1号");
+        addr.setIsDefault(1);
         addressService.save(addr);
         return addr;
     }
