@@ -242,13 +242,15 @@ public class AddressApplicationServiceImpl implements AddressApplicationService 
         if (excludeAddressId != null) {
             wrapper.ne(UserAddress::getId, excludeAddressId);
         }
-        addressService.update(wrapper);
+        if (!addressService.update(wrapper)) {
+            throw new IllegalStateException("取消旧默认地址失败");
+        }
     }
 
     private String normalizeBlank(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return value;
+        return value.trim();
     }
 }
