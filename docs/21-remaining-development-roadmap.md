@@ -50,8 +50,8 @@
 强制约束：
 
 - 阶段 10 管理后台核心流程、预约管理员审计质量任务、根 package 清理和 Testcontainers MySQL 门禁已完成。
-- 阶段 11 的 D-013、D-014 决策阻塞已解除；11-01 首轮编码已完成但 Review 未通过，当前只允许按 `docs/34-phase-11-01-review-and-remediation-plan.md` 执行 11-01R。
-- 11-02 详细任务书为 `docs/35-phase-11-02-glm5-user-profile-api-brief.md`，在 11-01R 完整门禁通过前保持锁定。
+- 阶段 11 的 D-013、D-014 决策阻塞已解除；11-01R 已通过 Review，11-02 首轮编码已完成但 Review 未通过，当前只允许按 `docs/36-phase-11-02-review-and-remediation-plan.md` 执行 11-02R。
+- 11-03 详细任务书为 `docs/37-phase-11-03-glm5-pet-profile-api-brief.md`，在 11-02R 完整门禁通过前保持锁定。
 - 禁止跳过阶段 11 门禁直接开始阶段 12 或后续阶段。
 
 ## 3. 总体阶段依赖

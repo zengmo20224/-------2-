@@ -51,7 +51,7 @@
 
 ### 11-01：测试环境测试登录端点
 
-**状态**：首轮编码已完成，Review 未通过；必须先执行 11-01R。
+**状态**：11-01R 已完成并通过 Review。
 
 **GLM5.1 详细执行任务书**：`docs/33-phase-11-01-glm5-test-login-implementation-brief.md`
 
@@ -109,9 +109,11 @@ git diff --check
 
 ### 11-02：用户资料 API
 
-**状态**：已规划，当前锁定；11-01R 全部门禁通过后解锁。
+**状态**：首轮编码已完成，Review 未通过；必须先执行 11-02R。
 
 **GLM5.1 详细执行任务书**：`docs/35-phase-11-02-glm5-user-profile-api-brief.md`
+
+**Review 与修复任务书**：`docs/36-phase-11-02-review-and-remediation-plan.md`
 
 **目标**：实现用户个人资料的查看和修改接口。
 
@@ -175,6 +177,10 @@ git diff --check
 
 ### 11-03：宠物档案 API
 
+**状态**：已规划，当前锁定；11-02R 全部门禁通过后解锁。
+
+**GLM5.1 详细执行任务书**：`docs/37-phase-11-03-glm5-pet-profile-api-brief.md`
+
 **目标**：实现用户宠物档案的 CRUD 接口。
 
 **依赖**：11-02
@@ -201,29 +207,35 @@ git diff --check
 **DTO 设计**：
 
 ```java
-// 响应
 PetResponse {
     String petId;
     String name;
-    String species;     // DOG, CAT, OTHER
+    String type;        // DOG, CAT, OTHER
     String breed;
-    String gender;      // MALE, FEMALE, UNKNOWN
-    LocalDate birthday;
-    Double weight;
-    String notes;
+    Integer gender;     // 0 未知, 1 公, 2 母
+    BigDecimal age;
+    BigDecimal weight;
+    String size;        // SMALL, MEDIUM, LARGE
+    Integer sterilized; // 0 否, 1 是
+    String avatarUrl;
+    String remark;
 }
 
-// 创建/修改请求
-PetRequest {
+PetUpsertRequest {
     @NotBlank String name;
-    @NotNull String species;
+    @NotNull String type;
     String breed;
-    String gender;
-    LocalDate birthday;
-    Double weight;
-    String notes;
+    Integer gender;
+    BigDecimal age;
+    BigDecimal weight;
+    String size;
+    Integer sterilized;
+    String avatarUrl;
+    String remark;
 }
 ```
+
+禁止增加当前 Schema 不存在的 `birthday`、`species`、`notes` 字段；详细契约以 11-03 任务书为准。
 
 **RED 测试**：
 
@@ -232,7 +244,7 @@ PetRequest {
 - 用户能修改自己的宠物。
 - 用户能删除自己的宠物。
 - 用户 A 不能查看/修改/删除用户 B 的宠物，返回 403 或 404。
-- 必填字段缺失返回 422。
+- 必填字段缺失返回 400 `validation_error`。
 
 **完成验证**：
 
@@ -311,7 +323,7 @@ AddressRequest {
 - 用户能删除自己的地址。
 - 用户 A 不能操作用户 B 的地址。
 - 设置默认地址时，取消其他地址的默认状态。
-- 必填字段缺失返回 422。
+- 必填字段缺失返回 400 `validation_error`。
 
 **完成验证**：
 

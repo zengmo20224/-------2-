@@ -45,6 +45,8 @@
 35. `docs/33-phase-11-01-glm5-test-login-implementation-brief.md`
 36. `docs/34-phase-11-01-review-and-remediation-plan.md`
 37. `docs/35-phase-11-02-glm5-user-profile-api-brief.md`
+38. `docs/36-phase-11-02-review-and-remediation-plan.md`
+39. `docs/37-phase-11-03-glm5-pet-profile-api-brief.md`
 
 如果任务只涉及某一模块，也不能跳过前五项和 `docs/08-pending-decisions.md`。如果任务涉及预约、排班、后台权限或后台接口，也必须阅读第 13、14 项。
 
