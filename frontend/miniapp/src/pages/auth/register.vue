@@ -17,11 +17,20 @@
       <text class="auth-section-title">安全问题（用于找回密码，请至少选择 2 个）</text>
       <view v-for="(sq, index) in form.securityQuestions" :key="index" class="auth-sq-item">
         <PcFormField :label="`问题 ${index + 1}`">
-          <picker class="pc-picker" :range="availableQuestionTexts(index)" @change="onQuestionChange($event, index)">
-            <view class="pc-picker-text" :class="{ 'pc-picker-text--placeholder': !sq.questionText }">
-              {{ sq.questionText || '请选择安全问题' }}
-            </view>
-          </picker>
+          <view class="pc-select-wrap">
+            <select class="pc-select" @change="onQuestionChange($event, index)">
+              <option value="">请选择安全问题</option>
+              <option
+                v-for="q in presetQuestions"
+                :key="q.index"
+                :value="q.index"
+                :disabled="isQuestionUsed(q.index, index)"
+                :class="{ 'pc-option-disabled': isQuestionUsed(q.index, index) }"
+              >
+                {{ q.text }}{{ isQuestionUsed(q.index, index) ? '（已选）' : '' }}
+              </option>
+            </select>
+          </view>
         </PcFormField>
         <PcFormField label="答案">
           <input class="pc-input" type="text" v-model="sq.answer" placeholder="输入答案" />
@@ -37,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import PcPageHeader from '@/components/PcPageHeader.vue'
 import PcFormField from '@/components/PcFormField.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
@@ -46,7 +55,7 @@ import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()
 const loading = ref(false)
-const presetQuestions = ref<string[]>([])
+const presetQuestions = ref<{ index: number; text: string }[]>([])
 
 interface SecurityQuestionForm {
   questionIndex: number | null
@@ -67,39 +76,31 @@ const form = ref({
 onMounted(async () => {
   const res = await getPresetSecurityQuestions()
   if (res.success && res.data) {
-    presetQuestions.value = res.data
+    presetQuestions.value = res.data.map((text, index) => ({ index, text }))
   }
 })
 
-/** For each picker: show all questions except those already chosen by other rows */
-function availableQuestionTexts(currentIndex: number): string[] {
-  const usedIndices = new Set<number>()
-  form.value.securityQuestions.forEach((sq, i) => {
-    if (i !== currentIndex && sq.questionIndex !== null) {
-      usedIndices.add(sq.questionIndex)
-    }
-  })
-  return presetQuestions.value.map((_, idx) => {
-    if (usedIndices.has(idx)) return '— 已选择 —'
-    return presetQuestions.value[idx]
-  })
+function isQuestionUsed(qIndex: number, currentRow: number): boolean {
+  return form.value.securityQuestions.some(
+    (sq, i) => i !== currentRow && sq.questionIndex === qIndex
+  )
 }
 
 function onQuestionChange(e: any, index: number) {
-  const picked = parseInt(e.detail.value)
-  const realText = presetQuestions.value[picked]
-  // Skip if it's the "already selected" placeholder
-  if (realText === undefined) return
-  // Check if this index is used by another row
-  const isUsed = form.value.securityQuestions.some(
-    (sq, i) => i !== index && sq.questionIndex === picked
-  )
-  if (isUsed) {
+  const picked = parseInt(e.target.value)
+  if (isNaN(picked)) {
+    form.value.securityQuestions[index].questionIndex = null
+    form.value.securityQuestions[index].questionText = ''
+    return
+  }
+  const found = presetQuestions.value.find(q => q.index === picked)
+  if (!found) return
+  if (isQuestionUsed(picked, index)) {
     uni.showToast({ title: '该问题已选择，不能重复', icon: 'none' })
     return
   }
   form.value.securityQuestions[index].questionIndex = picked
-  form.value.securityQuestions[index].questionText = realText
+  form.value.securityQuestions[index].questionText = found.text
 }
 
 async function handleRegister() {
@@ -112,7 +113,6 @@ async function handleRegister() {
     return
   }
 
-  // Validate security questions
   const validQuestions = form.value.securityQuestions.filter(sq => sq.questionIndex !== null)
   if (validQuestions.length < 2) {
     uni.showToast({ title: '请至少选择 2 个安全问题', icon: 'none' })
@@ -124,10 +124,8 @@ async function handleRegister() {
       return
     }
   }
-  // Check no duplicate answers across questions
   const answers = validQuestions.map(sq => sq.answer.trim().toLowerCase())
-  const uniqueAnswers = new Set(answers)
-  if (uniqueAnswers.size !== answers.length) {
+  if (new Set(answers).size !== answers.length) {
     uni.showToast({ title: '不同问题的答案不能相同', icon: 'none' })
     return
   }
@@ -206,24 +204,24 @@ function goLogin() {
   background: #fff;
 }
 
-.pc-picker {
-  height: 44px;
-  display: flex;
-  align-items: center;
+.pc-select-wrap {
+  position: relative;
 }
 
-.pc-picker-text {
+.pc-select {
+  width: 100%;
   height: 44px;
-  line-height: 44px;
   border: 1px solid var(--pc-user-line);
   border-radius: 12px;
   padding: 0 14px;
   font-size: var(--pc-font-body);
   color: var(--pc-user-ink);
   background: #fff;
+  appearance: auto;
+  -webkit-appearance: auto;
 }
 
-.pc-picker-text--placeholder {
+.pc-option-disabled {
   color: var(--pc-user-muted);
 }
 </style>
