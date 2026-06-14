@@ -30,6 +30,7 @@
           :mode="item.serviceMode"
           :duration-minutes="item.durationMinutes"
           :price="item.price"
+          :image-url="item.coverUrl || undefined"
           @tap="goDetail(item.id)"
         />
       </view>
