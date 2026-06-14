@@ -5,6 +5,7 @@ import com.petcare.user.auth.UserAuthService;
 import com.petcare.user.auth.WechatLoginProvider;
 import com.petcare.user.dto.*;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +38,15 @@ public class UserAuthController {
     public ApiResponse<Void> wechatLogin(@Valid @RequestBody WechatLoginRequest request) {
         wechatLoginProvider.login(request.code());
         return ApiResponse.ok(null);
+    }
+
+    /**
+     * Returns the preset security questions for the registration form.
+     * Public endpoint.
+     */
+    @GetMapping("/security-questions")
+    public ApiResponse<List<String>> getPresetSecurityQuestions() {
+        return ApiResponse.ok(PresetSecurityQuestions.QUESTIONS);
     }
 
     /**

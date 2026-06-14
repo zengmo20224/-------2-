@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/register").permitAll()
                         .requestMatchers("/api/v1/auth/login").permitAll()
                         .requestMatchers("/api/v1/auth/forgot-password/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/security-questions").permitAll()
                         .requestMatchers("/api/v1/auth/wechat-login").permitAll()
                         .requestMatchers("/api/v1/auth/test-login").permitAll()
                         // Anonymous public catalog reads (GET only, explicit real paths)

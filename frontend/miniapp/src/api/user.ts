@@ -30,12 +30,17 @@ export interface SecurityQuestion {
   question: string
 }
 
+/** Get preset security questions for registration */
+export function getPresetSecurityQuestions(): Promise<ApiResponse<string[]>> {
+  return http.get<string[]>('/api/v1/auth/security-questions')
+}
+
 /** Register with phone + password + security questions */
 export function register(data: {
   phone: string
   password: string
   nickname: string
-  securityQuestions: { question: string; answer: string }[]
+  securityQuestions: { questionIndex: number; answer: string }[]
 }): Promise<ApiResponse<AuthResult>> {
   return http.post<AuthResult>('/api/v1/auth/register', data as any)
 }

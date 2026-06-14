@@ -3,15 +3,29 @@
     <PcPageHeader title="注册" />
 
     <view class="auth-form">
-      <PcFormField label="手机号" placeholder="请输入手机号" v-model="form.phone" />
-      <PcFormField label="密码" placeholder="6-32位密码" v-model="form.password" />
-      <PcFormField label="昵称" placeholder="给自己起个昵称" v-model="form.nickname" />
+      <PcFormField label="手机号">
+        <input class="pc-input" type="text" v-model="form.phone" placeholder="请输入手机号" />
+      </PcFormField>
+      <PcFormField label="密码">
+        <input class="pc-input" type="text" v-model="form.password" placeholder="6-32位密码" password />
+      </PcFormField>
+      <PcFormField label="昵称">
+        <input class="pc-input" type="text" v-model="form.nickname" placeholder="给自己起个昵称" />
+      </PcFormField>
 
       <!-- Security Questions -->
-      <text class="auth-section-title">安全问题（用于找回密码）</text>
+      <text class="auth-section-title">安全问题（用于找回密码，请至少选择 2 个）</text>
       <view v-for="(sq, index) in form.securityQuestions" :key="index" class="auth-sq-item">
-        <PcFormField :label="`问题${index + 1}`" placeholder="设置一个安全问题" v-model="sq.question" />
-        <PcFormField label="答案" placeholder="安全问题答案" v-model="sq.answer" />
+        <PcFormField :label="`问题 ${index + 1}`">
+          <picker class="pc-picker" :range="availableQuestionTexts(index)" @change="onQuestionChange($event, index)">
+            <view class="pc-picker-text" :class="{ 'pc-picker-text--placeholder': !sq.questionText }">
+              {{ sq.questionText || '请选择安全问题' }}
+            </view>
+          </picker>
+        </PcFormField>
+        <PcFormField label="答案">
+          <input class="pc-input" type="text" v-model="sq.answer" placeholder="输入答案" />
+        </PcFormField>
       </view>
 
       <PcPrimaryButton text="注册" :loading="loading" @tap="handleRegister" />
@@ -23,25 +37,70 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import PcPageHeader from '@/components/PcPageHeader.vue'
 import PcFormField from '@/components/PcFormField.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
-import { register } from '@/api/user'
+import { register, getPresetSecurityQuestions } from '@/api/user'
 import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()
 const loading = ref(false)
+const presetQuestions = ref<string[]>([])
+
+interface SecurityQuestionForm {
+  questionIndex: number | null
+  questionText: string
+  answer: string
+}
 
 const form = ref({
   phone: '',
   password: '',
   nickname: '',
   securityQuestions: [
-    { question: '', answer: '' },
-    { question: '', answer: '' },
+    { questionIndex: null, questionText: '', answer: '' } as SecurityQuestionForm,
+    { questionIndex: null, questionText: '', answer: '' } as SecurityQuestionForm,
   ],
 })
+
+onMounted(async () => {
+  const res = await getPresetSecurityQuestions()
+  if (res.success && res.data) {
+    presetQuestions.value = res.data
+  }
+})
+
+/** For each picker: show all questions except those already chosen by other rows */
+function availableQuestionTexts(currentIndex: number): string[] {
+  const usedIndices = new Set<number>()
+  form.value.securityQuestions.forEach((sq, i) => {
+    if (i !== currentIndex && sq.questionIndex !== null) {
+      usedIndices.add(sq.questionIndex)
+    }
+  })
+  return presetQuestions.value.map((_, idx) => {
+    if (usedIndices.has(idx)) return '— 已选择 —'
+    return presetQuestions.value[idx]
+  })
+}
+
+function onQuestionChange(e: any, index: number) {
+  const picked = parseInt(e.detail.value)
+  const realText = presetQuestions.value[picked]
+  // Skip if it's the "already selected" placeholder
+  if (realText === undefined) return
+  // Check if this index is used by another row
+  const isUsed = form.value.securityQuestions.some(
+    (sq, i) => i !== index && sq.questionIndex === picked
+  )
+  if (isUsed) {
+    uni.showToast({ title: '该问题已选择，不能重复', icon: 'none' })
+    return
+  }
+  form.value.securityQuestions[index].questionIndex = picked
+  form.value.securityQuestions[index].questionText = realText
+}
 
 async function handleRegister() {
   if (!form.value.phone || !form.value.password || !form.value.nickname) {
@@ -52,15 +111,37 @@ async function handleRegister() {
     uni.showToast({ title: '密码至少6位', icon: 'none' })
     return
   }
-  for (const sq of form.value.securityQuestions) {
-    if (!sq.question || !sq.answer) {
-      uni.showToast({ title: '请完成安全问题设置', icon: 'none' })
+
+  // Validate security questions
+  const validQuestions = form.value.securityQuestions.filter(sq => sq.questionIndex !== null)
+  if (validQuestions.length < 2) {
+    uni.showToast({ title: '请至少选择 2 个安全问题', icon: 'none' })
+    return
+  }
+  for (const sq of validQuestions) {
+    if (!sq.answer.trim()) {
+      uni.showToast({ title: '请填写所有安全问题的答案', icon: 'none' })
       return
     }
   }
+  // Check no duplicate answers across questions
+  const answers = validQuestions.map(sq => sq.answer.trim().toLowerCase())
+  const uniqueAnswers = new Set(answers)
+  if (uniqueAnswers.size !== answers.length) {
+    uni.showToast({ title: '不同问题的答案不能相同', icon: 'none' })
+    return
+  }
 
   loading.value = true
-  const res = await register(form.value)
+  const res = await register({
+    phone: form.value.phone,
+    password: form.value.password,
+    nickname: form.value.nickname,
+    securityQuestions: validQuestions.map(sq => ({
+      questionIndex: sq.questionIndex!,
+      answer: sq.answer,
+    })),
+  })
   loading.value = false
 
   if (res.success && res.data) {
@@ -113,5 +194,36 @@ function goLogin() {
 .auth-link {
   font-size: var(--pc-font-body);
   color: var(--pc-user-primary);
+}
+
+.pc-input {
+  height: 44px;
+  border: 1px solid var(--pc-user-line);
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-ink);
+  background: #fff;
+}
+
+.pc-picker {
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.pc-picker-text {
+  height: 44px;
+  line-height: 44px;
+  border: 1px solid var(--pc-user-line);
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-ink);
+  background: #fff;
+}
+
+.pc-picker-text--placeholder {
+  color: var(--pc-user-muted);
 }
 </style>

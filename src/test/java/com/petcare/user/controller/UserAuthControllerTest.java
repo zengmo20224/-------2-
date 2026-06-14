@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,6 +32,18 @@ class UserAuthControllerTest {
     @Autowired
     private UserService userService;
 
+    // === Preset Security Questions ===
+
+    @Test
+    @DisplayName("GET /security-questions returns preset list")
+    void getSecurityQuestionsReturnsPresetList() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/security-questions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0]").exists())
+                .andExpect(jsonPath("$.data.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(5)));
+    }
+
     // === Register ===
 
     @Test
@@ -44,8 +57,8 @@ class UserAuthControllerTest {
                                     "password": "test123456",
                                     "nickname": "新用户",
                                     "securityQuestions": [
-                                        {"question": "你的宠物叫什么名字？", "answer": "豆豆"},
-                                        {"question": "你最喜欢的食物？", "answer": "火锅"}
+                                        {"questionIndex": 0, "answer": "豆豆"},
+                                        {"questionIndex": 1, "answer": "火锅"}
                                     ]
                                 }
                                 """))
@@ -69,7 +82,8 @@ class UserAuthControllerTest {
                                     "password": "test123456",
                                     "nickname": "重复用户",
                                     "securityQuestions": [
-                                        {"question": "问题1", "answer": "答案1"}
+                                        {"questionIndex": 0, "answer": "答案1"},
+                                        {"questionIndex": 1, "answer": "答案2"}
                                     ]
                                 }
                                 """))
@@ -111,32 +125,90 @@ class UserAuthControllerTest {
                 .andExpect(jsonPath("$.error.code").value("validation_error"));
     }
 
-    // === Login ===
-
     @Test
-    @DisplayName("login with correct password returns token")
-    void loginWithCorrectPasswordReturnsToken() throws Exception {
-        // Register first
+    @DisplayName("register with only 1 security question returns 422")
+    void registerWithOnlyOneSecurityQuestionReturns422() throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                     "phone": "13900004444",
                                     "password": "test123456",
+                                    "nickname": "问题不足",
+                                    "securityQuestions": [
+                                        {"questionIndex": 0, "answer": "答案1"}
+                                    ]
+                                }
+                                """))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("business_rule_violation"));
+    }
+
+    @Test
+    @DisplayName("register with duplicate question index returns 422")
+    void registerWithDuplicateQuestionIndexReturns422() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "phone": "13900005555",
+                                    "password": "test123456",
+                                    "nickname": "重复问题",
+                                    "securityQuestions": [
+                                        {"questionIndex": 0, "answer": "答案A"},
+                                        {"questionIndex": 0, "answer": "答案B"}
+                                    ]
+                                }
+                                """))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("business_rule_violation"));
+    }
+
+    @Test
+    @DisplayName("register with out-of-range question index returns 422")
+    void registerWithOutOfRangeQuestionIndexReturns422() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "phone": "13900006666",
+                                    "password": "test123456",
+                                    "nickname": "越界",
+                                    "securityQuestions": [
+                                        {"questionIndex": 0, "answer": "答案1"},
+                                        {"questionIndex": 999, "answer": "答案2"}
+                                    ]
+                                }
+                                """))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("business_rule_violation"));
+    }
+
+    // === Login ===
+
+    @Test
+    @DisplayName("login with correct password returns token")
+    void loginWithCorrectPasswordReturnsToken() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "phone": "13900007777",
+                                    "password": "test123456",
                                     "nickname": "登录测试",
                                     "securityQuestions": [
-                                        {"question": "问题1", "answer": "答案1"}
+                                        {"questionIndex": 0, "answer": "答案1"},
+                                        {"questionIndex": 1, "answer": "答案2"}
                                     ]
                                 }
                                 """))
                 .andExpect(status().isOk());
 
-        // Login
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "phone": "13900004444",
+                                    "phone": "13900007777",
                                     "password": "test123456"
                                 }
                                 """))
@@ -149,13 +221,13 @@ class UserAuthControllerTest {
     @Test
     @DisplayName("login with wrong password returns 401")
     void loginWithWrongPasswordReturns401() throws Exception {
-        createUser("13900005555");
+        createUser("13900008888");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "phone": "13900005555",
+                                    "phone": "13900008888",
                                     "password": "wrongpassword"
                                 }
                                 """))
@@ -182,92 +254,86 @@ class UserAuthControllerTest {
     @Test
     @DisplayName("forgot-password questions returns security questions without answers")
     void forgotPasswordReturnsSecurityQuestions() throws Exception {
-        // Register with questions
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "phone": "13900006666",
+                                    "phone": "13900009999",
                                     "password": "test123456",
                                     "nickname": "找回密码",
                                     "securityQuestions": [
-                                        {"question": "你的宠物叫什么？", "answer": "豆豆"},
-                                        {"question": "你的家乡？", "answer": "上海"}
+                                        {"questionIndex": 0, "answer": "豆豆"},
+                                        {"questionIndex": 2, "answer": "上海"}
                                     ]
                                 }
                                 """))
                 .andExpect(status().isOk());
 
-        // Get questions
         mockMvc.perform(post("/api/v1/auth/forgot-password/questions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"phone": "13900006666"}
+                                {"phone": "13900009999"}
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].question").value("你的宠物叫什么？"))
-                .andExpect(jsonPath("$.data[1].question").value("你的家乡？"));
+                .andExpect(jsonPath("$.data[0].question").exists())
+                .andExpect(jsonPath("$.data[1].question").exists());
     }
 
     @Test
     @DisplayName("forgot-password reset with correct answers changes password")
     void forgotPasswordResetWithCorrectAnswersChangesPassword() throws Exception {
-        // Register
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "phone": "13900007777",
+                                    "phone": "13900010000",
                                     "password": "oldpassword",
                                     "nickname": "重置密码",
                                     "securityQuestions": [
-                                        {"question": "你的宠物叫什么？", "answer": "豆豆"}
+                                        {"questionIndex": 0, "answer": "豆豆"},
+                                        {"questionIndex": 1, "answer": "火锅"}
                                     ]
                                 }
                                 """))
                 .andExpect(status().isOk());
 
-        // Get question IDs
         String questionsJson = mockMvc.perform(post("/api/v1/auth/forgot-password/questions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"phone": "13900007777"}
+                                {"phone": "13900010000"}
                                 """))
                 .andReturn().getResponse().getContentAsString();
 
-        // Extract question ID (simplified — the id field is a string in JSON)
-        // Use the actual ID from the response
         String questionId = extractIdFromJson(questionsJson);
 
-        // Reset password
         mockMvc.perform(post("/api/v1/auth/forgot-password/reset")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(String.format("""
                                 {
-                                    "phone": "13900007777",
+                                    "phone": "13900010000",
                                     "answers": [{"questionId": "%s", "answer": "豆豆"}],
                                     "newPassword": "newpassword"
                                 }
                                 """, questionId)))
                 .andExpect(status().isOk());
 
-        // Verify new password works
+        // New password works
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "phone": "13900007777",
+                                    "phone": "13900010000",
                                     "password": "newpassword"
                                 }
                                 """))
                 .andExpect(status().isOk());
 
-        // Verify old password no longer works
+        // Old password fails
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "phone": "13900007777",
+                                    "phone": "13900010000",
                                     "password": "oldpassword"
                                 }
                                 """))
@@ -277,37 +343,35 @@ class UserAuthControllerTest {
     @Test
     @DisplayName("forgot-password reset with wrong answer returns 422")
     void forgotPasswordResetWithWrongAnswerReturns422() throws Exception {
-        // Register
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                    "phone": "13900008888",
+                                    "phone": "13900011111",
                                     "password": "oldpassword",
                                     "nickname": "错误答案",
                                     "securityQuestions": [
-                                        {"question": "你的宠物叫什么？", "answer": "豆豆"}
+                                        {"questionIndex": 0, "answer": "豆豆"},
+                                        {"questionIndex": 1, "answer": "火锅"}
                                     ]
                                 }
                                 """))
                 .andExpect(status().isOk());
 
-        // Get question IDs
         String questionsJson = mockMvc.perform(post("/api/v1/auth/forgot-password/questions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"phone": "13900008888"}
+                                {"phone": "13900011111"}
                                 """))
                 .andReturn().getResponse().getContentAsString();
 
         String questionId = extractIdFromJson(questionsJson);
 
-        // Try reset with wrong answer
         mockMvc.perform(post("/api/v1/auth/forgot-password/reset")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(String.format("""
                                 {
-                                    "phone": "13900008888",
+                                    "phone": "13900011111",
                                     "answers": [{"questionId": "%s", "answer": "错误的答案"}],
                                     "newPassword": "newpassword"
                                 }
@@ -338,9 +402,7 @@ class UserAuthControllerTest {
         return user;
     }
 
-    /** Extract the first id value from the forgot-password questions JSON response */
     private String extractIdFromJson(String json) {
-        // The response format is: {"success":true,"data":[{"id":"123","question":"..."},...]}
         int idStart = json.indexOf("\"id\":\"") + 6;
         int idEnd = json.indexOf("\"", idStart);
         return json.substring(idStart, idEnd);

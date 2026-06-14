@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Application service for user registration, password login, and password recovery.
@@ -40,6 +42,7 @@ public class UserAuthService {
 
     /**
      * Register a new user with phone, password, and security questions.
+     * Security questions must be chosen from preset list; no duplicates allowed.
      */
     @Transactional
     public PasswordLoginResponse register(RegisterRequest request) {
@@ -51,6 +54,21 @@ public class UserAuthService {
             throw new BusinessException(ErrorCode.PHONE_ALREADY_REGISTERED, "该手机号已注册");
         }
 
+        // Validate security questions: at least 2, from preset list, no duplicate indices
+        if (request.securityQuestions() == null || request.securityQuestions().size() < 2) {
+            throw new BusinessException(ErrorCode.BUSINESS_RULE_VIOLATION, "请至少选择 2 个安全问题");
+        }
+        Set<Integer> seenIndices = new HashSet<>();
+        for (RegisterRequest.SecurityQuestionItem item : request.securityQuestions()) {
+            int idx = item.questionIndex();
+            if (idx < 0 || idx >= PresetSecurityQuestions.QUESTIONS.size()) {
+                throw new BusinessException(ErrorCode.BUSINESS_RULE_VIOLATION, "安全问题选择无效");
+            }
+            if (!seenIndices.add(idx)) {
+                throw new BusinessException(ErrorCode.BUSINESS_RULE_VIOLATION, "安全问题不能重复");
+            }
+        }
+
         // Create user
         User user = new User();
         user.setPhone(request.phone());
@@ -59,22 +77,20 @@ public class UserAuthService {
         user.setStatus("ACTIVE");
         userService.save(user);
 
-        // Save security questions
-        if (request.securityQuestions() != null && !request.securityQuestions().isEmpty()) {
-            List<UserSecurityQuestion> questions = request.securityQuestions().stream()
-                    .map(item -> {
-                        UserSecurityQuestion q = new UserSecurityQuestion();
-                        q.setUserId(user.getId());
-                        q.setQuestion(item.question());
-                        q.setAnswerHash(passwordEncoder.encode(item.answer().trim().toLowerCase()));
-                        return q;
-                    })
-                    .toList();
-            for (int i = 0; i < questions.size(); i++) {
-                questions.get(i).setSort(i);
-            }
-            securityQuestionService.saveBatch(questions);
+        // Save security questions (resolved from preset list by index)
+        List<UserSecurityQuestion> questions = request.securityQuestions().stream()
+                .map(item -> {
+                    UserSecurityQuestion q = new UserSecurityQuestion();
+                    q.setUserId(user.getId());
+                    q.setQuestion(PresetSecurityQuestions.QUESTIONS.get(item.questionIndex()));
+                    q.setAnswerHash(passwordEncoder.encode(item.answer().trim().toLowerCase()));
+                    return q;
+                })
+                .toList();
+        for (int i = 0; i < questions.size(); i++) {
+            questions.get(i).setSort(i);
         }
+        securityQuestionService.saveBatch(questions);
 
         String token = jwtTokenService.signUserToken(user.getId());
 

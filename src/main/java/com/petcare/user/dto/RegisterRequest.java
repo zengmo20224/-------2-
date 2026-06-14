@@ -1,6 +1,8 @@
 package com.petcare.user.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -8,6 +10,7 @@ import java.util.List;
 
 /**
  * User registration request with phone, password, and security questions.
+ * Security questions are chosen from preset list by index (0-based).
  */
 public record RegisterRequest(
         @NotBlank(message = "手机号不能为空")
@@ -25,8 +28,9 @@ public record RegisterRequest(
         List<SecurityQuestionItem> securityQuestions
 ) {
     public record SecurityQuestionItem(
-            @NotBlank(message = "安全问题不能为空")
-            String question,
+            @NotNull(message = "安全问题不能为空")
+            @Min(value = 0, message = "安全问题选择无效")
+            Integer questionIndex,
 
             @NotBlank(message = "安全答案不能为空")
             String answer

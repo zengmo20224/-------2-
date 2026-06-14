@@ -4,7 +4,9 @@
 
     <!-- Step 1: Enter phone -->
     <view v-if="step === 1" class="auth-form">
-      <PcFormField label="手机号" placeholder="请输入注册手机号" v-model="phoneInput" />
+      <PcFormField label="手机号">
+        <input class="pc-input" type="text" v-model="phoneInput" placeholder="请输入注册手机号" />
+      </PcFormField>
       <PcPrimaryButton text="获取安全问题" :loading="loading" @tap="handleGetQuestions" />
     </view>
 
@@ -13,10 +15,14 @@
       <text class="auth-step-label">请回答安全问题</text>
       <view v-for="q in questions" :key="q.id" class="auth-sq-item">
         <text class="auth-sq-question">{{ q.question }}</text>
-        <PcFormField label="" placeholder="请输入答案" v-model="answers[q.id]" />
+        <PcFormField label="答案">
+          <input class="pc-input" type="text" v-model="answers[q.id]" placeholder="请输入答案" />
+        </PcFormField>
       </view>
 
-      <PcFormField label="新密码" placeholder="6-32位新密码" v-model="newPassword" />
+      <PcFormField label="新密码">
+        <input class="pc-input" type="text" v-model="newPassword" placeholder="6-32位新密码" password />
+      </PcFormField>
       <PcPrimaryButton text="重置密码" :loading="loading" @tap="handleReset" />
     </view>
 
@@ -137,5 +143,15 @@ function goLogin() {
   font-size: var(--pc-font-card-title);
   color: var(--pc-user-ink);
   text-align: center;
+}
+
+.pc-input {
+  height: 44px;
+  border: 1px solid var(--pc-user-line);
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-ink);
+  background: #fff;
 }
 </style>

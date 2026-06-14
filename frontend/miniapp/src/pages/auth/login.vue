@@ -3,8 +3,12 @@
     <PcPageHeader title="登录" />
 
     <view class="auth-form">
-      <PcFormField label="手机号" placeholder="请输入手机号" v-model="phoneInput" />
-      <PcFormField label="密码" placeholder="请输入密码" v-model="passwordInput" />
+      <PcFormField label="手机号">
+        <input class="pc-input" type="text" v-model="phoneInput" placeholder="请输入手机号" />
+      </PcFormField>
+      <PcFormField label="密码">
+        <input class="pc-input" type="text" v-model="passwordInput" placeholder="请输入密码" password />
+      </PcFormField>
 
       <view class="auth-links">
         <text class="auth-link" @tap="goRegister">没有账号？去注册</text>
@@ -74,5 +78,15 @@ function goForgotPassword() {
 .auth-link {
   font-size: var(--pc-font-body);
   color: var(--pc-user-primary);
+}
+
+.pc-input {
+  height: 44px;
+  border: 1px solid var(--pc-user-line);
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: var(--pc-font-body);
+  color: var(--pc-user-ink);
+  background: #fff;
 }
 </style>
