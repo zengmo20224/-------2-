@@ -228,7 +228,7 @@ class UserAuthControllerTest {
                         .content("""
                                 {
                                     "phone": "13900008888",
-                                    "password": "wrongpassword"
+                                    "password": "wrongpass1"
                                 }
                                 """))
                 .andExpect(status().isUnauthorized())
@@ -287,7 +287,7 @@ class UserAuthControllerTest {
                         .content("""
                                 {
                                     "phone": "13900010000",
-                                    "password": "oldpassword",
+                                    "password": "oldpass1",
                                     "nickname": "重置密码",
                                     "securityQuestions": [
                                         {"questionIndex": 0, "answer": "豆豆"},
@@ -312,7 +312,7 @@ class UserAuthControllerTest {
                                 {
                                     "phone": "13900010000",
                                     "answers": [{"questionId": "%s", "answer": "豆豆"}],
-                                    "newPassword": "newpassword"
+                                    "newPassword": "newpass1"
                                 }
                                 """, questionId)))
                 .andExpect(status().isOk());
@@ -323,7 +323,7 @@ class UserAuthControllerTest {
                         .content("""
                                 {
                                     "phone": "13900010000",
-                                    "password": "newpassword"
+                                    "password": "newpass1"
                                 }
                                 """))
                 .andExpect(status().isOk());
@@ -334,7 +334,7 @@ class UserAuthControllerTest {
                         .content("""
                                 {
                                     "phone": "13900010000",
-                                    "password": "oldpassword"
+                                    "password": "oldpass1"
                                 }
                                 """))
                 .andExpect(status().isUnauthorized());
@@ -348,7 +348,7 @@ class UserAuthControllerTest {
                         .content("""
                                 {
                                     "phone": "13900011111",
-                                    "password": "oldpassword",
+                                    "password": "oldpass1",
                                     "nickname": "错误答案",
                                     "securityQuestions": [
                                         {"questionIndex": 0, "answer": "豆豆"},
@@ -373,7 +373,7 @@ class UserAuthControllerTest {
                                 {
                                     "phone": "13900011111",
                                     "answers": [{"questionId": "%s", "answer": "错误的答案"}],
-                                    "newPassword": "newpassword"
+                                    "newPassword": "newpass1"
                                 }
                                 """, questionId)))
                 .andExpect(status().isUnprocessableEntity())

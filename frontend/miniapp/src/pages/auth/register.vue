@@ -7,7 +7,7 @@
         <input class="pc-input" type="text" v-model="form.phone" placeholder="请输入手机号" />
       </PcFormField>
       <PcFormField label="密码">
-        <input class="pc-input" type="text" v-model="form.password" placeholder="6-32位密码" password />
+        <input class="pc-input" type="text" v-model="form.password" placeholder="请输入密码" password />
       </PcFormField>
       <PcFormField label="昵称">
         <input class="pc-input" type="text" v-model="form.nickname" placeholder="给自己起个昵称" />
@@ -108,8 +108,16 @@ async function handleRegister() {
     uni.showToast({ title: '请填写完整信息', icon: 'none' })
     return
   }
-  if (form.value.password.length < 6) {
-    uni.showToast({ title: '密码至少6位', icon: 'none' })
+  if (form.value.password.length < 8) {
+    uni.showToast({ title: '密码至少 8 位', icon: 'none' })
+    return
+  }
+  if (form.value.password.length > 32) {
+    uni.showToast({ title: '密码不能超过 32 位', icon: 'none' })
+    return
+  }
+  if (!/(?=.*[A-Za-z])(?=.*\d)/.test(form.value.password)) {
+    uni.showToast({ title: '密码必须包含数字和字母', icon: 'none' })
     return
   }
 

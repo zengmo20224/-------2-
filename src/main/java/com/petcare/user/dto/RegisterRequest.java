@@ -18,7 +18,8 @@ public record RegisterRequest(
         String phone,
 
         @NotBlank(message = "密码不能为空")
-        @Size(min = 6, max = 32, message = "密码长度 6-32 位")
+        @Size(min = 8, max = 32, message = "密码长度 8-32 位")
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$", message = "密码必须包含数字和字母")
         String password,
 
         @NotBlank(message = "昵称不能为空")

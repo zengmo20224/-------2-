@@ -21,7 +21,7 @@
       </view>
 
       <PcFormField label="新密码">
-        <input class="pc-input" type="text" v-model="newPassword" placeholder="6-32位新密码" password />
+        <input class="pc-input" type="text" v-model="newPassword" placeholder="请输入新密码" password />
       </PcFormField>
       <PcPrimaryButton text="重置密码" :loading="loading" @tap="handleReset" />
     </view>
@@ -66,8 +66,16 @@ async function handleGetQuestions() {
 }
 
 async function handleReset() {
-  if (!newPassword.value || newPassword.value.length < 6) {
-    uni.showToast({ title: '密码至少6位', icon: 'none' })
+  if (!newPassword.value || newPassword.value.length < 8) {
+    uni.showToast({ title: '密码至少 8 位', icon: 'none' })
+    return
+  }
+  if (newPassword.value.length > 32) {
+    uni.showToast({ title: '密码不能超过 32 位', icon: 'none' })
+    return
+  }
+  if (!/(?=.*[A-Za-z])(?=.*\d)/.test(newPassword.value)) {
+    uni.showToast({ title: '密码必须包含数字和字母', icon: 'none' })
     return
   }
   for (const q of questions.value) {
