@@ -123,12 +123,16 @@ class BookingStatusTransitionTransactionTest {
         bookingApplicationService.cancelBooking(90001L, booking.id(),
                 new BookingCancelRequest("不想要了"));
 
-        // Check the status log
+        // Check the status log.
+        // Filter by newStatus=CANCELLED (deterministic) instead of relying on
+        // ORDER BY create_time DESC: H2 stores create_time at second precision,
+        // so the create log and cancel log within the same second sort
+        // non-deterministically and the LIMIT 1 may pick the create log
+        // (whose old_status is NULL). Same pattern as userCancelAfterConfirm.
         BookingStatusLog log = bookingStatusLogService.getOne(
                 new LambdaQueryWrapper<BookingStatusLog>()
                         .eq(BookingStatusLog::getBookingId, booking.id())
-                        .orderByDesc(BookingStatusLog::getCreateTime)
-                        .last("LIMIT 1"));
+                        .eq(BookingStatusLog::getNewStatus, "CANCELLED"));
 
         assertThat(log).as("A status log must exist for the cancel operation").isNotNull();
         assertThat(log.getOldStatus())

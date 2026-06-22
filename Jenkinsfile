@@ -33,6 +33,7 @@ pipeline {
         MAVEN_OPTS      = '-Dmaven.repo.local=.m2-repo'
         IMAGE_TAG       = "${env.GIT_BRANCH ? env.GIT_BRANCH.replaceAll('[^a-zA-Z0-9.-]', '_') : 'local'}-${env.BUILD_NUMBER}"
         COMPOSE_PROJECT = 'petcare'
+        JWT_SECRET_CREDENTIAL_ID = 'petcare-jwt-secret'
     }
 
     triggers {
@@ -104,6 +105,23 @@ pipeline {
             }
         }
 
+        stage('Deployment Config Check') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                    expression { env.DEPLOY == 'true' }
+                }
+            }
+            steps {
+                withCredentials([string(credentialsId: "${env.JWT_SECRET_CREDENTIAL_ID}", variable: 'JWT_SECRET')]) {
+                    bat '''
+                        @powershell -NoProfile -ExecutionPolicy Bypass -Command "$envFile = Join-Path (Get-Location) '.env'; if ([string]::IsNullOrWhiteSpace($env:JWT_SECRET) -or [System.Text.Encoding]::UTF8.GetByteCount($env:JWT_SECRET) -lt 32) { Write-Error 'JWT_SECRET credential petcare-jwt-secret is missing or shorter than 32 bytes'; exit 1 }; if (-not (Test-Path -LiteralPath $envFile)) { Write-Error 'Jenkins workspace .env is missing; DB_PASSWORD must match the existing Docker MySQL volume'; exit 1 }; $dbPassword = (Get-Content -LiteralPath $envFile | Where-Object { $_ -like 'DB_PASSWORD=*' } | Select-Object -First 1); if ([string]::IsNullOrWhiteSpace($dbPassword) -or $dbPassword -eq 'DB_PASSWORD=') { Write-Error 'DB_PASSWORD is missing from Jenkins workspace .env'; exit 1 }"
+                    '''
+                }
+            }
+        }
+
         stage('Deploy') {
             when {
                 // 只在主分支或手动指定 DEPLOY=true 时部署
@@ -115,7 +133,9 @@ pipeline {
             }
             steps {
                 // 滚动重建并等待健康检查通过
-                bat 'docker compose up -d --wait --remove-orphans'
+                withCredentials([string(credentialsId: "${env.JWT_SECRET_CREDENTIAL_ID}", variable: 'JWT_SECRET')]) {
+                    bat 'docker compose up -d --wait --remove-orphans'
+                }
                 echo "Deployment complete. Services:"
                 bat 'docker compose ps'
             }

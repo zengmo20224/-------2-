@@ -32,7 +32,7 @@
 
 ### 2.2 解锁与初始化
 
-1. 浏览器打开 http://localhost:8888
+1. 浏览器打开 http://localhost:9090
 2. 用初始密码解锁：
    ```bash
    docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
@@ -55,6 +55,7 @@
 | **JaCoCo** | 覆盖率报告 |
 | **HTML Publisher** | 归档覆盖率 HTML 报告 |
 | **Docker Pipeline** | 在流水线中调用 docker |
+| **Credentials Binding** | 将 Jenkins 凭据安全注入流水线环境变量 |
 | **Email Extension** | 发送测试报告邮件（加分项） |
 
 > 安装后重启 Jenkins。
@@ -81,7 +82,42 @@ docker version       # 在 Jenkins 节点验证
 docker compose version
 ```
 
-### 4.4 邮件（Email Extension）
+### 4.4 JWT_SECRET 凭据（部署必填）
+
+`docker compose` 的生产后端使用 `JWT_SECRET` 签发登录令牌。该值不能写进仓库，也不会随本地 `.env` 提交到 Jenkins 工作区；必须在 Jenkins Credentials 中配置。
+
+1. 在 Jenkins 服务器 PowerShell 生成随机密钥：
+   ```powershell
+   $bytes = New-Object byte[] 32
+   $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+   try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+   [Convert]::ToBase64String($bytes)
+   ```
+2. 打开 `Manage Jenkins → Credentials → System → Global credentials → Add Credentials`。
+3. 类型选择 **Secret text**。
+4. `Secret` 填上一步生成的值。
+5. `ID` 必须填写：`petcare-jwt-secret`。
+
+流水线会在部署前校验该凭据是否存在且 UTF-8 字节长度不少于 32；未配置时会在 `Deployment Config Check` 阶段直接失败，避免后端容器启动后才显示 unhealthy。
+
+### 4.5 Docker Compose 本地 `.env`
+
+Jenkins 从 GitHub checkout 代码时不会带上仓库根目录的本地 `.env`。如果使用 `docker compose` 的持久化 MySQL 数据卷，Jenkins 工作区必须有一份本机部署用 `.env`，并且数据库变量要和该数据卷首次初始化时一致：
+
+```env
+DB_USERNAME=petcare
+DB_PASSWORD=<和现有 mysql-data 数据卷内用户密码一致>
+MYSQL_ROOT_PASSWORD=<和现有 mysql-data 数据卷内 root 密码一致>
+MYSQL_DATABASE=petcare_o2o
+JWT_SECRET=<至少 32 字节随机字符串>
+JWT_ISSUER=petcare-o2o-api
+JWT_EXPIRATION_MINUTES=120
+AI_PROVIDER_ENABLED=false
+```
+
+如果 `petcare-api` 日志出现 `Access denied for user 'petcare'`，优先检查 Jenkins 工作区 `.env` 的 `DB_PASSWORD` 是否和现有 `petcare-mysql-data` 数据卷匹配。修改 `.env` 不会修改已存在数据卷里的 MySQL 用户密码；要重新初始化密码只能谨慎执行 `docker compose down -v` 删除数据卷后重建，这会清空数据库。
+
+### 4.6 邮件（Email Extension）
 
 `Manage Jenkins → System → Extended E-mail Notification`：
 - SMTP Server：填学校或组内 SMTP（如 `smtp.qq.com`、`smtp.163.com`）。
@@ -117,13 +153,13 @@ GitHub 仓库 → `Settings → Webhooks → Add webhook`：
 
 | 字段 | 值 |
 |---|---|
-| Payload URL | `http://<你的IP>:8888/github-webhook/` |
+| Payload URL | `http://<你的IP>:9090/github-webhook/` |
 | Content type | `application/json` |
 | Trigger | ☑ Just the `push` event |
 
 > 本地演示可用 [ngrok](https://ngrok.com) 暴露 Jenkins：
 > ```bash
-> ngrok http 8888
+> ngrok http 9090
 > ```
 > 把 ngrok 给的公网 URL 填入 Payload URL。
 
@@ -135,7 +171,8 @@ GitHub 仓库 → `Settings → Webhooks → Add webhook`：
 
 ```
 Checkout → Backend Build → Backend Test → Backend Package
-       → Docker Build → Deploy (条件) → Health Check (条件) → Post
+       → Docker Build → Deployment Config Check (条件) → Deploy (条件)
+       → Health Check (条件) → Post
 ```
 
 - **Deploy / Health Check 阶段**仅在 `main` / `develop` 分支或 `DEPLOY=true` 时执行，避免每次 push 都重建生产。
@@ -171,6 +208,8 @@ Checkout → Backend Build → Backend Test → Backend Package
 | `'docker' is not recognized` | 安装 Docker Desktop，确保勾选 "Add to PATH"，重启 Jenkins 服务 |
 | `'curl' is not recognized` | Windows 10+ 自带 curl；若没有，安装 curl.exe 或改用 PowerShell `Invoke-WebRequest` |
 | `docker compose` 命令找不到 | 升级 Docker Desktop 到含 compose v2 的版本；旧版用 `docker-compose` |
+| `petcare-api is unhealthy` 且日志包含 `JWT_SECRET variable is not set` / `WeakKeyException` | 按第 4.4 节创建 `Secret text` 凭据，ID 必须为 `petcare-jwt-secret` |
+| `petcare-api is unhealthy` 且日志包含 `Access denied for user 'petcare'` | 按第 4.5 节检查 Jenkins 工作区 `.env`，确保 `DB_PASSWORD` 和现有 MySQL 数据卷里的用户密码一致 |
 | Docker 拉镜像超时 | 开启科学上网客户端的 TUN 模式；或在 Docker Desktop 配代理（Settings → Resources → Proxies） |
 | 端口 8080/8081/8082 占用 | 在 `.env` 改 `ADMIN_WEB_PORT` / `H5_PORT` / `API_PORT` |
 | 邮件发送失败 | 检查 SMTP 凭证；QQ/163 需用授权码而非登录密码；未配置 SMTP 时 emailext 会跳过 |
