@@ -166,8 +166,7 @@ class AdminBookingControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.items").isArray())
-                    .andExpect(jsonPath("$.data.items.length()")
-                            .value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)));
+                    .andExpect(jsonPath("$.data.items.length()").value(1));
         }
 
         @Test
