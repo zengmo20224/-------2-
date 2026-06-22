@@ -19,7 +19,7 @@ function goMyBookings() {
 
 <style scoped>
 .booking-success {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .booking-success__content {
@@ -35,14 +35,14 @@ function goMyBookings() {
 }
 
 .booking-success__title {
-  font-size: var(--pc-font-title);
+  font-size: 24px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .booking-success__hint {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
   margin-bottom: 24px;
 }
 </style>

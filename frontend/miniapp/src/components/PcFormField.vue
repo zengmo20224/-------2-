@@ -20,8 +20,8 @@ defineProps<{
 }
 
 .pc-form-field__label {
-  font-size: var(--pc-font-body);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 </style>

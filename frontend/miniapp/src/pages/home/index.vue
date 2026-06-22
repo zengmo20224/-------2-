@@ -1,5 +1,16 @@
 <template>
   <view class="pc-page home-page">
+    <view class="home-brand">
+      <view>
+        <text class="home-brand__name">PetCare</text>
+        <text class="home-brand__location">萌宠家园 · 上海徐汇店</text>
+      </view>
+      <view class="home-brand__status">
+        <view class="home-brand__dot" />
+        <text>营业中</text>
+      </view>
+    </view>
+
     <!-- Hero Section -->
     <PcHeroCard
       title="给它安心的照护时间"
@@ -12,40 +23,114 @@
       </template>
     </PcHeroCard>
 
+    <!-- Announcement Banner -->
+    <view v-if="latestAnnouncement" class="home-announcement" @tap="goAnnouncementDetail(latestAnnouncement.id)">
+      <view class="home-announcement__icon">
+        <text>告</text>
+        <view v-if="hasUnreadAnnouncement" class="home-announcement__dot" />
+      </view>
+      <view class="home-announcement__body">
+        <text class="home-announcement__eyebrow">社区公告</text>
+        <text class="home-announcement__title">{{ latestAnnouncement.title }}</text>
+      </view>
+      <view class="home-announcement__action">
+        <text>查看</text>
+      </view>
+    </view>
+
     <!-- Quick Service Shortcuts -->
     <view class="pc-section">
-      <text class="home-section-title">常用服务</text>
+      <view class="home-section-heading">
+        <text class="home-section-kicker">QUICK ACCESS</text>
+        <text class="home-section-title">常用服务</text>
+      </view>
       <view class="home-shortcuts">
-        <view class="home-shortcut-item" @tap="goServices">
-          <view class="home-shortcut-icon home-shortcut-icon--grooming">
-            <text>洗护</text>
+        <view
+          v-for="item in serviceShortcuts"
+          :key="item.label"
+          class="home-shortcut-card"
+          @tap="goServices(item.categoryName)"
+        >
+          <view class="home-shortcut-item">
+            <view class="home-shortcut-icon" :style="{ backgroundColor: item.background }">
+              <text :style="{ color: item.color }">{{ item.iconText }}</text>
+            </view>
+            <text class="home-shortcut-label">{{ item.label }}</text>
+            <text class="home-shortcut-hint">{{ item.hint }}</text>
           </view>
-          <text class="home-shortcut-label">洗护</text>
-        </view>
-        <view class="home-shortcut-item" @tap="goServices">
-          <view class="home-shortcut-icon home-shortcut-icon--beauty">
-            <text>美容</text>
-          </view>
-          <text class="home-shortcut-label">美容</text>
-        </view>
-        <view class="home-shortcut-item" @tap="goServices">
-          <view class="home-shortcut-icon home-shortcut-icon--home">
-            <text>上门</text>
-          </view>
-          <text class="home-shortcut-label">上门照护</text>
-        </view>
-        <view class="home-shortcut-item" @tap="goServices">
-          <view class="home-shortcut-icon home-shortcut-icon--care">
-            <text>照护</text>
-          </view>
-          <text class="home-shortcut-label">寄养</text>
         </view>
       </view>
     </view>
 
+    <!-- Featured Products -->
+    <view class="pc-section">
+      <view class="home-section-header">
+        <view class="home-section-heading">
+          <text class="home-section-kicker">PET SELECT</text>
+          <text class="home-section-title">精选好物</text>
+        </view>
+        <text class="home-section-more" @tap="goProducts">逛逛商店</text>
+      </view>
+      <PcStatePanel :status="productsStatus" empty-text="暂无精选商品" error-message="">
+        <scroll-view class="home-products-scroll" scroll-x>
+          <view class="home-products">
+            <PcProductCard
+              v-for="item in featuredProducts"
+              :key="item.id"
+              class="home-product-card"
+              :product-id="item.id"
+              :name="item.name"
+              :price="item.price"
+              :cover-url="item.coverUrl"
+              :sales-count="item.salesCount"
+              badge="门店精选"
+              @tap="goProductDetail(item.id)"
+            />
+          </view>
+        </scroll-view>
+      </PcStatePanel>
+    </view>
+
+    <!-- Marketing Activities -->
+    <view class="pc-section">
+      <view class="home-section-header">
+        <view class="home-section-heading">
+          <text class="home-section-kicker">SPECIAL OFFERS</text>
+          <text class="home-section-title">门店活动</text>
+        </view>
+        <text class="home-section-more" @tap="goActivities">查看全部</text>
+      </view>
+      <PcStatePanel :status="activitiesStatus" empty-text="暂无活动" error-message="">
+        <view class="home-posts">
+          <view
+            v-for="act in recentActivities"
+            :key="act.id"
+            class="home-activity-item"
+            @tap="goActivityDetail(act.id)"
+          >
+            <image v-if="act.coverUrl" class="home-activity-cover" :src="fullImageUrl(act.coverUrl)" mode="aspectFill" />
+            <view v-else class="home-activity-cover home-activity-cover--placeholder">
+              <text>活动</text>
+            </view>
+            <view class="home-activity-body">
+              <text class="home-post-title">{{ act.title }}</text>
+              <text class="home-activity-time">{{ formatActivityTime(act) }}</text>
+              <view class="home-post-meta">
+                <text v-if="activityProductCount(act) > 0" class="home-post-stat">{{ activityProductCount(act) }} 件商品</text>
+                <text v-if="activityServiceCount(act) > 0" class="home-post-stat">{{ activityServiceCount(act) }} 项服务</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </PcStatePanel>
+    </view>
+
     <!-- Recent Community Posts -->
     <view class="pc-section">
-      <text class="home-section-title">社区动态</text>
+      <view class="home-section-heading">
+        <text class="home-section-kicker">COMMUNITY</text>
+        <text class="home-section-title">社区动态</text>
+      </view>
       <PcStatePanel :status="postsStatus" empty-text="暂无动态" error-message="">
         <view class="home-posts">
           <view
@@ -64,52 +149,52 @@
       </PcStatePanel>
     </view>
 
-    <!-- Marketing Activities -->
-    <view class="pc-section">
-      <view class="home-section-header">
-        <text class="home-section-title">优惠活动</text>
-        <text class="home-section-more" @tap="goActivities">查看全部</text>
-      </view>
-      <PcStatePanel :status="activitiesStatus" empty-text="暂无活动" error-message="">
-        <view class="home-posts">
-          <view
-            v-for="act in recentActivities"
-            :key="act.id"
-            class="home-post-item"
-            @tap="goActivityDetail(act.id)"
-          >
-            <text class="home-post-title">{{ act.title }}</text>
-            <view class="home-post-meta">
-              <text v-if="act.productNames.length > 0" class="home-post-stat">{{ act.productNames.length }} 件商品</text>
-              <text v-if="act.serviceNames.length > 0" class="home-post-stat">{{ act.serviceNames.length }} 项服务</text>
-            </view>
-          </view>
-        </view>
-      </PcStatePanel>
-    </view>
-
     <!-- AI Status -->
     <view class="pc-section">
       <PcBlockedFeature title="智能助手暂未开放" reason="AI 能力正在开发中，敬请期待" />
     </view>
+    <PcBottomNav current-path="pages/home/index" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import PcHeroCard from '@/components/PcHeroCard.vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcBlockedFeature from '@/components/PcBlockedFeature.vue'
+import PcProductCard from '@/components/PcProductCard.vue'
+import PcBottomNav from '@/components/PcBottomNav.vue'
 import { getPosts } from '@/api/community'
 import { getActivities } from '@/api/activity'
+import { getAnnouncements } from '@/api/notification'
+import { getProducts } from '@/api/product'
 import type { PostItem } from '@/types/community'
 import type { ActivityItem } from '@/types/activity'
+import type { AnnouncementItem } from '@/types/notification'
+import type { ProductItem } from '@/types/product'
+import { openAllServices, openServiceCategory } from '@/utils/service-navigation'
+import { hasUnreadAnnouncements } from '@/utils/announcement-read'
+
+const latestAnnouncement = ref<AnnouncementItem | null>(null)
+const announcements = ref<AnnouncementItem[]>([])
+const hasUnreadAnnouncement = ref(false)
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+
+const serviceShortcuts = [
+  { label: '洗护', categoryName: '洗护', hint: '清爽洁净', iconText: '洗', color: '#11796F', background: '#DFF2ED' },
+  { label: '美容', categoryName: '美容', hint: '精致造型', iconText: '美', color: '#D78A0C', background: '#FFF0D1' },
+  { label: '上门照护', categoryName: '上门照护', hint: '省心到家', iconText: '家', color: '#4777C8', background: '#E8F0FE' },
+  { label: '安心寄养', categoryName: '寄养', hint: '贴心陪伴', iconText: '养', color: '#C85B79', background: '#FCE4EC' },
+] as const
 
 const recentPosts = ref<PostItem[]>([])
 const postsStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 
 const recentActivities = ref<ActivityItem[]>([])
 const activitiesStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
+const featuredProducts = ref<ProductItem[]>([])
+const productsStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 
 async function loadRecentPosts() {
   postsStatus.value = 'loading'
@@ -139,12 +224,31 @@ async function loadRecentActivities() {
   activitiesStatus.value = recentActivities.value.length > 0 ? 'success' : 'empty'
 }
 
-function goBooking() {
-  uni.navigateTo({ url: '/pages/booking/create' })
+async function loadFeaturedProducts() {
+  productsStatus.value = 'loading'
+  const res = await getProducts({ size: 6 })
+  if (!res.success || !res.data) {
+    productsStatus.value = 'error'
+    return
+  }
+  featuredProducts.value = res.data.items.slice(0, 6)
+  productsStatus.value = featuredProducts.value.length > 0 ? 'success' : 'empty'
 }
 
-function goServices() {
-  uni.switchTab({ url: '/pages/services/index' })
+function goBooking() {
+  openAllServices()
+}
+
+function goServices(categoryName: string) {
+  openServiceCategory(categoryName)
+}
+
+function goProducts() {
+  uni.switchTab({ url: '/pages/products/index' })
+}
+
+function goProductDetail(id: string) {
+  uni.navigateTo({ url: `/pages/products/detail?id=${id}` })
 }
 
 function goPostDetail(id: string) {
@@ -159,20 +263,223 @@ function goActivityDetail(id: string) {
   uni.navigateTo({ url: `/pages/activity/detail?id=${id}` })
 }
 
-loadRecentPosts()
-loadRecentActivities()
+function activityProductCount(activity: ActivityItem): number {
+  return activity.products?.length ?? activity.productNames?.length ?? 0
+}
+
+function activityServiceCount(activity: ActivityItem): number {
+  return activity.services?.length ?? activity.serviceNames?.length ?? 0
+}
+
+function fullImageUrl(url: string | null): string {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return API_BASE + url
+}
+
+function formatActivityTime(activity: ActivityItem): string {
+  const start = formatShortDate(activity.startTime)
+  const end = formatShortDate(activity.endTime)
+  if (!start && !end) return '长期有效'
+  if (!start) return `截至 ${end}`
+  if (!end) return `${start} 起`
+  return `${start} - ${end}`
+}
+
+function formatShortDate(value: string | null): string {
+  if (!value) return ''
+  return value.replace('T', ' ').slice(5, 16)
+}
+
+async function loadAnnouncement() {
+  const res = await getAnnouncements(100)
+  if (res.success && res.data && res.data.length > 0) {
+    announcements.value = res.data
+    latestAnnouncement.value = res.data[0]
+    hasUnreadAnnouncement.value = hasUnreadAnnouncements(res.data.map(item => item.id))
+  }
+}
+
+function loadHomeData() {
+  loadRecentPosts()
+  loadRecentActivities()
+  loadFeaturedProducts()
+  loadAnnouncement()
+}
+
+function goAnnouncementDetail(id: string) {
+  uni.navigateTo({ url: `/pages/announcement/detail?id=${id}` })
+}
+
+onLoad(loadHomeData)
+onShow(loadAnnouncement)
 </script>
 
 <style scoped>
 .home-page {
-  padding: var(--pc-page-padding);
+  padding: 20px;
+  padding: 20px;
+}
+
+.home-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 2px 18px;
+}
+
+.home-brand > view:first-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-brand__name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #0C4D48;
+  color: #0C4D48;
+}
+
+.home-brand__location {
+  font-size: 11px;
+  color: #71817D;
+  color: #71817D;
+}
+
+.home-brand__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #E2E9E6;
+  border: 1px solid #E2E9E6;
+}
+
+.home-brand__status text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #11796F;
+  color: #11796F;
+}
+
+.home-brand__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #11796F;
+  background: #11796F;
+  box-shadow: 0 0 0 4px rgba(17, 121, 111, 0.12);
+}
+
+.home-announcement {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 12px;
+  margin-top: 14px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(223, 242, 237, 0.72));
+  border: 1px solid rgba(17, 121, 111, 0.16);
+  border-radius: 20px;
+  box-shadow: 0 8px 22px rgba(25, 50, 46, 0.07);
+}
+
+.home-announcement:active {
+  transform: scale(0.99);
+  background: linear-gradient(135deg, #fff, rgba(223, 242, 237, 0.95));
+}
+
+.home-announcement__icon {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #e8f7f3, #ccebe3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.home-announcement__icon text {
+  font-size: 15px;
+  font-weight: 800;
+  color: #11796F;
+}
+
+.home-announcement__dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  background: #E97951;
+  background: #E97951;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.home-announcement__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.home-announcement__eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #11796F;
+  color: #11796F;
+  letter-spacing: 1px;
+}
+
+.home-announcement__title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #19322E;
+  color: #19322E;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-announcement__action {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(17, 121, 111, 0.12);
+  border-radius: 999px;
+}
+
+.home-announcement__action text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #11796F;
+  color: #11796F;
+}
+
+.home-announcement__arrow {
+  margin-left: 2px;
 }
 
 .home-hero__btn {
-  margin-top: 12px;
-  height: 40px;
-  background: var(--pc-user-accent);
-  border-radius: 20px;
+  margin-top: 16px;
+  height: 42px;
+  background: #fff;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,16 +488,33 @@ loadRecentActivities()
 }
 
 .home-hero__btn-text {
-  color: #fff;
-  font-size: var(--pc-font-body);
+  color: #0C4D48;
+  color: #0C4D48;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .home-section-title {
-  font-size: var(--pc-font-card-title);
-  font-weight: 700;
-  color: var(--pc-user-ink);
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: #19322E;
+  color: #19322E;
   margin-bottom: 12px;
+}
+
+.home-section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.home-section-kicker {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  color: #E97951;
+  color: #E97951;
 }
 
 .home-section-header {
@@ -205,43 +529,97 @@ loadRecentActivities()
 }
 
 .home-section-more {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-primary);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #DFF2ED;
+  background: #DFF2ED;
+  font-size: 10px;
+  font-weight: 700;
+  color: #11796F;
+  color: #11796F;
 }
 
 .home-shortcuts {
   display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  align-items: stretch;
+  padding: 12px 8px;
+  border: 1px solid rgba(226, 233, 230, 0.8);
+  border-radius: 20px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  box-shadow: 0 8px 24px rgba(25, 50, 46, 0.08);
+  box-shadow: 0 8px 24px rgba(25, 50, 46, 0.08);
+}
+
+.home-shortcut-card {
+  flex: 1;
+  min-width: 0;
 }
 
 .home-shortcut-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 96px;
+  padding: 4px 2px;
 }
 
 .home-shortcut-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 2px;
+  border-radius: 17px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--pc-font-caption);
-  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
 }
 
-.home-shortcut-icon--grooming { background: var(--pc-user-soft); color: var(--pc-user-primary); }
-.home-shortcut-icon--beauty { background: var(--pc-user-accent-soft); color: var(--pc-user-accent); }
-.home-shortcut-icon--home { background: #E8F0FE; color: #4285F4; }
-.home-shortcut-icon--care { background: #FCE4EC; color: #E91E63; }
+.home-shortcut-icon text {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.home-shortcut-item:active .home-shortcut-icon {
+  transform: translateY(2px) scale(0.96);
+}
+
+.home-products-scroll {
+  width: calc(100% + 20px);
+}
+
+.home-products {
+  display: flex;
+  gap: 12px;
+  padding: 2px 20px 12px 0;
+}
+
+.home-product-card {
+  width: 190px;
+  flex-shrink: 0;
+}
 
 .home-shortcut-label {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-ink);
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  color: #19322E;
+  color: #19322E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-shortcut-hint {
+  max-width: 100%;
+  font-size: 9px;
+  color: #71817D;
+  color: #71817D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home-posts {
@@ -252,15 +630,19 @@ loadRecentActivities()
 
 .home-post-item {
   background: #fff;
-  border-radius: var(--pc-radius-card);
-  padding: 14px 16px;
-  box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
+  border: 1px solid rgba(226, 233, 230, 0.75);
+  border-radius: 20px;
+  border-radius: 20px;
+  padding: 15px 16px;
+  box-shadow: 0 8px 24px rgba(25, 50, 46, 0.08);
+  box-shadow: 0 8px 24px rgba(25, 50, 46, 0.08);
 }
 
 .home-post-title {
-  font-size: var(--pc-font-body);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--pc-user-ink);
+  color: #19322E;
+  color: #19322E;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -274,7 +656,52 @@ loadRecentActivities()
 }
 
 .home-post-stat {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-muted);
+  font-size: 11px;
+  color: #71817D;
+  color: #71817D;
+}
+
+.home-activity-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid rgba(226, 233, 230, 0.75);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(25, 50, 46, 0.08);
+}
+
+.home-activity-cover {
+  width: 92px;
+  height: 74px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #DFF2ED;
+}
+
+.home-activity-cover--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-activity-cover--placeholder text {
+  font-size: 18px;
+  font-weight: 800;
+  color: #11796F;
+  opacity: 0.36;
+}
+
+.home-activity-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-activity-time {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #71817D;
 }
 </style>

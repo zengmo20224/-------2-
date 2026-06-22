@@ -23,7 +23,7 @@ withDefaults(defineProps<{
   justify-content: center;
   padding: 24px 16px;
   background: #fff;
-  border-radius: var(--pc-radius-card);
+  border-radius: 16px;
   gap: 8px;
 }
 
@@ -32,13 +32,13 @@ withDefaults(defineProps<{
 }
 
 .pc-blocked-feature__title {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 600;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .pc-blocked-feature__reason {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-muted);
+  font-size: 11px;
+  color: #71817D;
 }
 </style>

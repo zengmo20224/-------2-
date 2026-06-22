@@ -20,8 +20,8 @@ defineProps<{
 }
 
 .pc-page-header__title {
-  font-size: var(--pc-font-title);
+  font-size: 24px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 </style>

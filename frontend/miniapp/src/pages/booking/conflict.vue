@@ -19,7 +19,7 @@ function goBack() {
 
 <style scoped>
 .booking-conflict {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .booking-conflict__content {
@@ -35,14 +35,14 @@ function goBack() {
 }
 
 .booking-conflict__title {
-  font-size: var(--pc-font-title);
+  font-size: 24px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .booking-conflict__hint {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
   margin-bottom: 24px;
 }
 </style>

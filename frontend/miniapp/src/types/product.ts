@@ -15,6 +15,14 @@ export interface ProductItem {
   sort: number
 }
 
+/** Product category as returned by category list API */
+export interface ProductCategory {
+  id: string
+  name: string
+  iconUrl: string | null
+  sort: number
+}
+
 /** Product detail as returned by detail API */
 export interface ProductDetail {
   id: string
@@ -28,6 +36,7 @@ export interface ProductDetail {
   description: string | null
   pickupOnly: number
   imageUrls: string[]
+  detailImageUrls: string[]
 }
 
 /** Cart item as returned by cart API */
@@ -48,6 +57,8 @@ export interface OrderItem {
   id: string
   orderNo: string
   totalAmount: number
+  deliveryMethod: string
+  addressSnapshot: string | null
   paymentMethod: string | null
   paymentStatus: string
   pickupStatus: string
@@ -63,6 +74,8 @@ export interface OrderDetail {
   id: string
   orderNo: string
   totalAmount: number
+  deliveryMethod: string
+  addressSnapshot: string | null
   paymentMethod: string | null
   paymentStatus: string
   pickupStatus: string

@@ -67,8 +67,15 @@
         <el-form-item label="服务名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入服务名称" />
         </el-form-item>
-        <el-form-item label="分类 ID" prop="categoryId">
-          <el-input-number v-model="form.categoryId" :min="1" />
+        <el-form-item label="服务分类" prop="categoryId">
+          <el-select v-model="form.categoryId" placeholder="请选择服务分类" style="width: 100%">
+            <el-option
+              v-for="category in serviceCategories"
+              :key="category.id"
+              :label="category.name"
+              :value="category.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="服务模式" prop="serviceMode">
           <el-select v-model="form.serviceMode" style="width: 100%">
@@ -106,6 +113,58 @@
         <el-form-item label="排序" prop="sort">
           <el-input-number v-model="form.sort" :min="0" />
         </el-form-item>
+        <el-form-item label="封面图" prop="coverUrl">
+          <div class="pc-service__cover-row">
+            <el-input v-model="form.coverUrl" placeholder="图片URL，如 /uploads/xxx.png" />
+            <el-upload
+              v-model:file-list="coverUploadFileList"
+              action=""
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              :show-file-list="false"
+              :http-request="uploadCoverImage"
+              :before-upload="beforeUploadCoverImage"
+            >
+              <el-button type="primary">导入封面图</el-button>
+            </el-upload>
+          </div>
+        </el-form-item>
+        <el-form-item label="详情图片" prop="imageUrls">
+          <div class="pc-service__image-list">
+            <el-upload
+              v-model:file-list="uploadFileList"
+              action=""
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              multiple
+              :show-file-list="false"
+              :http-request="uploadDetailImage"
+              :before-upload="beforeUploadImage"
+              :limit="CATALOG_DETAIL_IMAGE_LIMIT"
+              :on-exceed="handleImageExceed"
+              :disabled="catalogImageCount >= CATALOG_DETAIL_IMAGE_LIMIT"
+            >
+              <el-button type="primary" :disabled="catalogImageCount >= CATALOG_DETAIL_IMAGE_LIMIT">
+                导入照片
+              </el-button>
+              <template #tip>
+                <div class="pc-service__upload-tip">
+                  最多导入 {{ CATALOG_DETAIL_IMAGE_LIMIT }} 张，支持 JPG/PNG/GIF/WebP，单张不超过 10MB。
+                </div>
+              </template>
+            </el-upload>
+            <div v-for="(_, index) in form.imageUrls" :key="index" class="pc-service__image-row">
+              <el-input v-model="form.imageUrls[index]" placeholder="详情图片URL，如 /uploads/detail.png" />
+              <el-button @click="removeImageUrl(index)" :disabled="form.imageUrls.length <= 1">删除</el-button>
+            </div>
+            <el-button
+              type="primary"
+              text
+              @click="addImageUrl"
+              :disabled="catalogImageCount >= CATALOG_DETAIL_IMAGE_LIMIT"
+            >
+              添加图片URL
+            </el-button>
+          </div>
+        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
@@ -129,13 +188,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { getServiceItems, createServiceItem, updateServiceItem, disableServiceItem } from '../../api/service'
-import type { ServiceItem, ServiceItemCreateParams } from '../../api/service'
-import type { FormInstance, FormRules } from 'element-plus'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { getServiceItems, getServiceCategories, createServiceItem, updateServiceItem, disableServiceItem } from '../../api/service'
+import type { ServiceItem, ServiceItemCreateParams, ServiceCategory } from '../../api/service'
+import { uploadCatalogImage } from '../../api/upload'
+import type { FormInstance, FormRules, UploadRawFile, UploadRequestOptions, UploadUserFile } from 'element-plus'
 import { useUserStore } from '../../store/user'
 import { showSuccess, showError } from '../../utils/feedback'
-import { SERVICE_MODE, SERVICE_STATUS, PET_TYPE, PET_SIZE, isServiceOnSale } from '../../types/status'
+import {
+  CATALOG_DETAIL_IMAGE_LIMIT,
+  MAX_UPLOAD_SIZE,
+  SERVICE_MODE,
+  SERVICE_STATUS,
+  PET_TYPE,
+  PET_SIZE,
+  isServiceOnSale,
+} from '../../types/status'
 import type { ServiceMode, ServiceStatus, PetType } from '../../types/status'
 import FilterBar from '../../components/FilterBar.vue'
 import DataTableShell from '../../components/DataTableShell.vue'
@@ -148,6 +216,9 @@ const tableData = ref<ServiceItem[]>([])
 const total = ref(0)
 const queryParams = reactive({ page: 1, size: 10, status: '' })
 
+// ─── Service Categories (active only, from backend) ───
+const serviceCategories = ref<ServiceCategory[]>([])
+
 // ─── Dialog ───
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
@@ -155,10 +226,17 @@ const submitLoading = ref(false)
 const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 const currentId = ref<number | undefined>(undefined)
+const coverUploadFileList = ref<UploadUserFile[]>([])
+const uploadFileList = ref<UploadUserFile[]>([])
 
-const defaultForm: ServiceItemCreateParams = {
+type ServiceItemForm = Omit<ServiceItemCreateParams, 'categoryId'> & {
+  categoryId: number | undefined
+  imageUrls: string[]
+}
+
+const defaultForm: ServiceItemForm = {
   name: '',
-  categoryId: 1,
+  categoryId: undefined,
   serviceMode: 'STORE',
   price: 0,
   durationMinutes: 30,
@@ -166,18 +244,21 @@ const defaultForm: ServiceItemCreateParams = {
   needPet: true,
   petType: 'ALL',
   petSize: 'ALL',
+  coverUrl: '',
+  imageUrls: [''],
   description: '',
   sort: 0,
 }
 
-const form = ref<ServiceItemCreateParams>({ ...defaultForm })
+const form = ref<ServiceItemForm>({ ...defaultForm })
+const catalogImageCount = computed(() => normalizeImageUrls(form.value.imageUrls).length)
 
 const rules: FormRules = {
   name: [{ required: true, message: '请输入服务名称', trigger: 'blur' }],
   price: [{ required: true, message: '请输入价格', trigger: 'blur' }],
   durationMinutes: [{ required: true, message: '请输入时长', trigger: 'blur' }],
   serviceMode: [{ required: true, message: '请选择服务模式', trigger: 'change' }],
-  categoryId: [{ required: true, message: '请输入分类ID', trigger: 'blur' }],
+  categoryId: [{ required: true, message: '请选择服务分类', trigger: 'change' }],
   needAddress: [{ required: true, message: '请选择', trigger: 'change' }],
   needPet: [{ required: true, message: '请选择', trigger: 'change' }],
 }
@@ -216,6 +297,13 @@ const fetchData = async () => {
   }
 }
 
+const fetchServiceCategories = async () => {
+  try {
+    const res = await getServiceCategories()
+    serviceCategories.value = res.data ?? []
+  } catch { /* handled by interceptor */ }
+}
+
 const handlePageChange = (page: number, size: number) => {
   queryParams.page = page
   queryParams.size = size
@@ -232,7 +320,11 @@ const handleReset = () => {
 const openCreateDialog = () => {
   isEdit.value = false
   dialogTitle.value = '新增服务项目'
-  form.value = { ...defaultForm }
+  form.value = createDefaultForm()
+  // Default to the first active category so the form is submittable as-is.
+  if (serviceCategories.value.length > 0) {
+    form.value.categoryId = serviceCategories.value[0].id
+  }
   dialogVisible.value = true
 }
 
@@ -252,22 +344,151 @@ const openEditDialog = (row: ServiceItem) => {
     needPet: row.needPet,
     description: row.description ?? undefined,
     coverUrl: row.coverUrl ?? undefined,
+    imageUrls: row.imageUrls?.length ? [...row.imageUrls] : [''],
     sort: row.sort ?? undefined,
   }
   dialogVisible.value = true
 }
 
+const createDefaultForm = (): ServiceItemForm => ({
+  ...defaultForm,
+  imageUrls: [...defaultForm.imageUrls],
+})
+
+const normalizeImageUrls = (urls: string[]) => {
+  return urls.map((url) => url.trim()).filter(Boolean)
+}
+
+const addImageUrl = () => {
+  if (catalogImageCount.value >= CATALOG_DETAIL_IMAGE_LIMIT) {
+    showError(`详情图片最多导入 ${CATALOG_DETAIL_IMAGE_LIMIT} 张`)
+    return
+  }
+  form.value = {
+    ...form.value,
+    imageUrls: [...form.value.imageUrls, ''],
+  }
+}
+
+const removeImageUrl = (index: number) => {
+  const next = [...form.value.imageUrls]
+  next.splice(index, 1)
+  form.value = {
+    ...form.value,
+    imageUrls: next.length > 0 ? next : [''],
+  }
+}
+
+const appendImageUrl = (url: string) => {
+  const current = normalizeImageUrls(form.value.imageUrls)
+  if (current.length >= CATALOG_DETAIL_IMAGE_LIMIT) {
+    showError(`详情图片最多导入 ${CATALOG_DETAIL_IMAGE_LIMIT} 张`)
+    return false
+  }
+  const next = current.includes(url) ? current : [...current, url]
+  form.value = {
+    ...form.value,
+    imageUrls: next.length > 0 ? next : [''],
+  }
+  return true
+}
+
+const validateImageFile = (file: UploadRawFile) => {
+  const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+  if (!allowedTypes.has(file.type)) {
+    showError('只支持 JPG/PNG/GIF/WebP 格式')
+    return false
+  }
+  if (file.size > MAX_UPLOAD_SIZE) {
+    showError('单张图片不能超过 10MB')
+    return false
+  }
+  return true
+}
+
+const beforeUploadCoverImage = (file: UploadRawFile) => {
+  return validateImageFile(file)
+}
+
+const beforeUploadImage = (file: UploadRawFile) => {
+  if (!validateImageFile(file)) {
+    return false
+  }
+  if (catalogImageCount.value >= CATALOG_DETAIL_IMAGE_LIMIT) {
+    showError(`详情图片最多导入 ${CATALOG_DETAIL_IMAGE_LIMIT} 张`)
+    return false
+  }
+  return true
+}
+
+const uploadCoverImage = async (options: UploadRequestOptions) => {
+  try {
+    const res = await uploadCatalogImage(options.file)
+    const url = res.data?.url
+    if (!url) throw new Error('上传失败')
+    form.value = {
+      ...form.value,
+      coverUrl: url,
+    }
+    options.onSuccess?.(res)
+    showSuccess('封面图已导入')
+  } catch (error) {
+    const normalizedError = error instanceof Error ? error : new Error('上传失败')
+    options.onError?.(Object.assign(normalizedError, { status: 0, method: 'POST', url: '/v1/upload' }))
+    showError(normalizedError.message)
+  } finally {
+    coverUploadFileList.value = []
+  }
+}
+
+const uploadDetailImage = async (options: UploadRequestOptions) => {
+  try {
+    const res = await uploadCatalogImage(options.file)
+    const url = res.data?.url
+    if (!url) throw new Error('上传失败')
+    if (appendImageUrl(url)) {
+      options.onSuccess?.(res)
+      showSuccess('照片已导入')
+    }
+  } catch (error) {
+    const normalizedError = error instanceof Error ? error : new Error('上传失败')
+    options.onError?.(Object.assign(normalizedError, { status: 0, method: 'POST', url: '/v1/upload' }))
+    showError(normalizedError.message)
+  } finally {
+    uploadFileList.value = []
+  }
+}
+
+const handleImageExceed = () => {
+  showError(`详情图片最多导入 ${CATALOG_DETAIL_IMAGE_LIMIT} 张`)
+}
+
+const validateImageLimit = () => {
+  if (normalizeImageUrls(form.value.imageUrls).length > CATALOG_DETAIL_IMAGE_LIMIT) {
+    showError(`详情图片最多导入 ${CATALOG_DETAIL_IMAGE_LIMIT} 张`)
+    return false
+  }
+  return true
+}
+
+const buildPayload = (): ServiceItemCreateParams => ({
+  ...form.value,
+  imageUrls: normalizeImageUrls(form.value.imageUrls),
+})
+
 const submitForm = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
+    if (!validateImageLimit()) return
     submitLoading.value = true
     try {
+      const payload = buildPayload()
       if (isEdit.value && currentId.value) {
-        await updateServiceItem(currentId.value, form.value)
+        await updateServiceItem(currentId.value, payload)
         showSuccess('服务项目已更新')
       } else {
-        await createServiceItem(form.value)
+        await createServiceItem(payload)
         showSuccess('服务项目已创建')
       }
       dialogVisible.value = false
@@ -280,9 +501,16 @@ const submitForm = async () => {
   })
 }
 
-const resetDialog = () => { formRef.value?.resetFields() }
+const resetDialog = () => {
+  formRef.value?.resetFields()
+  coverUploadFileList.value = []
+  uploadFileList.value = []
+}
 
-onMounted(() => { fetchData() })
+onMounted(() => {
+  fetchServiceCategories()
+  fetchData()
+})
 </script>
 
 <style scoped>
@@ -302,5 +530,33 @@ onMounted(() => { fetchData() })
   font-size: 20px;
   font-weight: 600;
   color: var(--pc-ink);
+}
+
+.pc-service__image-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.pc-service__cover-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.pc-service__cover-row .el-input {
+  flex: 1;
+}
+
+.pc-service__image-row {
+  display: flex;
+  gap: 8px;
+}
+
+.pc-service__upload-tip {
+  color: var(--pc-text-secondary, #909399);
+  font-size: 12px;
+  line-height: 1.5;
 }
 </style>

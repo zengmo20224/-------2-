@@ -60,7 +60,7 @@ function goForgotPassword() {
 
 <style scoped>
 .auth-page {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .auth-form {
@@ -68,6 +68,11 @@ function goForgotPassword() {
   flex-direction: column;
   gap: 16px;
   margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #DCEBE7;
+  border-radius: 24px;
+  background: #FFFFFF;
+  box-shadow: 0 12px 32px rgba(25, 50, 46, 0.09);
 }
 
 .auth-links {
@@ -76,17 +81,20 @@ function goForgotPassword() {
 }
 
 .auth-link {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-primary);
+  font-size: 14px;
+  color: #11796F;
+  color: #11796F;
+  font-weight: 700;
 }
 
 .pc-input {
   height: 44px;
-  border: 1px solid var(--pc-user-line);
+  border: 1px solid #E2E9E6;
+  border: 1px solid #E2E9E6;
   border-radius: 12px;
   padding: 0 14px;
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   background: #fff;
 }
 </style>

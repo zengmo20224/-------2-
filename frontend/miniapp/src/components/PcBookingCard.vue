@@ -50,7 +50,7 @@ const dateText = computed(() => formatDate(props.bookingDate))
 <style scoped>
 .pc-booking-card {
   background: #fff;
-  border-radius: var(--pc-radius-card);
+  border-radius: 16px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
@@ -63,9 +63,9 @@ const dateText = computed(() => formatDate(props.bookingDate))
 }
 
 .pc-booking-card__service {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 600;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .pc-booking-card__detail {
@@ -76,13 +76,13 @@ const dateText = computed(() => formatDate(props.bookingDate))
 
 .pc-booking-card__date,
 .pc-booking-card__time {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
 }
 
 .pc-booking-card__staff {
   margin-top: 4px;
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-muted);
+  font-size: 11px;
+  color: #71817D;
 }
 </style>

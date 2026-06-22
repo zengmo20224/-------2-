@@ -34,7 +34,7 @@ const tagStyle = computed(() => {
   align-items: center;
   padding: 2px 8px;
   border-radius: 8px;
-  font-size: var(--pc-font-caption);
+  font-size: 11px;
   font-weight: 500;
 }
 </style>

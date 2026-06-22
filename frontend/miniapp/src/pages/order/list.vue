@@ -81,18 +81,18 @@ onMounted(() => {
 
 <style scoped>
 .order-list {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .order-list__items {
   display: flex;
   flex-direction: column;
-  gap: var(--pc-card-gap);
+  gap: 14px;
 }
 
 .order-card {
   background: #fff;
-  border-radius: var(--pc-radius-card);
+  border-radius: 16px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
@@ -105,9 +105,9 @@ onMounted(() => {
 }
 
 .order-card__no {
-  font-size: var(--pc-font-body);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .order-card__row {
@@ -117,13 +117,13 @@ onMounted(() => {
 }
 
 .order-card__amount {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--pc-user-accent);
+  color: #F5A623;
 }
 
 .order-card__time {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-muted);
+  font-size: 11px;
+  color: #71817D;
 }
 </style>

@@ -103,6 +103,7 @@ describe('H12: API type completeness', () => {
     'api/product.ts',
     'api/product-order.ts',
     'api/community.ts',
+    'api/activity.ts',
     'api/store.ts',
     'api/operation-log.ts',
   ]

@@ -29,6 +29,7 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column prop="serviceItemName" label="服务项目" min-width="120" show-overflow-tooltip />
       <el-table-column prop="bookingDate" label="日期" width="110" />
       <el-table-column label="时间" width="120">
         <template #default="{ row }">{{ row.startTime }} - {{ row.endTime }}</template>
@@ -74,6 +75,7 @@
         <el-descriptions-item label="预约编号">{{ detailData.bookingNo }}</el-descriptions-item>
         <el-descriptions-item label="状态">{{ BOOKING_STATUS[detailData.status as BookingStatusType]?.label || detailData.status }}</el-descriptions-item>
         <el-descriptions-item label="服务模式">{{ detailData.serviceMode }}</el-descriptions-item>
+        <el-descriptions-item label="服务项目">{{ detailData.serviceItemName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="日期">{{ detailData.bookingDate }}</el-descriptions-item>
         <el-descriptions-item label="时间段">{{ detailData.startTime }} - {{ detailData.endTime }}</el-descriptions-item>
         <el-descriptions-item label="价格">{{ Number(detailData.price).toFixed(2) }}</el-descriptions-item>

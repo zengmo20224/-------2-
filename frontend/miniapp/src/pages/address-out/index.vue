@@ -19,7 +19,7 @@ function goServices() {
 
 <style scoped>
 .address-out {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .address-out__content {
@@ -35,14 +35,14 @@ function goServices() {
 }
 
 .address-out__title {
-  font-size: var(--pc-font-title);
+  font-size: 24px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .address-out__hint {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
   text-align: center;
   margin-bottom: 24px;
 }

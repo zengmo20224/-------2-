@@ -6,7 +6,7 @@ onLaunch(() => {
 })
 </script>
 
-<style>
+<style lang="scss">
 @import './styles/reset.css';
 @import './styles/tokens.css';
 </style>

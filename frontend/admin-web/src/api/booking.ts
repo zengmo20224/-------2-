@@ -10,6 +10,7 @@ export interface Booking {
   petId: number | null
   storeId: number
   serviceItemId: number
+  serviceItemName: string
   staffId: number | null
   serviceMode: string
   bookingDate: string

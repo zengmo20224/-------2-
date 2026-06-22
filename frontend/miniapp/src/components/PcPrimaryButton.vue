@@ -1,8 +1,8 @@
 <template>
   <view
     class="pc-primary-button"
-    :class="{ 'pc-primary-button--disabled': disabled }"
-    @tap="!disabled && $emit('tap')"
+    :class="{ 'pc-primary-button--disabled': disabled || loading }"
+    @tap="!(disabled || loading) && $emit('tap')"
   >
     <text class="pc-primary-button__text">
       <slot>{{ text }}</slot>
@@ -14,6 +14,7 @@
 defineProps<{
   text?: string
   disabled?: boolean
+  loading?: boolean
 }>()
 
 defineEmits<{
@@ -23,12 +24,19 @@ defineEmits<{
 
 <style scoped>
 .pc-primary-button {
-  height: var(--pc-btn-height);
-  background: var(--pc-user-primary);
-  border-radius: var(--pc-radius-card);
+  height: 48px;
+  min-height: 48px;
+  background: #11796F;
+  background: #11796F;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 10px 24px rgba(17, 121, 111, 0.24);
+}
+
+.pc-primary-button:active {
+  transform: scale(0.98);
 }
 
 .pc-primary-button--disabled {
@@ -37,7 +45,7 @@ defineEmits<{
 
 .pc-primary-button__text {
   color: #fff;
-  font-size: var(--pc-font-card-title);
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
 }
 </style>

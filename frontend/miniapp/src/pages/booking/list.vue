@@ -17,7 +17,7 @@
         <PcBookingCard
           v-for="item in bookings"
           :key="item.id"
-          :service-name="`预约 #${item.bookingNo}`"
+          :service-name="item.serviceItemName || `预约 #${item.bookingNo}`"
           :status="item.status"
           :status-label="statusLabels[item.status] || item.status"
           :booking-date="item.bookingDate"
@@ -45,6 +45,12 @@ const statusLabels: Record<string, string> = {
   COMPLETED: '已完成',
   CANCELLED: '已取消',
   REJECTED: '已拒绝',
+}
+
+const serviceModeLabels: Record<string, string> = {
+  STORE: '到店',
+  HOME: '上门',
+  BOTH: '到店/上门',
 }
 
 const userStore = useUserStore()
@@ -80,12 +86,12 @@ onMounted(() => {
 
 <style scoped>
 .booking-list {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .booking-list__items {
   display: flex;
   flex-direction: column;
-  gap: var(--pc-card-gap);
+  gap: 14px;
 }
 </style>

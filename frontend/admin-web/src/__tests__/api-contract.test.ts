@@ -247,6 +247,7 @@ describe('ServiceItem response DTO shape', () => {
       needPet: false,
       description: null,
       coverUrl: null,
+      imageUrls: [],
       status: 'ACTIVE',
       sort: null,
     }
@@ -254,12 +255,13 @@ describe('ServiceItem response DTO shape', () => {
     expect(item.petSize).toBeNull()
     expect(item.description).toBeNull()
     expect(item.coverUrl).toBeNull()
+    expect(item.imageUrls).toEqual([])
     expect(item.sort).toBeNull()
   })
 })
 
 describe('Product response DTO shape', () => {
-  it('Product allows nullable coverUrl, description, sort', () => {
+  it('Product allows nullable coverUrl, description, sort and detail imageUrls', () => {
     const product: import('../api/product').Product = {
       id: 1,
       categoryId: 1,
@@ -272,10 +274,55 @@ describe('Product response DTO shape', () => {
       pickupOnly: true,
       status: 'ON_SALE',
       sort: null,
+      imageUrls: [],
+      detailImageUrls: [],
     }
     expect(product.coverUrl).toBeNull()
     expect(product.description).toBeNull()
     expect(product.sort).toBeNull()
+    expect(product.imageUrls).toEqual([])
+    expect(product.detailImageUrls).toEqual([])
+  })
+})
+
+describe('Product carousel admin API contract', () => {
+  it('listProductCarouselImages calls GET /v1/admin/product-carousel-images', async () => {
+    const { listProductCarouselImages } = await import('../api/product-carousel')
+    const request = (await import('../utils/request')).default
+
+    await listProductCarouselImages()
+    expect(request.get).toHaveBeenCalledWith('/v1/admin/product-carousel-images')
+  })
+
+  it('replaceProductCarouselImages calls PUT /v1/admin/product-carousel-images', async () => {
+    const { replaceProductCarouselImages } = await import('../api/product-carousel')
+    const request = (await import('../utils/request')).default
+
+    const payload = {
+      images: [{
+        title: '新品推荐',
+        imageUrl: 'https://example.com/banner.jpg',
+        linkType: 'PRODUCT',
+        linkTargetId: 1,
+        status: 'ACTIVE',
+        sort: 1,
+      }],
+    }
+    await replaceProductCarouselImages(payload)
+    expect(request.put).toHaveBeenCalledWith('/v1/admin/product-carousel-images', payload)
+  })
+
+  it('ProductCarouselImage allows nullable title, linkType and linkTargetId', () => {
+    const image: import('../api/product-carousel').ProductCarouselImage = {
+      id: 1,
+      title: null,
+      imageUrl: 'https://example.com/banner.jpg',
+      linkType: null,
+      linkTargetId: null,
+      status: 'ACTIVE',
+      sort: 1,
+    }
+    expect(image.linkTargetId).toBeNull()
   })
 })
 

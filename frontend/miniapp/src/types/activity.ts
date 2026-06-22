@@ -9,8 +9,28 @@ export interface ActivityItem {
   title: string
   activityType: string
   description: string | null
+  coverUrl: string | null
   startTime: string | null
   endTime: string | null
+  products: ActivityProductCard[]
+  services: ActivityServiceCard[]
   productNames: string[]
   serviceNames: string[]
+}
+
+export interface ActivityProductCard {
+  id: string
+  name: string
+  coverUrl: string | null
+  price: number
+  salesCount: number | null
+}
+
+export interface ActivityServiceCard {
+  id: string
+  name: string
+  coverUrl: string | null
+  price: number
+  durationMinutes: number
+  serviceMode: string
 }

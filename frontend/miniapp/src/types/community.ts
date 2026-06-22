@@ -3,6 +3,14 @@
  * Backend source: com.petcare.community.dto.PublicPostSummaryResponse / PublicPostDetailResponse / PublicCommentResponse
  */
 
+/** Topic (tag) as returned by topic list API */
+export interface TopicItem {
+  id: string
+  name: string
+  description: string | null
+  sort: number
+}
+
 /** Post summary as returned by public list API */
 export interface PostItem {
   id: string
@@ -15,6 +23,10 @@ export interface PostItem {
   favoriteCount: number
   publishTime: string
   createTime: string
+  imageUrls: string[]
+  tags: string[]
+  authorName: string | null
+  authorAvatar: string | null
 }
 
 /** Post detail as returned by public detail API */
@@ -30,6 +42,9 @@ export interface PostDetail {
   publishTime: string
   createTime: string
   imageUrls: string[]
+  tags: string[]
+  authorName: string | null
+  authorAvatar: string | null
 }
 
 /** Public comment as returned by comment list API */
@@ -39,4 +54,23 @@ export interface CommentItem {
   content: string
   likeCount: number
   createTime: string
+}
+
+/** Comment tree node (top-level comment with nested replies) */
+export interface CommentTreeNode {
+  id: string
+  parentId: string | null
+  content: string
+  likeCount: number
+  createTime: string
+  authorName: string | null
+  authorAvatar: string | null
+  replies: CommentTreeNode[]
+}
+
+/** Tag as returned by tag search API */
+export interface TagItem {
+  id: string
+  name: string
+  usageCount: number
 }

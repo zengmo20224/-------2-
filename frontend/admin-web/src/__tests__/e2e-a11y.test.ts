@@ -47,6 +47,7 @@ describe('H11: Router contract', () => {
     'Login', 'Dashboard', 'StoreInfo', 'StoreConfig', 'ServiceItems',
     'Staff', 'Bookings', 'Products', 'ProductOrders',
     'CommunityPosts', 'CommunityReports', 'SensitiveWords', 'OperationLogs',
+    'Activities',
     'Forbidden', 'NotFound',
   ]
 
@@ -91,6 +92,7 @@ describe('H11: Page existence & structure', () => {
     'views/product-order/index.vue',
     'views/community/posts.vue',
     'views/community/reports.vue',
+    'views/activity/index.vue',
     'views/operation-logs/index.vue',
     'views/error/403.vue',
     'views/error/404.vue',
@@ -134,6 +136,7 @@ describe('H11: Form accessibility — label-width', () => {
     'views/store/config.vue',
     'views/service/index.vue',
     'views/product/index.vue',
+    'views/activity/index.vue',
     'views/staff/index.vue',
     'views/booking/index.vue',
   ]
@@ -179,6 +182,7 @@ describe('H11: PetCare design tokens in pages', () => {
     'views/product-order/index.vue',
     'views/community/posts.vue',
     'views/community/reports.vue',
+    'views/activity/index.vue',
     'views/store/info.vue',
     'views/store/config.vue',
     'views/operation-logs/index.vue',
@@ -207,6 +211,7 @@ describe('H11: BEM naming convention', () => {
     'views/product-order/index.vue': 'pc-product-order',
     'views/community/posts.vue': 'pc-community-posts',
     'views/community/reports.vue': 'pc-community-reports',
+    'views/activity/index.vue': 'pc-activity',
     'views/store/info.vue': 'pc-store-info',
     'views/store/config.vue': 'pc-store-config',
     'views/operation-logs/index.vue': 'pc-operation-logs',
@@ -232,6 +237,7 @@ describe('H11: Shared component integration', () => {
     'views/product-order/index.vue',
     'views/community/posts.vue',
     'views/community/reports.vue',
+    'views/activity/index.vue',
     'views/operation-logs/index.vue',
   ]
 

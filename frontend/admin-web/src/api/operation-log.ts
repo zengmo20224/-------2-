@@ -4,8 +4,8 @@ import type { PageResponse, PageParams } from '../types/api'
 // ─── Types ───
 
 export interface OperationLog {
-  id: number
-  adminId: number
+  id: string | number
+  adminId: string | number
   module: string
   operation: string
   requestMethod: string

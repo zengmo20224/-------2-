@@ -14,15 +14,22 @@
           class="activity-card"
           @tap="goDetail(item.id)"
         >
-          <text class="activity-card__title">{{ item.title }}</text>
-          <text v-if="item.description" class="activity-card__desc">{{ item.description }}</text>
-          <view class="activity-card__tags">
-            <text v-if="item.productNames.length > 0" class="activity-card__tag">
-              {{ item.productNames.length }} 件商品
-            </text>
-            <text v-if="item.serviceNames.length > 0" class="activity-card__tag">
-              {{ item.serviceNames.length }} 项服务
-            </text>
+          <image v-if="item.coverUrl" class="activity-card__cover" :src="fullImageUrl(item.coverUrl)" mode="aspectFill" />
+          <view v-else class="activity-card__cover activity-card__cover--placeholder">
+            <text>活动</text>
+          </view>
+          <view class="activity-card__body">
+            <text class="activity-card__title">{{ item.title }}</text>
+            <text class="activity-card__time">{{ formatActivityTime(item) }}</text>
+            <text v-if="item.description" class="activity-card__desc">{{ item.description }}</text>
+            <view class="activity-card__tags">
+              <text v-if="productCount(item) > 0" class="activity-card__tag">
+                {{ productCount(item) }} 件商品
+              </text>
+              <text v-if="serviceCount(item) > 0" class="activity-card__tag">
+                {{ serviceCount(item) }} 项服务
+              </text>
+            </view>
           </view>
         </view>
       </view>
@@ -39,6 +46,7 @@ import type { ActivityItem } from '@/types/activity'
 
 const listStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 const activities = ref<ActivityItem[]>([])
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 async function loadActivities() {
   listStatus.value = 'loading'
@@ -58,40 +66,110 @@ function goDetail(id: string) {
   uni.navigateTo({ url: `/pages/activity/detail?id=${id}` })
 }
 
+function productCount(item: ActivityItem): number {
+  return item.products?.length ?? item.productNames?.length ?? 0
+}
+
+function serviceCount(item: ActivityItem): number {
+  return item.services?.length ?? item.serviceNames?.length ?? 0
+}
+
+function fullImageUrl(url: string | null): string {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return API_BASE + url
+}
+
+function formatActivityTime(item: ActivityItem): string {
+  const start = formatShortDate(item.startTime)
+  const end = formatShortDate(item.endTime)
+  if (!start && !end) return '长期有效'
+  if (!start) return `截至 ${end}`
+  if (!end) return `${start} 起`
+  return `${start} - ${end}`
+}
+
+function formatShortDate(value: string | null): string {
+  if (!value) return ''
+  return value.replace('T', ' ').slice(5, 16)
+}
+
 loadActivities()
 </script>
 
 <style scoped>
 .activity-page {
-  padding: var(--pc-page-padding);
+  padding: 20px;
+  padding: 20px;
 }
 
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: var(--pc-card-gap);
+  gap: 14px;
 }
 
 .activity-card {
+  display: flex;
+  gap: 12px;
   background: #fff;
-  border-radius: var(--pc-radius-card);
-  padding: 16px;
+  border: 1px solid #E2E9E6;
+  border-radius: 16px;
+  border-radius: 16px;
+  padding: 12px;
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
 
+.activity-card__cover {
+  width: 108px;
+  height: 88px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #DFF2ED;
+}
+
+.activity-card__cover--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-card__cover--placeholder text {
+  font-size: 20px;
+  font-weight: 800;
+  color: #11796F;
+  opacity: 0.34;
+}
+
+.activity-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
 .activity-card__title {
-  font-size: var(--pc-font-card-title);
+  display: block;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
+  color: #19322E;
+  margin-bottom: 6px;
+}
+
+.activity-card__time {
+  display: block;
+  font-size: 11px;
+  color: #11796F;
   margin-bottom: 6px;
 }
 
 .activity-card__desc {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  display: -webkit-box;
+  font-size: 14px;
+  color: #71817D;
+  color: #71817D;
   line-height: 1.6;
   margin-bottom: 8px;
-  display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -103,9 +181,11 @@ loadActivities()
 }
 
 .activity-card__tag {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-primary);
-  background: var(--pc-user-soft);
+  font-size: 11px;
+  color: #11796F;
+  color: #11796F;
+  background: #DFF2ED;
+  background: #DFF2ED;
   padding: 2px 8px;
   border-radius: 8px;
 }

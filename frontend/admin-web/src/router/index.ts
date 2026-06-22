@@ -21,6 +21,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: 'Dashboard', icon: 'Menu' },
       },
       {
+        path: 'users',
+        name: 'Users',
+        component: () => import('../views/user/index.vue'),
+        meta: { title: '用户管理', icon: 'UserFilled', permission: 'user:profile:read' },
+      },
+      {
         path: 'store/info',
         name: 'StoreInfo',
         component: () => import('../views/store/info.vue'),
@@ -61,6 +67,18 @@ const routes: Array<RouteRecordRaw> = [
         name: 'ProductOrders',
         component: () => import('../views/product-order/index.vue'),
         meta: { title: '自提订单', icon: 'Box', permission: 'product:order:read' },
+      },
+      {
+        path: 'announcements',
+        name: 'Announcements',
+        component: () => import('../views/announcement/index.vue'),
+        meta: { title: '公告管理', icon: 'Bell', permission: 'system:config' },
+      },
+      {
+        path: 'activities',
+        name: 'Activities',
+        component: () => import('../views/activity/index.vue'),
+        meta: { title: '营销活动', icon: 'Bell', permission: 'marketing:activity:read' },
       },
       {
         path: 'community/posts',

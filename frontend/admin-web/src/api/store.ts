@@ -47,8 +47,9 @@ export interface StoreConfigUpdateParams {
   contentAutoPublish: boolean
 }
 
-// V1 single store — fixed store ID
-const STORE_ID = 1
+// V1 single store — fixed store ID. Must match the seed row in data-dev.sql
+// (currently id=1001, the 萌宠家园上海徐汇店). Mismatch causes 404 "门店不存在".
+const STORE_ID = 1001
 
 // ─── API Functions ───
 

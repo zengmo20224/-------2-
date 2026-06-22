@@ -18,6 +18,10 @@
   --pc-user-ink: #19322E;
   --pc-user-muted: #71817D;
   --pc-user-line: #E2E9E6;
+  --pc-user-surface: #FFFFFF;
+  --pc-user-surface-soft: #F3F7F5;
+  --pc-user-coral: #E97951;
+  --pc-user-lavender: #EDE9F7;
 
   /* ─── Spacing ─── */
 
@@ -29,6 +33,7 @@
 
   --pc-radius-card: 16px;
   --pc-radius-card-lg: 20px;
+  --pc-radius-pill: 999px;
 
   /* ─── Typography ─── */
 
@@ -41,4 +46,9 @@
 
   --pc-btn-height: 48px;
   --pc-tab-bar-height: 64px;
+
+  /* ─── Elevation ─── */
+
+  --pc-shadow-card: 0 8px 24px rgba(25, 50, 46, 0.08);
+  --pc-shadow-raised: 0 16px 40px rgba(12, 77, 72, 0.16);
 }

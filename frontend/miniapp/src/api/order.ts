@@ -6,9 +6,12 @@ import { http } from './request'
 import type { ApiResponse, PageResponse, PageParams } from '@/types/api'
 import type { OrderItem, OrderDetail } from '@/types/product'
 
-/** Create order from checked cart items */
+/** Create order from checked cart items.
+ *  deliveryMethod PICKUP requires storeId; EXPRESS requires addressId. */
 export function createOrder(data: {
-  storeId: string
+  deliveryMethod: 'PICKUP' | 'EXPRESS'
+  storeId?: string
+  addressId?: string
   contactName: string
   contactPhone: string
   remark?: string

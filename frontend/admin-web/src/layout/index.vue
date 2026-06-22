@@ -18,6 +18,11 @@
           <span>运营总览</span>
         </el-menu-item>
 
+        <el-menu-item v-if="userStore.hasPermission('user:profile:read')" index="/users">
+          <el-icon><UserFilled /></el-icon>
+          <span>用户管理</span>
+        </el-menu-item>
+
         <el-sub-menu v-if="userStore.hasPermission('store:info:read') || userStore.hasPermission('store:config:read')" index="store-sub">
           <template #title>
             <el-icon><OfficeBuilding /></el-icon>
@@ -42,13 +47,23 @@
           <span>预约管理</span>
         </el-menu-item>
 
+        <el-menu-item v-if="userStore.hasPermission('system:config')" index="/announcements">
+          <el-icon><Bell /></el-icon>
+          <span>公告管理</span>
+        </el-menu-item>
+
+        <el-menu-item v-if="userStore.hasPermission('marketing:activity:read')" index="/activities">
+          <el-icon><Bell /></el-icon>
+          <span>营销活动</span>
+        </el-menu-item>
+
         <el-sub-menu v-if="userStore.hasPermission('product:item:read') || userStore.hasPermission('product:order:read')" index="product-sub">
           <template #title>
             <el-icon><ShoppingBag /></el-icon>
             <span>商品管理</span>
           </template>
           <el-menu-item v-if="userStore.hasPermission('product:item:read')" index="/products">商品列表</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('product:order:read')" index="/product-orders">自提订单</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('product:order:read')" index="/product-orders">商品订单</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu v-if="userStore.hasPermission('community:post:read') || userStore.hasPermission('community:report:handle')" index="community-sub">
@@ -98,7 +113,9 @@ import {
   OfficeBuilding,
   Briefcase,
   User,
+  UserFilled,
   Calendar,
+  Bell,
   ShoppingBag,
   ChatDotRound,
   Filter,

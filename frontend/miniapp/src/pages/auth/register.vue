@@ -8,6 +8,7 @@
       </PcFormField>
       <PcFormField label="密码">
         <input class="pc-input" type="text" v-model="form.password" placeholder="请输入密码" password />
+        <text class="pc-field-hint">8-32位，需同时包含数字和字母</text>
       </PcFormField>
       <PcFormField label="昵称">
         <input class="pc-input" type="text" v-model="form.nickname" placeholder="给自己起个昵称" />
@@ -18,18 +19,19 @@
       <view v-for="(sq, index) in form.securityQuestions" :key="index" class="auth-sq-item">
         <PcFormField :label="`问题 ${index + 1}`">
           <view class="pc-select-wrap">
-            <select class="pc-select" @change="onQuestionChange($event, index)">
-              <option value="">请选择安全问题</option>
-              <option
-                v-for="q in presetQuestions"
-                :key="q.index"
-                :value="q.index"
-                :disabled="isQuestionUsed(q.index, index)"
-                :class="{ 'pc-option-disabled': isQuestionUsed(q.index, index) }"
-              >
-                {{ q.text }}{{ isQuestionUsed(q.index, index) ? '（已选）' : '' }}
-              </option>
-            </select>
+            <picker
+              class="pc-picker"
+              mode="selector"
+              :range="questionPickerOptions(index)"
+              range-key="label"
+              :value="questionPickerIndex(index)"
+              @change="onQuestionPickerChange($event, index)"
+            >
+              <view class="pc-select pc-select--picker" :class="{ 'pc-select--placeholder': sq.questionIndex === null }">
+                <text class="pc-select__text">{{ questionPickerLabel(index) }}</text>
+                <text class="pc-select__arrow">?</text>
+              </view>
+            </picker>
           </view>
         </PcFormField>
         <PcFormField label="答案">
@@ -63,6 +65,12 @@ interface SecurityQuestionForm {
   answer: string
 }
 
+interface QuestionPickerOption {
+  label: string
+  value: number | null
+  disabled: boolean
+}
+
 const form = ref({
   phone: '',
   password: '',
@@ -86,21 +94,57 @@ function isQuestionUsed(qIndex: number, currentRow: number): boolean {
   )
 }
 
-function onQuestionChange(e: any, index: number) {
-  const picked = parseInt(e.target.value)
-  if (isNaN(picked)) {
-    form.value.securityQuestions[index].questionIndex = null
-    form.value.securityQuestions[index].questionText = ''
+function questionPickerOptions(rowIndex: number): QuestionPickerOption[] {
+  return [
+    { label: '请选择安全问题', value: null, disabled: false },
+    ...presetQuestions.value.map((q) => {
+      const disabled = isQuestionUsed(q.index, rowIndex)
+      return {
+        label: `${q.text}${disabled ? '（已选）' : ''}`,
+        value: q.index,
+        disabled,
+      }
+    }),
+  ]
+}
+
+function questionPickerIndex(rowIndex: number): number {
+  const selected = form.value.securityQuestions[rowIndex]?.questionIndex
+  if (selected === null || selected === undefined) {
+    return 0
+  }
+  const index = questionPickerOptions(rowIndex).findIndex((option) => option.value === selected)
+  return index >= 0 ? index : 0
+}
+
+function questionPickerLabel(rowIndex: number): string {
+  return questionPickerOptions(rowIndex)[questionPickerIndex(rowIndex)]?.label ?? '请选择安全问题'
+}
+
+function getPickerEventIndex(e: any): number {
+  const index = Number(e?.detail?.value)
+  return Number.isFinite(index) ? index : 0
+}
+
+function clearQuestion(rowIndex: number) {
+  form.value.securityQuestions[rowIndex].questionIndex = null
+  form.value.securityQuestions[rowIndex].questionText = ''
+}
+
+function onQuestionPickerChange(e: any, rowIndex: number) {
+  const option = questionPickerOptions(rowIndex)[getPickerEventIndex(e)]
+  if (!option || option.value === null) {
+    clearQuestion(rowIndex)
     return
   }
-  const found = presetQuestions.value.find(q => q.index === picked)
-  if (!found) return
-  if (isQuestionUsed(picked, index)) {
+  if (option.disabled) {
     uni.showToast({ title: '该问题已选择，不能重复', icon: 'none' })
     return
   }
-  form.value.securityQuestions[index].questionIndex = picked
-  form.value.securityQuestions[index].questionText = found.text
+  const found = presetQuestions.value.find(q => q.index === option.value)
+  if (!found) return
+  form.value.securityQuestions[rowIndex].questionIndex = found.index
+  form.value.securityQuestions[rowIndex].questionText = found.text
 }
 
 async function handleRegister() {
@@ -165,7 +209,7 @@ function goLogin() {
 
 <style scoped>
 .auth-page {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .auth-form {
@@ -173,12 +217,17 @@ function goLogin() {
   flex-direction: column;
   gap: 16px;
   margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #DCEBE7;
+  border-radius: 24px;
+  background: #FFFFFF;
+  box-shadow: 0 12px 32px rgba(25, 50, 46, 0.09);
 }
 
 .auth-section-title {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
   margin-top: 8px;
 }
 
@@ -186,8 +235,9 @@ function goLogin() {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: var(--pc-user-cream);
-  border-radius: var(--pc-radius-card);
+  background: #FFF7E6;
+  background: #FAF8F3;
+  border-radius: 16px;
   padding: 12px;
 }
 
@@ -198,18 +248,27 @@ function goLogin() {
 }
 
 .auth-link {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-primary);
+  font-size: 14px;
+  color: #11796F;
+  color: #11796F;
+  font-weight: 700;
 }
 
 .pc-input {
   height: 44px;
-  border: 1px solid var(--pc-user-line);
+  border: 1px solid #E2E9E6;
+  border: 1px solid #E2E9E6;
   border-radius: 12px;
   padding: 0 14px;
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   background: #fff;
+}
+
+.pc-field-hint {
+  font-size: 11px;
+  color: #71817D;
+  margin-top: 4px;
 }
 
 .pc-select-wrap {
@@ -219,17 +278,40 @@ function goLogin() {
 .pc-select {
   width: 100%;
   height: 44px;
-  border: 1px solid var(--pc-user-line);
+  border: 1px solid #E2E9E6;
+  border: 1px solid #E2E9E6;
   border-radius: 12px;
   padding: 0 14px;
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   background: #fff;
-  appearance: auto;
-  -webkit-appearance: auto;
+  box-sizing: border-box;
 }
 
-.pc-option-disabled {
-  color: var(--pc-user-muted);
+.pc-picker {
+  display: block;
+}
+
+.pc-select--picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pc-select--placeholder {
+  color: #71817D;
+}
+
+.pc-select__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-select__arrow {
+  margin-left: 8px;
+  color: #71817D;
 }
 </style>

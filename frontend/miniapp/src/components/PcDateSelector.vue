@@ -64,13 +64,13 @@ const days = computed(() => {
   padding: 8px 12px;
   border-radius: 12px;
   background: #fff;
-  border: 1px solid var(--pc-user-line);
+  border: 1px solid #E2E9E6;
   min-width: 52px;
 }
 
 .pc-date-selector__item--active {
-  background: var(--pc-user-primary);
-  border-color: var(--pc-user-primary);
+  background: #11796F;
+  border-color: #11796F;
 }
 
 .pc-date-selector__item--active .pc-date-selector__weekday,
@@ -79,13 +79,13 @@ const days = computed(() => {
 }
 
 .pc-date-selector__weekday {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-muted);
+  font-size: 11px;
+  color: #71817D;
 }
 
 .pc-date-selector__date {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   font-weight: 600;
 }
 </style>

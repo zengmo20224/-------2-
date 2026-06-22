@@ -64,8 +64,11 @@ docs/audit-evidence/**/*.mov
 docgen/
 
 # 微信小程序个人配置（含 appid / 本地路径，不应共享）
+# 项目当前主目标为 H5，小程序工程配置暂不纳入版本库（AGENTS.md §2）
 project.private.config.json
+project.config.json
 **/project.private.config.json
+**/project.config.json
 
 # 误产物（Windows nul 是保留设备名，不应作为文件存在）
 nul

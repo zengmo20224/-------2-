@@ -14,6 +14,10 @@
             <PcStatusTag :label="statusLabels[booking.status] || booking.status" :type="statusType" />
           </view>
 
+          <view v-if="booking.serviceItemName" class="booking-detail__row">
+            <text class="booking-detail__label">服务项目</text>
+            <text class="booking-detail__value">{{ booking.serviceItemName }}</text>
+          </view>
           <view class="booking-detail__row">
             <text class="booking-detail__label">日期</text>
             <text class="booking-detail__value">{{ booking.bookingDate }}</text>
@@ -57,17 +61,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import PcPageHeader from '@/components/PcPageHeader.vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcStatusTag from '@/components/PcStatusTag.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
 import { getBookingDetail, cancelBooking } from '@/api/booking'
 import type { BookingItem } from '@/types/booking'
+import { normalizeRouteParam } from '@/utils/route-query'
 
 const booking = ref<BookingItem | null>(null)
 const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 const cancelling = ref(false)
+const currentBookingId = ref('')
 
 const statusLabels: Record<string, string> = {
   PENDING_CONFIRM: '待确认', CONFIRMED: '已确认', IN_SERVICE: '服务中',
@@ -98,20 +105,21 @@ const canCancel = computed(() => {
   return s === 'PENDING_CONFIRM' || s === 'CONFIRMED'
 })
 
-async function loadDetail() {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1] as any
-  const id = currentPage?.options?.id
+async function loadDetail(routeId?: unknown) {
+  const id = normalizeRouteParam(routeId ?? currentBookingId.value)
 
   if (!id) {
+    booking.value = null
     pageStatus.value = 'empty'
     return
   }
 
+  currentBookingId.value = id
   pageStatus.value = 'loading'
-  const res = await getBookingDetail(String(id))
+  const res = await getBookingDetail(id)
 
   if (!res.success || !res.data) {
+    booking.value = null
     pageStatus.value = 'error'
     return
   }
@@ -132,17 +140,19 @@ async function handleCancel() {
   }
 }
 
-onMounted(() => loadDetail())
+onLoad((query) => {
+  loadDetail(query?.id)
+})
 </script>
 
 <style scoped>
 .booking-detail {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .booking-detail__card {
   background: #fff;
-  border-radius: var(--pc-radius-card);
+  border-radius: 16px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
@@ -155,26 +165,26 @@ onMounted(() => loadDetail())
 }
 
 .booking-detail__no {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .booking-detail__row {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  border-bottom: 1px solid var(--pc-user-line);
+  border-bottom: 1px solid #E2E9E6;
 }
 
 .booking-detail__label {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
 }
 
 .booking-detail__value {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   font-weight: 500;
 }
 

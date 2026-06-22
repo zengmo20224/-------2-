@@ -47,21 +47,21 @@ defineEmits<{
 .pc-confirm-sheet__panel {
   width: 100%;
   background: #fff;
-  border-radius: var(--pc-radius-card-lg) var(--pc-radius-card-lg) 0 0;
+  border-radius: 20px 20px 0 0;
   padding: 24px 20px;
-  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  padding-bottom: 34px;
 }
 
 .pc-confirm-sheet__title {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
   margin-bottom: 8px;
 }
 
 .pc-confirm-sheet__message {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
   margin-bottom: 20px;
 }
 
@@ -76,18 +76,18 @@ defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--pc-radius-card);
-  font-size: var(--pc-font-body);
+  border-radius: 16px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .pc-confirm-sheet__btn--cancel {
-  background: var(--pc-user-cream);
-  color: var(--pc-user-muted);
+  background: #FAF8F3;
+  color: #71817D;
 }
 
 .pc-confirm-sheet__btn--confirm {
-  background: var(--pc-user-primary);
+  background: #11796F;
   color: #fff;
 }
 </style>

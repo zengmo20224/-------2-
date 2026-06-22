@@ -13,6 +13,8 @@ export interface Product {
   salesCount: number | null
   description: string | null
   pickupOnly: boolean
+  imageUrls: string[]
+  detailImageUrls: string[]
   status: string
   sort: number | null
 }
@@ -24,6 +26,8 @@ export interface ProductCreateParams {
   price: number
   description?: string
   pickupOnly: boolean
+  imageUrls?: string[]
+  detailImageUrls?: string[]
   sort?: number
 }
 

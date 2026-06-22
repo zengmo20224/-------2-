@@ -6,21 +6,22 @@
       @retry="loadDetail"
     >
       <template v-if="service">
-        <!-- Cover Image -->
-        <view class="service-detail__cover">
-          <image v-if="service.coverUrl" class="service-detail__cover-img" :src="service.coverUrl" mode="aspectFill" />
-          <view v-else class="service-detail__cover-img service-detail__cover-placeholder">
-            <text class="service-detail__cover-placeholder-text">{{ modeLabel }}</text>
-          </view>
+        <view v-if="coverImage" class="service-detail__cover">
+          <image
+            class="service-detail__cover-img"
+            :src="coverImage"
+            mode="aspectFill"
+            @tap="previewCover"
+          />
+        </view>
+        <view v-else class="service-detail__cover service-detail__cover-placeholder">
+          <text class="service-detail__cover-placeholder-text">{{ modeLabel }}</text>
         </view>
 
         <view class="service-detail__body">
           <view class="service-detail__header">
             <text class="service-detail__name">{{ service.name }}</text>
             <PcStatusTag :label="modeLabel" type="primary" />
-          </view>
-          <view v-if="service.description" class="service-detail__desc">
-            <text>{{ service.description }}</text>
           </view>
           <view class="service-detail__info">
             <view class="service-detail__info-row">
@@ -40,6 +41,22 @@
             <PcPrimaryButton text="立即预约" @tap="goBooking" />
           </view>
         </view>
+
+        <!-- Service details section: text description + image grid (like product detail) -->
+        <view v-if="service.description || detailImages.length > 0" class="service-detail__desc">
+          <text class="service-detail__desc-title">服务详情</text>
+          <text v-if="service.description" class="service-detail__desc-content" decode>{{ service.description }}</text>
+          <view v-if="detailImages.length > 0" class="service-detail__desc-images">
+            <view
+              v-for="(url, index) in detailImages"
+              :key="index"
+              class="service-detail__desc-image-wrap"
+              @tap="previewDetailImage(index)"
+            >
+              <image class="service-detail__desc-image" :src="url" mode="widthFix" />
+            </view>
+          </view>
+        </view>
       </template>
     </PcStatePanel>
   </view>
@@ -47,15 +64,22 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcStatusTag from '@/components/PcStatusTag.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
 import { getServiceDetail } from '@/api/service'
+import { useUserStore } from '@/store/user'
 import type { ServiceItem } from '@/types/service'
 import { formatDuration, formatYuan } from '@/utils/format'
+import { normalizeRouteParam } from '@/utils/route-query'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+const userStore = useUserStore()
 
 const service = ref<ServiceItem | null>(null)
 const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
+const currentServiceId = ref('')
 
 const modeLabel = computed(() => {
   const map: Record<string, string> = { STORE: '到店', HOME: '上门', BOTH: '到店/上门' }
@@ -70,20 +94,60 @@ const petTypeText = computed(() => {
   return map[service.value?.petType ?? ''] ?? '所有宠物'
 })
 
-async function loadDetail() {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1] as any
-  const id = currentPage?.options?.id
+/**
+ * Cover image: a single coverUrl shown at the top (no swiper).
+ */
+const coverImage = computed(() => {
+  if (!service.value?.coverUrl) return ''
+  return fullUrl(service.value.coverUrl)
+})
+
+/**
+ * Detail images: imageUrls shown below as a "service details" introduction grid,
+ * mirroring the product detail page (no carousel).
+ */
+const detailImages = computed(() => {
+  if (!service.value?.imageUrls?.length) return []
+  return service.value.imageUrls.map(fullUrl)
+})
+
+function fullUrl(url: string): string {
+  if (url.startsWith('http')) return url
+  return API_BASE + url
+}
+
+function previewCover() {
+  if (!coverImage.value) return
+  uni.previewImage({
+    current: coverImage.value,
+    urls: [coverImage.value],
+  })
+}
+
+/** Preview an image from the description section grid. */
+function previewDetailImage(index: number) {
+  if (detailImages.value.length === 0) return
+  uni.previewImage({
+    current: detailImages.value[index],
+    urls: detailImages.value,
+  })
+}
+
+async function loadDetail(routeId?: unknown) {
+  const id = normalizeRouteParam(routeId ?? currentServiceId.value)
 
   if (!id) {
+    service.value = null
     pageStatus.value = 'empty'
     return
   }
 
+  currentServiceId.value = id
   pageStatus.value = 'loading'
-  const res = await getServiceDetail(String(id))
+  const res = await getServiceDetail(id)
 
   if (!res.success || !res.data) {
+    service.value = null
     pageStatus.value = 'error'
     return
   }
@@ -93,23 +157,31 @@ async function loadDetail() {
 }
 
 function goBooking() {
+  if (!userStore.isLoggedIn) {
+    uni.showToast({ title: '请先登录后再预约', icon: 'none' })
+    setTimeout(() => uni.navigateTo({ url: '/pages/auth/login' }), 1000)
+    return
+  }
   if (service.value) {
     uni.navigateTo({ url: `/pages/booking/create?serviceId=${service.value.id}` })
   }
 }
 
-loadDetail()
+onLoad((query) => {
+  loadDetail(query?.id)
+})
 </script>
 
 <style scoped>
 .service-detail {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .service-detail__cover {
+  position: relative;
   width: 100%;
   height: 200px;
-  border-radius: var(--pc-radius-card-lg);
+  border-radius: 20px;
   overflow: hidden;
   margin-bottom: 16px;
 }
@@ -123,19 +195,19 @@ loadDetail()
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--pc-user-soft);
+  background: #DFF2ED;
 }
 
 .service-detail__cover-placeholder-text {
   font-size: 48px;
   font-weight: 700;
-  color: var(--pc-user-primary);
+  color: #11796F;
   opacity: 0.3;
 }
 
 .service-detail__body {
   background: #fff;
-  border-radius: var(--pc-radius-card);
+  border-radius: 16px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
@@ -148,21 +220,57 @@ loadDetail()
 }
 
 .service-detail__name {
-  font-size: var(--pc-font-title);
+  font-size: 24px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
+/* Service details section (text description + image grid) */
 .service-detail__desc {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--pc-user-line);
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
 
-.service-detail__desc text {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
-  line-height: 1.6;
+.service-detail__desc-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #19322E;
+  margin-bottom: 12px;
+}
+
+.service-detail__desc-content {
+  display: block;
+  width: 100%;
+  font-size: 14px;
+  color: #19322E;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+/* Description images: always one per row (single column, full width) */
+.service-detail__desc-images {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.service-detail__desc-image-wrap {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.service-detail__desc-image {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .service-detail__info {
@@ -179,19 +287,19 @@ loadDetail()
 }
 
 .service-detail__label {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
 }
 
 .service-detail__value {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   font-weight: 500;
 }
 
 .service-detail__price {
   font-size: 20px;
-  color: var(--pc-user-accent);
+  color: #F5A623;
   font-weight: 700;
 }
 

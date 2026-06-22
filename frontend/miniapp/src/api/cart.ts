@@ -25,3 +25,8 @@ export function updateCartItem(id: string, quantity: number): Promise<ApiRespons
 export function deleteCartItem(id: string): Promise<ApiResponse<void>> {
   return http.delete<void>(`/api/v1/cart-items/${id}`)
 }
+
+/** Check/uncheck cart items (controls which items are included in checkout) */
+export function checkCartItems(cartItemIds: string[], checked: boolean): Promise<ApiResponse<CartItem[]>> {
+  return http.post<CartItem[]>('/api/v1/cart-items/check', { cartItemIds, checked } as any)
+}

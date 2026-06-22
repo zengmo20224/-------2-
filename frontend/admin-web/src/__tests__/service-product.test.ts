@@ -27,6 +27,7 @@ const serviceVue = read('views/service/index.vue')
 const productVue = read('views/product/index.vue')
 const feedbackSrc = read('utils/feedback.ts')
 const statusSrc = read('types/status.ts')
+const uploadApiSrc = read('api/upload.ts')
 
 // ──────────────────────────────────────────
 // 1. Shared components — Service
@@ -246,11 +247,106 @@ describe('H07: Query param lifecycle', () => {
 })
 
 // ──────────────────────────────────────────
-// 9. File upload 10 MB limit constant
+// 10. Detail images management
+// ──────────────────────────────────────────
+describe('H07: Detail images management', () => {
+  it('service page imports cover photos through a dedicated admin upload button', () => {
+    expect(serviceVue).toContain('prop="coverUrl"')
+    expect(serviceVue).toContain('coverUploadFileList')
+    expect(serviceVue).toContain('uploadCoverImage')
+    expect(serviceVue).toContain('beforeUploadCoverImage')
+    expect(serviceVue).toContain('导入封面图')
+    expect(serviceVue).toContain('form.coverUrl')
+  })
+
+  it('product page imports cover photos through a dedicated admin upload button', () => {
+    expect(productVue).toContain('prop="coverUrl"')
+    expect(productVue).toContain('coverUploadFileList')
+    expect(productVue).toContain('uploadCoverImage')
+    expect(productVue).toContain('beforeUploadCoverImage')
+    expect(productVue).toContain('导入封面图')
+    expect(productVue).toContain('form.coverUrl')
+  })
+
+  it('service page edits multiple detail image URLs', () => {
+    expect(serviceVue).toContain('form.imageUrls')
+    expect(serviceVue).toContain('详情图片')
+  })
+
+  it('product page keeps product carousel photos and intro photos as separate form fields', () => {
+    expect(productVue).toContain('form.imageUrls')
+    expect(productVue).toContain('form.detailImageUrls')
+    expect(productVue).toContain('商品展示轮播图')
+    expect(productVue).toContain('商品介绍图片')
+    expect(productVue).toContain('展示在用户端商品详情页顶部')
+    expect(productVue).toContain('插入到用户端商品详情页的商品介绍区域')
+    expect(productVue).not.toContain('label="顶部轮播图"')
+    expect(productVue).not.toContain('顶部轮播图最多导入')
+    expect(productVue).not.toContain('商品详情页顶部轮播图URL')
+  })
+
+  it('product page manages product detail carousel photos in the product form with a 5-image limit', () => {
+    expect(productVue).toContain('PRODUCT_DETAIL_CAROUSEL_LIMIT')
+    expect(productVue).toContain(':limit="PRODUCT_DETAIL_CAROUSEL_LIMIT"')
+    expect(productVue).toContain('商品展示轮播图最多导入')
+    expect(productVue).toContain('最多导入 {{ PRODUCT_DETAIL_CAROUSEL_LIMIT }} 张')
+    expect(productVue).toContain('carouselUploadFileList')
+    expect(productVue).toContain('uploadCarouselImage')
+    expect(productVue).not.toContain('carouselForm')
+    expect(productVue).not.toContain('listProductCarouselImages')
+    expect(productVue).not.toContain('replaceProductCarouselImages')
+  })
+
+  it('product page imports intro photos through a separate admin upload button with a 20-image limit', () => {
+    expect(productVue).toContain('CATALOG_DETAIL_IMAGE_LIMIT')
+    expect(productVue).toContain('form.detailImageUrls')
+    expect(productVue).toContain('detailUploadFileList')
+    expect(productVue).toContain('uploadDetailImage')
+    expect(productVue).toContain('handleDetailImageExceed')
+    expect(productVue).toContain('商品介绍图片最多导入')
+    expect(productVue).toContain('最多导入 {{ CATALOG_DETAIL_IMAGE_LIMIT }} 张')
+  })
+
+  it('service page imports photos through admin upload with a 20-image limit', () => {
+    expect(serviceVue).toContain('<el-upload')
+    expect(serviceVue).toContain('uploadCatalogImage')
+    expect(serviceVue).toContain('CATALOG_DETAIL_IMAGE_LIMIT')
+    expect(serviceVue).toContain(':limit="CATALOG_DETAIL_IMAGE_LIMIT"')
+    expect(serviceVue).toContain('handleImageExceed')
+  })
+
+  it('product page imports carousel photos through admin upload with a 5-image limit', () => {
+    expect(productVue).toContain('<el-upload')
+    expect(productVue).toContain('uploadCatalogImage')
+    expect(productVue).toContain('PRODUCT_DETAIL_CAROUSEL_LIMIT')
+    expect(productVue).toContain(':limit="PRODUCT_DETAIL_CAROUSEL_LIMIT"')
+    expect(productVue).toContain('handleCarouselImageExceed')
+  })
+})
+
+// ──────────────────────────────────────────
+// 9. File upload limits and API
 // ──────────────────────────────────────────
 describe('H07: File upload 10 MB limit', () => {
   it('status module defines MAX_UPLOAD_SIZE constant (10 MB)', () => {
     expect(statusSrc).toMatch(/MAX_UPLOAD_SIZE/)
     expect(statusSrc).toMatch(/10.*\*.*1024.*\*.*1024/)
+  })
+
+  it('status module defines catalog detail image count as 20', () => {
+    expect(statusSrc).toMatch(/CATALOG_DETAIL_IMAGE_LIMIT/)
+    expect(statusSrc).toMatch(/CATALOG_DETAIL_IMAGE_LIMIT\s*=\s*20/)
+  })
+
+  it('status module defines product detail carousel image count as 5', () => {
+    expect(statusSrc).toMatch(/PRODUCT_DETAIL_CAROUSEL_LIMIT/)
+    expect(statusSrc).toMatch(/PRODUCT_DETAIL_CAROUSEL_LIMIT\s*=\s*5/)
+  })
+
+  it('admin upload API posts multipart files to /v1/upload', () => {
+    expect(uploadApiSrc).toContain('uploadCatalogImage')
+    expect(uploadApiSrc).toContain("'/v1/upload'")
+    expect(uploadApiSrc).toContain('FormData')
+    expect(uploadApiSrc).toContain("formData.append('file', file)")
   })
 })

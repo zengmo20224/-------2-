@@ -3,6 +3,13 @@ import type { PageResponse, PageParams } from '../types/api'
 
 // ─── Types (match backend DTOs exactly) ───
 
+export interface ServiceCategory {
+  id: number
+  name: string
+  iconUrl: string | null
+  sort: number
+}
+
 export interface ServiceItem {
   id: number
   categoryId: number
@@ -16,6 +23,7 @@ export interface ServiceItem {
   needPet: boolean
   description: string | null
   coverUrl: string | null
+  imageUrls: string[]
   status: string // ON_SALE | OFF_SALE
   sort: number | null
 }
@@ -32,6 +40,7 @@ export interface ServiceItemCreateParams {
   needPet: boolean
   description?: string
   coverUrl?: string
+  imageUrls?: string[]
   sort?: number
 }
 
@@ -41,6 +50,11 @@ export interface ServiceItemQueryParams extends PageParams {
 }
 
 // ─── API Functions ───
+
+/** GET /api/v1/service-categories — lists active service categories */
+export const getServiceCategories = () => {
+  return request.get<ServiceCategory[]>('/v1/service-categories')
+}
 
 /** GET /api/v1/admin/service-items */
 export const getServiceItems = (params: ServiceItemQueryParams) => {

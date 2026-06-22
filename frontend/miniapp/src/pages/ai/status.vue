@@ -10,7 +10,7 @@ import PcBlockedFeature from '@/components/PcBlockedFeature.vue'
 
 <style scoped>
 .ai-status {
-  padding: var(--pc-page-padding);
+  padding: 20px;
   padding-top: 60px;
 }
 </style>

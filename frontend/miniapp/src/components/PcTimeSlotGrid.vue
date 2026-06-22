@@ -45,14 +45,14 @@ defineEmits<{
   padding: 10px 0;
   border-radius: 12px;
   background: #fff;
-  border: 1px solid var(--pc-user-line);
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  border: 1px solid #E2E9E6;
+  font-size: 14px;
+  color: #19322E;
 }
 
 .pc-time-slot-grid__item--active {
-  background: var(--pc-user-primary);
-  border-color: var(--pc-user-primary);
+  background: #11796F;
+  border-color: #11796F;
   color: #fff;
 }
 

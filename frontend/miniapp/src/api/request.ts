@@ -6,7 +6,53 @@
 import type { ApiResponse } from '@/types/api'
 import { sanitizeErrorMessage } from '@/utils/error-sanitizer'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const DEFAULT_MP_API_BASE_URL = 'http://127.0.0.1:8080'
+const REQUEST_TIMEOUT_MS = 8000
+
+function normalizeBaseUrl(url: string | undefined): string {
+  return (url || '').trim().replace(/\/+$/, '')
+}
+
+function uniqueUrls(urls: string[]): string[] {
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const url of urls) {
+    const normalized = normalizeBaseUrl(url)
+    if (!normalized && seen.has('')) continue
+    if (normalized && seen.has(normalized)) continue
+    seen.add(normalized)
+    result.push(normalized)
+  }
+  return result
+}
+
+function configuredMpFallbackUrls(): string[] {
+  return (import.meta.env.VITE_MP_API_BASE_FALLBACK_URLS || '')
+    .split(',')
+    .map((url: string) => normalizeBaseUrl(url))
+    .filter(Boolean)
+}
+
+export function getRequestBaseUrls(): string[] {
+  const apiBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL)
+
+  // #ifdef MP-WEIXIN
+  const mpBaseUrl = normalizeBaseUrl(import.meta.env.VITE_MP_API_BASE_URL)
+  const mpUrls = uniqueUrls([
+    mpBaseUrl,
+    ...configuredMpFallbackUrls(),
+    apiBaseUrl,
+    DEFAULT_MP_API_BASE_URL,
+  ]).filter(Boolean)
+  return mpUrls.length > 0 ? mpUrls : [DEFAULT_MP_API_BASE_URL]
+  // #endif
+
+  return uniqueUrls([apiBaseUrl])
+}
+
+export function getPrimaryApiBaseUrl(): string {
+  return getRequestBaseUrls()[0] || ''
+}
 
 type RequestData = Exclude<UniNamespace.RequestOptions['data'], undefined>
 type RequestMethod = Exclude<UniNamespace.RequestOptions['method'], undefined>
@@ -60,70 +106,79 @@ function showToast(title: string, icon: 'none' | 'success' | 'error' | 'loading'
 export function request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
   const token = getToken()
   const queryString = options.params ? buildQueryString(options.params) : ''
-  const fullUrl = `${BASE_URL}${options.url}${queryString}`
+  const requestUrls = getRequestBaseUrls().map(baseUrl => `${baseUrl}${options.url}${queryString}`)
 
   return new Promise((resolve) => {
-    uni.request({
-      url: fullUrl,
-      method: options.method || 'GET',
-      data: options.data,
-      header: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.header,
-      },
-      success: (res) => {
-        const statusCode = res.statusCode
-        const body = res.data as ApiResponse<T>
+    const send = (urlIndex: number) => {
+      uni.request({
+        url: requestUrls[urlIndex],
+        method: options.method || 'GET',
+        data: options.data,
+        timeout: REQUEST_TIMEOUT_MS,
+        header: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...options.header,
+        },
+        success: (res) => {
+          const statusCode = res.statusCode
+          const body = res.data as ApiResponse<T>
 
-        if (statusCode === 401) {
-          clearToken()
-          showToast('登录已过期，请重新登录')
-          resolve({ success: false, error: { code: 'UNAUTHORIZED', message: '登录已过期' } })
-          return
-        }
+          if (statusCode === 401) {
+            clearToken()
+            showToast('登录已过期，请重新登录')
+            resolve({ success: false, error: { code: 'UNAUTHORIZED', message: '登录已过期' } })
+            return
+          }
 
-        if (statusCode === 403) {
-          resolve({ success: false, error: { code: 'FORBIDDEN', message: '无权访问' } })
-          return
-        }
+          if (statusCode === 403) {
+            resolve({ success: false, error: { code: 'FORBIDDEN', message: '无权访问' } })
+            return
+          }
 
-        if (statusCode === 409) {
-          const msg = body?.error?.message || '数据状态冲突，请刷新后重试'
-          showToast(msg)
-          resolve({ success: false, error: { code: 'CONFLICT', message: msg } })
-          return
-        }
+          if (statusCode === 409) {
+            const msg = body?.error?.message || '数据状态冲突，请刷新后重试'
+            showToast(msg)
+            resolve({ success: false, error: { code: 'CONFLICT', message: msg } })
+            return
+          }
 
-        if (statusCode === 422) {
-          const msg = body?.error?.message || '提交数据验证失败'
-          showToast(msg)
-          resolve({ success: false, error: { code: 'UNPROCESSABLE', message: msg } })
-          return
-        }
+          if (statusCode === 422) {
+            const msg = body?.error?.message || '提交数据验证失败'
+            showToast(msg)
+            resolve({ success: false, error: { code: 'UNPROCESSABLE', message: msg } })
+            return
+          }
 
-        if (statusCode >= 400) {
-          const msg = body?.error?.message ? sanitizeErrorMessage(body.error.message) : '请求失败'
-          showToast(msg)
-          resolve({ success: false, error: { code: `HTTP_${statusCode}`, message: msg } })
-          return
-        }
+          if (statusCode >= 400) {
+            const msg = body?.error?.message ? sanitizeErrorMessage(body.error.message) : '请求失败'
+            showToast(msg)
+            resolve({ success: false, error: { code: `HTTP_${statusCode}`, message: msg } })
+            return
+          }
 
-        // 2xx success — check business-level error
-        if (body && body.success === false) {
-          const msg = body.error?.message ? sanitizeErrorMessage(body.error.message) : '操作失败'
-          showToast(msg)
-          resolve({ success: false, error: { code: body.error?.code || 'BIZ_ERROR', message: msg, details: body.error?.details } })
-          return
-        }
+          // 2xx success — check business-level error
+          if (body && body.success === false) {
+            const msg = body.error?.message ? sanitizeErrorMessage(body.error.message) : '操作失败'
+            showToast(msg)
+            resolve({ success: false, error: { code: body.error?.code || 'BIZ_ERROR', message: msg, details: body.error?.details } })
+            return
+          }
 
-        resolve(body || { success: true })
-      },
-      fail: (err) => {
-        showToast('网络连接失败')
-        resolve({ success: false, error: { code: 'NETWORK_ERROR', message: '网络连接失败' } })
-      },
-    })
+          resolve(body || { success: true })
+        },
+        fail: () => {
+          if (urlIndex < requestUrls.length - 1) {
+            send(urlIndex + 1)
+            return
+          }
+          showToast('网络连接失败')
+          resolve({ success: false, error: { code: 'NETWORK_ERROR', message: '网络连接失败' } })
+        },
+      })
+    }
+
+    send(0)
   })
 }
 

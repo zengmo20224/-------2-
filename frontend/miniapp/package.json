@@ -7,7 +7,7 @@
     "dev": "uni",
     "build": "uni build",
     "dev:mp-weixin": "uni -p mp-weixin",
-    "build:mp-weixin": "uni build -p mp-weixin",
+    "build:mp-weixin": "node scripts/clean-mp-weixin-output.mjs && uni build -p mp-weixin && node scripts/ensure-mp-weixin-static.mjs",
     "dev:h5": "uni",
     "build:h5": "uni build",
     "typecheck": "vue-tsc --noEmit",
@@ -16,29 +16,57 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@dcloudio/uni-app": "3.0.0-4080420251103001",
-    "@dcloudio/uni-app-plus": "3.0.0-4080420251103001",
-    "@dcloudio/uni-components": "3.0.0-4080420251103001",
-    "@dcloudio/uni-h5": "3.0.0-4080420251103001",
-    "@dcloudio/uni-mp-weixin": "3.0.0-4080420251103001",
-    "vue": "^3.4.21",
+    "@dcloudio/uni-app": "3.0.0-5000720260410001",
+    "@dcloudio/uni-app-plus": "3.0.0-5000720260410001",
+    "@dcloudio/uni-components": "3.0.0-5000720260410001",
+    "@dcloudio/uni-h5": "3.0.0-5000720260410001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5000720260410001",
+    "@dcloudio/uni-ui": "^1.5.12",
+    "nutui-uniapp": "^1.11.2",
     "pinia": "^2.1.7",
-    "pinia-plugin-unistorage": "^0.1.2"
+    "pinia-plugin-unistorage": "^0.1.2",
+    "vue": "^3.4.21"
   },
   "devDependencies": {
     "@dcloudio/types": "^3.4.8",
-    "@dcloudio/uni-automator": "3.0.0-4080420251103001",
-    "@dcloudio/uni-cli-shared": "3.0.0-4080420251103001",
-    "@dcloudio/uni-stacktracey": "3.0.0-4080420251103001",
-    "@dcloudio/vite-plugin-uni": "3.0.0-4080420251103001",
+    "@dcloudio/uni-cli-shared": "3.0.0-5000720260410001",
+    "@dcloudio/uni-stacktracey": "3.0.0-5000720260410001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5000720260410001",
     "@types/node": "^20.14.0",
+    "@vue/runtime-core": "^3.4.21",
     "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.5.1",
-    "@vue/runtime-core": "^3.4.21",
     "jsdom": "^24.1.0",
+    "sass": "^1.101.0",
     "typescript": "~5.5.0",
-    "vite": "5.2.8",
-    "vitest": "^1.6.0",
+    "vite": "^5.2.8",
+    "vitest": "^4.1.9",
     "vue-tsc": "^2.0.0"
+  },
+  "overrides": {
+    "@babel/core": "7.29.7",
+    "@intlify/core-base": "9.14.5",
+    "@intlify/message-compiler": "9.14.5",
+    "@intlify/vue-devtools": "9.14.5",
+    "postcss": "8.5.15",
+    "@dcloudio/uni-mp-weixin": {
+      "ws": "8.21.0"
+    },
+    "@jimp/jpeg": {
+      "jpeg-js": "0.4.4"
+    },
+    "@jimp/core": {
+      "phin": "3.7.1"
+    },
+    "express": {
+      "body-parser": "1.20.5",
+      "cookie": "0.7.2",
+      "path-to-regexp": "0.1.13",
+      "qs": "6.15.2",
+      "serve-static": "1.16.2"
+    },
+    "body-parser": {
+      "qs": "6.15.2"
+    }
   }
 }

@@ -21,6 +21,7 @@ export interface ServiceItem {
   needPet: number
   description: string | null
   coverUrl: string | null
+  imageUrls: string[]
 }
 
 /** Service category as returned by backend API */

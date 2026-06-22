@@ -5,29 +5,29 @@
 /* Card base */
 .pc-card {
   background: #fff;
-  border-radius: var(--pc-radius-card);
+  border-radius: 16px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
 
 /* Page section */
 .pc-section {
-  margin-bottom: var(--pc-section-gap);
+  margin-bottom: 28px;
 }
 
 /* Page container */
 .pc-page {
-  padding: var(--pc-page-padding);
-  padding-bottom: calc(var(--pc-tab-bar-height) + 20px);
+  padding: 20px;
+  padding-bottom: calc(64px + 20px);
 }
 
 /* Primary button */
 .pc-btn-primary {
-  height: var(--pc-btn-height);
-  background: var(--pc-user-primary);
+  height: 48px;
+  background: #11796F;
   color: #fff;
-  border-radius: var(--pc-radius-card);
-  font-size: var(--pc-font-card-title);
+  border-radius: 16px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -37,11 +37,11 @@
 
 /* Accent button */
 .pc-btn-accent {
-  height: var(--pc-btn-height);
-  background: var(--pc-user-accent);
+  height: 48px;
+  background: #F5A623;
   color: #fff;
-  border-radius: var(--pc-radius-card);
-  font-size: var(--pc-font-card-title);
+  border-radius: 16px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -55,6 +55,6 @@
   align-items: center;
   padding: 2px 8px;
   border-radius: 8px;
-  font-size: var(--pc-font-caption);
+  font-size: 11px;
   font-weight: 500;
 }

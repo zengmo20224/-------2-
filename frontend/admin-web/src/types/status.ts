@@ -77,6 +77,15 @@ export const STAFF_STATUS = {
 
 export type StaffStatus = keyof typeof STAFF_STATUS
 
+// ─── App User ───
+
+export const USER_STATUS = {
+  ACTIVE: { label: '正常', color: 'success' },
+  BANNED: { label: '已封禁', color: 'danger' },
+} as const
+
+export type UserStatus = keyof typeof USER_STATUS
+
 export const SCHEDULE_STATUS = {
   AVAILABLE: { label: '可用', color: 'success' },
   UNAVAILABLE: { label: '不可用', color: 'danger' },
@@ -271,7 +280,28 @@ export function canDisableStaff(status: string): boolean {
   return status === 'ACTIVE'
 }
 
+/**
+ * Returns true if the user can be banned (currently ACTIVE).
+ * Backend: User status ACTIVE → BANNED
+ */
+export function canBanUser(status: string): boolean {
+  return status === 'ACTIVE'
+}
+
+/**
+ * Returns true if the user can be unbanned (currently BANNED).
+ */
+export function canUnbanUser(status: string): boolean {
+  return status === 'BANNED'
+}
+
 // ─── File Upload Limits ───
 
 /** Maximum file upload size: 10 MB */
 export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+/** Maximum photos per service/product detail gallery. */
+export const CATALOG_DETAIL_IMAGE_LIMIT = 20
+
+/** Maximum photos per product detail page top carousel. */
+export const PRODUCT_DETAIL_CAROUSEL_LIMIT = 5

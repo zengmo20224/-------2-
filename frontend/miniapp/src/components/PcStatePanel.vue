@@ -80,8 +80,8 @@ const sanitizedMessage = computed(() => sanitizeErrorMessage(props.errorMessage)
 .pc-state-panel__spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid var(--pc-user-line);
-  border-top-color: var(--pc-user-primary);
+  border: 3px solid #E2E9E6;
+  border-top-color: #11796F;
   border-radius: 50%;
   animation: pc-spin 0.8s linear infinite;
 }
@@ -97,13 +97,13 @@ const sanitizedMessage = computed(() => sanitizeErrorMessage(props.errorMessage)
 }
 
 .pc-state-panel__text {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
   text-align: center;
 }
 
 .pc-state-panel__reason {
-  font-size: var(--pc-font-caption);
-  color: var(--pc-user-muted);
+  font-size: 11px;
+  color: #71817D;
 }
 </style>

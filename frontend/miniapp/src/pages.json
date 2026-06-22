@@ -29,6 +29,24 @@
       "style": {
         "navigationBarTitleText": "我的"
       }
+    },
+    {
+      "path": "pages/services/detail",
+      "style": {
+        "navigationBarTitleText": "服务详情"
+      }
+    },
+    {
+      "path": "pages/products/detail",
+      "style": {
+        "navigationBarTitleText": "商品详情"
+      }
+    },
+    {
+      "path": "pages/community/detail",
+      "style": {
+        "navigationBarTitleText": "帖子详情"
+      }
     }
   ],
   "subPackages": [
@@ -83,13 +101,61 @@
         { "path": "register", "style": { "navigationBarTitleText": "注册" } },
         { "path": "forgot-password", "style": { "navigationBarTitleText": "找回密码" } }
       ]
+    },
+    {
+      "root": "pages/pets",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "我的宠物" } },
+        { "path": "edit", "style": { "navigationBarTitleText": "编辑宠物" } }
+      ]
+    },
+    {
+      "root": "pages/addresses",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "我的地址" } },
+        { "path": "edit", "style": { "navigationBarTitleText": "编辑地址" } }
+      ]
+    },
+    {
+      "root": "pages/map-picker",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "选择位置" } }
+      ]
+    },
+    {
+      "root": "pages/profile-edit",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "编辑资料" } }
+      ]
+    },
+    {
+      "root": "pages/my-community",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "我的社区" } }
+      ]
+    },
+    {
+      "root": "pages/notifications",
+      "pages": [
+        { "path": "index", "style": { "navigationBarTitleText": "消息通知" } }
+      ]
+    },
+    {
+      "root": "pages/announcement",
+      "pages": [
+        { "path": "detail", "style": { "navigationBarTitleText": "公告详情" } }
+      ]
     }
   ],
   "tabBar": {
-    "color": "#71817D",
-    "selectedColor": "#11796F",
+    "color": "#314D48",
+    "selectedColor": "#00796B",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
+    "height": "70px",
+    "iconWidth": "30px",
+    "fontSize": "12px",
+    "spacing": "4px",
     "list": [
       {
         "pagePath": "pages/home/index",

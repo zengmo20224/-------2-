@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import router from '../router'
 import type { ApiResponse } from '../types/api'
 import { sanitizeErrorMessage } from './error-sanitizer'
+import { getUserErrorMessage } from './feedback'
 
 const axiosInstance = axios.create({
   baseURL: '/api',
@@ -39,32 +40,50 @@ axiosInstance.interceptors.response.use(
     return apiResponse as never
   },
   (error) => {
+    let userMessage = '网络连接失败'
+
     if (error.response) {
       const { status, data } = error.response
-      const msg = sanitizeErrorMessage(data?.error?.message || data?.message || '')
+      const rawMsg = data?.error?.message || data?.message
+      const msg = rawMsg ? sanitizeErrorMessage(rawMsg) : ''
+      const requestUrl = error.config?.url || ''
+      userMessage = getUserErrorMessage(error, '服务器错误')
 
       switch (status) {
+        case 400:
+          userMessage = msg || '请求参数不合法，请检查填写内容'
+          ElMessage.warning(userMessage)
+          break
         case 401:
           localStorage.removeItem('admin_token')
-          router.push('/login')
-          ElMessage.warning('登录已过期，请重新登录')
+          if (!requestUrl.includes('/admin/auth/login')) {
+            router.push('/login')
+          }
+          userMessage = requestUrl.includes('/admin/auth/login')
+            ? (msg || '用户名或密码错误')
+            : '登录已过期，请重新登录'
+          ElMessage.warning(userMessage)
           break
         case 403:
           router.push('/403')
+          userMessage = msg || '无权访问该功能'
           break
         case 409:
-          ElMessage.warning(msg || '数据状态冲突，请刷新后重试')
+          userMessage = msg || '数据状态冲突，请刷新后重试'
+          ElMessage.warning(userMessage)
           break
         case 422:
-          ElMessage.warning(msg || '提交数据验证失败')
+          userMessage = msg || '提交数据验证失败'
+          ElMessage.warning(userMessage)
           break
         default:
-          ElMessage.error(msg || '服务器错误')
+          userMessage = msg || userMessage
+          ElMessage.error(userMessage)
       }
     } else {
       ElMessage.error('网络连接失败')
     }
-    return Promise.reject(error)
+    return Promise.reject(new Error(userMessage))
   },
 )
 

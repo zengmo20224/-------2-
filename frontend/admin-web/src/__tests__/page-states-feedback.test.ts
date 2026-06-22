@@ -93,6 +93,27 @@ describe('feedback utils', () => {
     spy.mockRestore()
   })
 
+  it('showError converts Axios 401 status text to a Chinese message', () => {
+    const spy = vi.spyOn(ElMessage, 'error')
+    feedback.showError('Request failed with status code 401')
+    expect(spy).toHaveBeenCalledWith('登录已过期，请重新登录')
+    spy.mockRestore()
+  })
+
+  it('showError converts Axios 400 status text with extra content to a validation message', () => {
+    const spy = vi.spyOn(ElMessage, 'error')
+    feedback.showError('Request failed with status code 400 参数不合法')
+    expect(spy).toHaveBeenCalledWith('请求参数不合法，请检查填写内容')
+    spy.mockRestore()
+  })
+
+  it('showError converts Axios response errors to backend or status messages', () => {
+    const spy = vi.spyOn(ElMessage, 'error')
+    feedback.showError({ response: { status: 500, data: {} } })
+    expect(spy).toHaveBeenCalledWith('服务内部错误，请稍后重试')
+    spy.mockRestore()
+  })
+
   it('showConflict displays conflict-specific message', () => {
     const spy = vi.spyOn(ElMessage, 'warning')
     feedback.showConflict()

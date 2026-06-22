@@ -12,7 +12,12 @@ export function getServiceCategories(): Promise<ApiResponse<ServiceCategory[]>> 
 }
 
 /** List service items (paginated) */
-export function getServiceItems(params?: PageParams & { categoryId?: string; serviceMode?: string }): Promise<ApiResponse<PageResponse<ServiceItem>>> {
+export function getServiceItems(params?: PageParams & {
+  categoryId?: string
+  serviceMode?: string
+  petType?: string
+  petSize?: string
+}): Promise<ApiResponse<PageResponse<ServiceItem>>> {
   return http.get<PageResponse<ServiceItem>>('/api/v1/service-items', params as Record<string, unknown>)
 }
 

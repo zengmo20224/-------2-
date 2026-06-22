@@ -3,9 +3,17 @@
  */
 
 page {
-  background-color: var(--pc-user-cream);
-  color: var(--pc-user-ink);
-  font-size: var(--pc-font-body);
+  background: #FAF8F3;
+  background:
+    linear-gradient(180deg, rgba(223, 242, 237, 0.45) 0, rgba(250, 248, 243, 0) 220px),
+    #FAF8F3;
+  background:
+    linear-gradient(180deg, rgba(223, 242, 237, 0.45) 0, rgba(250, 248, 243, 0) 220px),
+    #FAF8F3;
+  color: #19322E;
+  color: #19322E;
+  font-size: 14px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
@@ -13,6 +21,41 @@ view,
 text,
 image {
   box-sizing: border-box;
+}
+
+view,
+text,
+image {
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+/* H5 native tab bar polish. The icon artwork itself comes from uni-icons. */
+.uni-tabbar-bottom .uni-tabbar {
+  border-top: 1px solid rgba(226, 233, 230, 0.8);
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 -10px 30px rgba(25, 50, 46, 0.08);
+}
+
+.uni-tabbar__item {
+  min-width: 0;
+}
+
+.uni-tabbar__bd {
+  gap: 1px;
+  padding: 4px 0 3px;
+}
+
+.uni-tabbar__icon {
+  transition: transform 180ms ease;
+}
+
+.uni-tabbar__item:active .uni-tabbar__icon {
+  transform: scale(0.92);
+}
+
+.uni-tabbar__label {
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 /* Responsive: constrain content width on tablet/desktop */

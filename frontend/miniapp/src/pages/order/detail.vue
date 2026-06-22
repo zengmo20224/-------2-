@@ -57,17 +57,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import PcPageHeader from '@/components/PcPageHeader.vue'
 import PcStatePanel from '@/components/PcStatePanel.vue'
 import PcStatusTag from '@/components/PcStatusTag.vue'
 import PcPrimaryButton from '@/components/PcPrimaryButton.vue'
 import { getOrderDetail, cancelOrder } from '@/api/order'
 import type { OrderDetail } from '@/types/product'
+import { normalizeRouteParam } from '@/utils/route-query'
 
 const order = ref<OrderDetail | null>(null)
 const pageStatus = ref<'loading' | 'empty' | 'success' | 'error'>('loading')
 const cancelling = ref(false)
+const currentOrderId = ref('')
 
 const statusLabels: Record<string, string> = {
   PENDING_CONFIRM: '待确认', PREPARING: '备货中', READY_FOR_PICKUP: '待自提',
@@ -89,15 +92,22 @@ const canCancel = computed(() => {
   return s === 'PENDING_CONFIRM' || s === 'PREPARING'
 })
 
-async function loadDetail() {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1] as any
-  const id = currentPage?.options?.id
-  if (!id) { pageStatus.value = 'empty'; return }
+async function loadDetail(routeId?: unknown) {
+  const id = normalizeRouteParam(routeId ?? currentOrderId.value)
+  if (!id) {
+    order.value = null
+    pageStatus.value = 'empty'
+    return
+  }
 
+  currentOrderId.value = id
   pageStatus.value = 'loading'
-  const res = await getOrderDetail(String(id))
-  if (!res.success || !res.data) { pageStatus.value = 'error'; return }
+  const res = await getOrderDetail(id)
+  if (!res.success || !res.data) {
+    order.value = null
+    pageStatus.value = 'error'
+    return
+  }
   order.value = res.data
   pageStatus.value = 'success'
 }
@@ -113,17 +123,19 @@ async function handleCancel() {
   }
 }
 
-onMounted(() => loadDetail())
+onLoad((query) => {
+  loadDetail(query?.id)
+})
 </script>
 
 <style scoped>
 .order-detail {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .order-detail__card {
   background: #fff;
-  border-radius: var(--pc-radius-card);
+  border-radius: 16px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(25, 50, 46, 0.06);
 }
@@ -136,9 +148,9 @@ onMounted(() => loadDetail())
 }
 
 .order-detail__no {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .order-detail__items {
@@ -146,7 +158,7 @@ onMounted(() => loadDetail())
   flex-direction: column;
   gap: 8px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--pc-user-line);
+  border-bottom: 1px solid #E2E9E6;
   margin-bottom: 12px;
 }
 
@@ -156,13 +168,13 @@ onMounted(() => loadDetail())
 }
 
 .order-detail__item-name {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
 }
 
 .order-detail__item-price {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-accent);
+  font-size: 14px;
+  color: #F5A623;
 }
 
 .order-detail__row {
@@ -172,20 +184,20 @@ onMounted(() => loadDetail())
 }
 
 .order-detail__label {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-muted);
+  font-size: 14px;
+  color: #71817D;
 }
 
 .order-detail__value {
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   font-weight: 500;
 }
 
 .order-detail__value--accent {
-  color: var(--pc-user-accent);
+  color: #F5A623;
   font-weight: 700;
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
 }
 
 .order-detail__action {

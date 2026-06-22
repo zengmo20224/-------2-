@@ -108,7 +108,7 @@ function goLogin() {
 
 <style scoped>
 .auth-page {
-  padding: var(--pc-page-padding);
+  padding: 20px;
 }
 
 .auth-form {
@@ -116,27 +116,33 @@ function goLogin() {
   flex-direction: column;
   gap: 16px;
   margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #DCEBE7;
+  border-radius: 24px;
+  background: #FFFFFF;
+  box-shadow: 0 12px 32px rgba(25, 50, 46, 0.09);
 }
 
 .auth-step-label {
-  font-size: var(--pc-font-card-title);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .auth-sq-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: var(--pc-user-cream);
-  border-radius: var(--pc-radius-card);
+  background: #FFF7E6;
+  background: #FAF8F3;
+  border-radius: 16px;
   padding: 12px;
 }
 
 .auth-sq-question {
-  font-size: var(--pc-font-body);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--pc-user-ink);
+  color: #19322E;
 }
 
 .auth-success {
@@ -148,18 +154,19 @@ function goLogin() {
 }
 
 .auth-success-text {
-  font-size: var(--pc-font-card-title);
-  color: var(--pc-user-ink);
+  font-size: 16px;
+  color: #19322E;
   text-align: center;
 }
 
 .pc-input {
   height: 44px;
-  border: 1px solid var(--pc-user-line);
+  border: 1px solid #E2E9E6;
+  border: 1px solid #E2E9E6;
   border-radius: 12px;
   padding: 0 14px;
-  font-size: var(--pc-font-body);
-  color: var(--pc-user-ink);
+  font-size: 14px;
+  color: #19322E;
   background: #fff;
 }
 </style>
