@@ -1,7 +1,8 @@
-// PetCare O2O — Jenkins 声明式流水线
+// PetCare O2O — Jenkins 声明式流水线（Windows 节点 bat 语法）
 // 关联文档：docs/06-build-guide.md §3、docs/07-deployment-guide.md §6.1、jenkins/README.md
 // CI：CI-CI-001
 //
+// 运行环境：Windows 原生 Jenkins（MSI 安装），节点需有 mvn、docker、git、curl 在 PATH
 // 流水线阶段：Checkout → Backend Build → Backend Test → Backend Package
 //           → Docker Build → Deploy → Health Check → Report & Email
 //
@@ -39,7 +40,11 @@ pipeline {
                 checkout scm
                 script {
                     // 记录 commit SHA 用于镜像标签追溯（CMP §5 基线可追溯）
-                    env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    // bat 输出带 CRLF，trim + replaceAll 清理
+                    env.GIT_COMMIT_SHORT = bat(
+                        script: '@git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim().replaceAll('\r', '')
                     echo "Building commit: ${env.GIT_COMMIT_SHORT}"
                 }
             }
@@ -47,14 +52,14 @@ pipeline {
 
         stage('Backend Build') {
             steps {
-                sh 'mvn -B -V -ntp clean compile'
+                bat 'mvn -B -V -ntp clean compile'
             }
         }
 
         stage('Backend Test') {
             steps {
                 // 跑单元测试 + H2 集成测试（默认排除 tc-mysql 分组，不依赖 Docker daemon 之外的 MySQL）
-                sh 'mvn -B -ntp test'
+                bat 'mvn -B -ntp test'
             }
             post {
                 always {
@@ -73,7 +78,7 @@ pipeline {
 
         stage('Backend Package') {
             steps {
-                sh 'mvn -B -ntp package -DskipTests'
+                bat 'mvn -B -ntp package -DskipTests'
             }
             post {
                 success {
@@ -88,7 +93,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 // 构建全部镜像（后端 + 两个前端）
-                sh 'docker compose build'
+                bat 'docker compose build'
             }
         }
 
@@ -103,9 +108,9 @@ pipeline {
             }
             steps {
                 // 滚动重建并等待健康检查通过
-                sh 'docker compose up -d --wait --remove-orphans'
+                bat 'docker compose up -d --wait --remove-orphans'
                 echo "Deployment complete. Services:"
-                sh 'docker compose ps'
+                bat 'docker compose ps'
             }
         }
 
@@ -123,8 +128,12 @@ pipeline {
                     def ok = false
                     for (int i = 0; i < attempts; i++) {
                         sleep(time: 5, unit: 'SECONDS')
-                        def status = sh(script: 'curl -fsS http://localhost:8080/api/v1/system/health || echo "PENDING"',
-                                        returnStdout: true).trim()
+                        // curl 失败时不让 bat 整体失败，用 cmd 的 || 兜底输出 PENDING
+                        // @ 前缀抑制命令回显，输出干净
+                        def status = bat(
+                            script: '@curl -fsS http://localhost:8082/api/v1/system/health 2>nul || echo PENDING',
+                            returnStdout: true
+                        ).trim().replaceAll('\r', '')
                         echo "Health check attempt ${i + 1}/${attempts}: ${status}"
                         if (status != 'PENDING' && status != '') {
                             ok = true
@@ -142,10 +151,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline SUCCESS: 编译 / 测试 / 打包 / 部署全部通过'
+            echo 'Pipeline SUCCESS: 编译 / 测试 / 打包 / 部署全部通过'
         }
         failure {
-            echo '❌ Pipeline FAILED — 请查看上方日志定位失败阶段'
+            echo 'Pipeline FAILED — 请查看上方日志定位失败阶段'
         }
         always {
             // 归档覆盖率报告 HTML（CI-BL-009）供审计回溯
@@ -158,6 +167,7 @@ pipeline {
                 alwaysLinkToLastBuild: true
             ])
             // 发送测试报告邮件给组员（加分项 — 课程明确点名）
+            // 如果未配置 SMTP，emailext 会优雅跳过（不会让构建失败）
             emailext(
                 subject: "[PetCare] ${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
@@ -170,10 +180,11 @@ pipeline {
                     <p>详细测试覆盖率报告见 Jenkins 构建页面左侧 "JaCoCo Coverage Report"。</p>
                 """.stripIndent(),
                 to: "${env.TEAM_EMAIL ?: ''}",
-                attachmentsPattern: 'target/site/jacoco/index.html'
+                attachmentsPattern: 'target/site/jacoco/index.html',
+                attachBuildLog: false
             )
-            // 清理工作区（可选，保留 .m2-repo 缓存）
-            sh 'docker compose logs --tail=100 || true'
+            // 收集容器日志便于排障（失败也无所谓）
+            bat 'docker compose logs --tail=100 2>nul || exit /b 0'
         }
     }
 }

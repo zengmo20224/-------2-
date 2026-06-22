@@ -1,10 +1,10 @@
-# Jenkins 接入指南
+# Jenkins 接入指南（Windows 原生节点版）
 
 > 关联文档：`docs/06-build-guide.md` §3、`docs/07-deployment-guide.md` §6.1、`docs/03-configuration-management-plan.md` §9
 >
 > CI 配置项：`CI-CI-001`（Jenkinsfile）、`CI-CI-002`（本文件）、`CI-CI-003`（邮件模板）
 >
-> 本指南面向**本地笔记本演示**场景，指导从零接入 Jenkins 并触发完整流水线。
+> 本指南面向**本地笔记本演示**场景，Jenkins 为 Windows 原生安装（MSI），Jenkinsfile 使用 `bat` 语法。
 
 ---
 
@@ -12,11 +12,15 @@
 
 | 项 | 要求 |
 |---|---|
-| 操作系统 | Windows 10/11、macOS、Linux 均可 |
+| 操作系统 | Windows 10/11 |
 | Java | JDK 17（Jenkins 2.400+ 要求） |
-| Docker Desktop | 24+，已启用且 Docker daemon 运行中 |
+| Docker Desktop | 24+，已启用且 Docker daemon 运行中（演示时需开 TUN 模式或代理） |
+| Git | 2.40+，git.exe 在 PATH |
+| Maven | 3.9+，mvn.cmd 在 PATH（或用 Jenkins 全局工具自动装） |
+| curl | Windows 10+ 自带，curl.exe 在 PATH（用于健康检查） |
 | 内存 | ≥ 8 GB（Jenkins + Maven 构建 + Docker 4 容器） |
-| Git | 2.40+ |
+
+> Jenkinsfile 已改为纯 `bat` 语法，无需 sh/Git Bash。
 
 ---
 
@@ -24,18 +28,7 @@
 
 ### 2.1 下载与启动
 
-- **Windows**：从 https://www.jenkins.io/download/ 下载 LTS Windows 安装包，按向导安装。
-- **通用（推荐 Docker 方式）**：
-  ```bash
-  docker run -d --name jenkins \
-    --restart unless-stopped \
-    -p 8888:8080 -p 50000:50000 \
-    -v jenkins_home:/var/jenkins_home \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    jenkins/jenkins:lts-jdk17
-  ```
-  > 挂载 `/var/run/docker.sock` 让 Jenkins 容器内能调用宿主机 Docker（构建镜像与部署）。
-  > Windows Docker Desktop：`/var/run/docker.sock` 需改用 `-v //var/run/docker.sock:/var/run/docker.sock`。
+- **Windows 原生（本项目采用）**：从 https://www.jenkins.io/download/ 下载 LTS Windows 安装包，按向导安装。默认监听 `http://localhost:8080`（如冲突可在安装时改端口）。
 
 ### 2.2 解锁与初始化
 
@@ -112,7 +105,7 @@ docker compose version
    - SCM：**Git**。
    - Repository URL：`https://github.com/zengmo20224/-------2-.git`
    - Credentials：如为私有仓库则添加；公开仓库可不填。
-   - Branch Specifier：`*/main`（或 `*/phase-11-user-prerequisites`）。
+   - Branch Specifier：`*/main`（产品基线分支；日常集成可改为 `*/develop`）。
    - Script Path：`Jenkinsfile`。
 5. 保存 → 点 **Build Now** 测试。
 
@@ -159,7 +152,12 @@ Checkout → Backend Build → Backend Test → Backend Package
    git push
    ```
 3. 切到 Jenkins，观察 webhook 触发 → 流水线各阶段实时日志（编译/测试/打包/镜像构建/部署）。
-4. 等流水线绿 → 浏览器刷新 http://localhost:8081 → 看到改动生效。
+4. 等流水线绿 → 浏览器刷新三端：
+   - 管理端 PC Web：http://localhost:8080
+   - 用户端 H5：http://localhost:8081
+   - API 健康端点：http://localhost:8082/api/v1/system/health
+   
+   看到改动生效。
 5. 展示 "JaCoCo Coverage Report" 与组员收到的测试邮件。
 6. 展示 `git tag -l`、配置项登记表、变更申请单实例。
 
@@ -169,11 +167,13 @@ Checkout → Backend Build → Backend Test → Backend Package
 
 | 问题 | 解决 |
 |---|---|
-| `mvn not found` | 在 Tools 配置 Maven；或 Jenkinsfile 用 `sh 'mvn ...'` 时确认 PATH |
+| `'mvn' is not recognized` | 安装 Maven 并把 `bin` 加 PATH；或在 Jenkins → Manage Jenkins → Tools → Maven installations 勾选自动安装 |
+| `'docker' is not recognized` | 安装 Docker Desktop，确保勾选 "Add to PATH"，重启 Jenkins 服务 |
+| `'curl' is not recognized` | Windows 10+ 自带 curl；若没有，安装 curl.exe 或改用 PowerShell `Invoke-WebRequest` |
 | `docker compose` 命令找不到 | 升级 Docker Desktop 到含 compose v2 的版本；旧版用 `docker-compose` |
-| Docker socket 权限拒绝 | 把 jenkins 用户加入 docker 组：`usermod -aG docker jenkins` |
-| 端口 8080/8081 占用 | 在 `.env` 改 `ADMIN_WEB_PORT` / `H5_PORT` |
-| 邮件发送失败 | 检查 SMTP 凭证；QQ/163 需用授权码而非登录密码 |
+| Docker 拉镜像超时 | 开启科学上网客户端的 TUN 模式；或在 Docker Desktop 配代理（Settings → Resources → Proxies） |
+| 端口 8080/8081/8082 占用 | 在 `.env` 改 `ADMIN_WEB_PORT` / `H5_PORT` / `API_PORT` |
+| 邮件发送失败 | 检查 SMTP 凭证；QQ/163 需用授权码而非登录密码；未配置 SMTP 时 emailext 会跳过 |
 | Webhook 不触发 | 检查 ngrok 是否运行；Jenkins "GitHub hook trigger" 是否勾选 |
 
 ---
