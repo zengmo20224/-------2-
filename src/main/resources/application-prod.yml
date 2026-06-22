@@ -1,0 +1,62 @@
+# 生产环境配置（容器化部署）
+# 关联文档：docs/07-deployment-guide.md、docs/03-configuration-management-plan.md §7.2
+# CI：CI-RC-004
+#
+# 所有敏感配置通过环境变量注入，禁止在本文件硬编码任何密钥。
+
+spring:
+  datasource:
+    # docker-compose 网络内服务名 mysql；端口 3306
+    url: ${DB_URL:jdbc:mysql://mysql:3306/petcare_o2o?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${DB_USERNAME:petcare}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # 生产环境关闭 JPA / MyBatis-Plus 的 SQL 日志
+  configuration:
+    map-underscore-to-camel-case: true
+
+# MyBatis-Plus 生产配置：关闭 banner
+mybatis-plus:
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+petcare:
+  security:
+    # 必须由环境变量提供，不设默认值以强制生产部署显式提供
+    jwt-secret: ${JWT_SECRET}
+    jwt-issuer: ${JWT_ISSUER:petcare-o2o-api}
+    jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:120}
+  ai:
+    # V1 保持禁用（决策 D-004）
+    provider-enabled: ${AI_PROVIDER_ENABLED:false}
+
+# 服务器配置
+server:
+  port: 8080
+  shutdown: graceful
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+
+spring.lifecycle-period-timeout: 30s
+
+logging:
+  level:
+    root: INFO
+    com.petcare: INFO
+    org.springframework: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

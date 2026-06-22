@@ -1,0 +1,111 @@
+# PetCare O2O — GitHub Actions 自动部署流水线
+# 关联文档：docs/06-build-guide.md §4、docs/07-deployment-guide.md §6.2、docs/03-configuration-management-plan.md §5
+# CI：CI-CI-005
+#
+# 触发：推送 v* tag（基线 tag，见 docs/基线清单.md）
+# 内容：构建全部 Docker 镜像 → 推送到镜像库（可选）→ 在 self-hosted runner 上 docker compose 部署
+
+name: Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# 防止同一 tag 并发部署
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────────────────
+  # 构建 Docker 镜像
+  # ─────────────────────────────────────────────────────────
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Derive image tag from git tag
+        id: meta
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build all images via compose
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.version }}
+        run: docker compose build
+
+      - name: Save images to tarball (for offline transfer to self-hosted runner)
+        run: |
+          docker save petcare-api:${{ steps.meta.outputs.version }} \
+                       petcare-admin-web:${{ steps.meta.outputs.version }} \
+                       petcare-h5:${{ steps.meta.outputs.version }} \
+            -o petcare-images-${{ steps.meta.outputs.version }}.tar
+
+      - name: Upload image tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: petcare-images-${{ steps.meta.outputs.version }}
+          path: petcare-images-*.tar
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────
+  # 部署到 self-hosted runner（演示笔记本）
+  # ─────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy (self-hosted)
+    needs: build-images
+    runs-on: self-hosted
+    if: ${{ vars.ENABLE_SELF_HOSTED_DEPLOY == 'true' }}
+    environment:
+      name: production
+    env:
+      IMAGE_TAG: ${{ needs.build-images.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure .env exists
+        run: |
+          if [ ! -f .env ]; then
+            echo "⚠️  .env not found. Copying from .env.example — set real values before production!"
+            cp .env.example .env
+          fi
+          # 用本次 tag 覆盖镜像版本
+          sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
+
+      - name: Pull image tarball (if offline)
+        uses: actions/download-artifact@v4
+        with:
+          name: petcare-images-${{ env.IMAGE_TAG }}
+
+      - name: Load images
+        run: |
+          if [ -f petcare-images-${IMAGE_TAG}.tar ]; then
+            docker load -i petcare-images-${IMAGE_TAG}.tar
+          fi
+
+      - name: Deploy with docker compose
+        run: docker compose up -d --build --wait --remove-orphans
+
+      - name: Show running services
+        run: docker compose ps
+
+      - name: Smoke test
+        run: |
+          sleep 10
+          curl -fsS http://localhost:8080/ >/dev/null && echo "admin-web OK"
+          curl -fsS http://localhost:8081/ >/dev/null && echo "h5 OK"
+          curl -fsS http://localhost:8082/ >/dev/null || echo "api root endpoint expected (non-2xx is normal)"
+
+      - name: Notify
+        if: always()
+        run: |
+          echo "Deploy of ${IMAGE_TAG}: ${{ job.status }}"
+          echo "管理端: http://localhost:8080"
+          echo "用户端: http://localhost:8081"

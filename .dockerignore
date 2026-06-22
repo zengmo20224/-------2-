@@ -1,0 +1,50 @@
+# 通用忽略：避免把无关目录送入 Docker 构建上下文，加速构建并防止敏感信息泄漏
+# 关联文档：docs/07-deployment-guide.md、docs/03-configuration-management-plan.md §7.2
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI / 文档（构建镜像不需要）
+.github
+jenkins
+docs
+*.md
+!frontend/admin-web/README.md
+LICENSE
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# 构建产物
+**/target
+**/dist
+**/build
+**/coverage
+**/.vite
+**/.nuxt
+
+# 依赖目录（在镜像内重新安装，保证纯净）
+**/node_modules
+
+# 环境变量与密钥（绝对不能进镜像）
+.env
+.env.*
+!.env.example
+
+# 本地数据
+*.log
+uploads/
+data/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# docker 自身文件
+docker-compose*.yml
+Dockerfile*
+.dockerignore
