@@ -28,7 +28,7 @@
 
 ### 2.1 下载与启动
 
-- **Windows 原生（本项目采用）**：从 https://www.jenkins.io/download/ 下载 LTS Windows 安装包，按向导安装。默认监听 `http://localhost:8080`（如冲突可在安装时改端口）。
+- **Windows 原生（本项目采用）**：从 https://www.jenkins.io/download/ 下载 LTS Windows 安装包，按向导安装。默认监听 `http://localhost:8080`，但本机 8080 被 docker-compose 的管理端占用，故将 Jenkins 端口改为 **9090**（修改 `F:\jenkins.xml` 的 `--httpPort=9090` 后 `Start-Service Jenkins`）。
 
 ### 2.2 解锁与初始化
 
