@@ -149,7 +149,7 @@
 | `phase-N-*` | 阶段交付分支（按里程碑或功能模块） | `develop` | `develop` | `phase-<编号>-<主题>` |
 | `hotfix/*` | 紧急修复 | `main` | `main` + `develop` | `hotfix/CR-<日期>-<序号>` |
 
-> **现状说明**：项目当前以 `phase-*` 分支推进，`main` / `develop` 将在本 CMP 落地时补建，用于固化稳定基线（见 §5）。
+> **现状说明**：`main` 与 `develop` 已于 2026-06-22 建立，二者均基于 `phase-11-user-prerequisites` 的基线 commit（`441b5a6`）。此后 `main` 只接受基线合并与 hotfix，日常开发在 `develop` 与 `feature/*` 上推进。`phase-*` 分支保留为历史里程碑记录。
 
 ### 4.3 版本号规则（SemVer + 里程碑后缀）
 
