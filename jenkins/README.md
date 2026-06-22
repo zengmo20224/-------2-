@@ -98,7 +98,7 @@ docker compose version
 4. `Secret` 填上一步生成的值。
 5. `ID` 必须填写：`petcare-jwt-secret`。
 
-普通 CI 构建不会读取该凭据；只有手动设置 `DEPLOY=true` 进入部署时，流水线才会在部署前校验该凭据是否存在且 UTF-8 字节长度不少于 32。未配置时会在 `Deployment Config Check` 阶段直接失败，避免后端容器启动后才显示 unhealthy。
+普通 CI 构建不会读取该凭据；只有人工点击 **Build with Parameters** 且勾选 `DEPLOY=true` 进入部署时，流水线才会在部署前校验该凭据是否存在且 UTF-8 字节长度不少于 32。未配置时会在 `Deployment Config Check` 阶段直接失败，避免后端容器启动后才显示 unhealthy。
 
 ### 4.5 Docker Compose 本地 `.env`
 
@@ -132,7 +132,7 @@ AI_PROVIDER_ENABLED=false
 1. Jenkins 首页 → `New Item` → 名字填 `petcare-o2o` → 选 **Pipeline** → OK。
 2. **General**：
    - 勾选 "This project is parameterized"，加：
-     - Boolean Parameter `DEPLOY`（默认 false）：普通构建只做编译/测试/打包/镜像构建；手动勾选后才部署。
+     - Boolean Parameter `DEPLOY`（默认 false）：普通构建只做编译/测试/打包/镜像构建；人工 Build with Parameters 勾选后才部署。
      - String Parameter `GIT_BRANCH`（默认 `*/main`）。
 3. **Build Triggers**：
    - ☑ **GitHub hook trigger for GITScm polling**（配合 Webhook）。
@@ -171,11 +171,11 @@ GitHub 仓库 → `Settings → Webhooks → Add webhook`：
 
 ```
 Checkout → Backend Build → Backend Test → Backend Package
-       → Docker Build → Deployment Config Check (DEPLOY=true) → Deploy (DEPLOY=true)
+       → Docker Build → Deployment Config Check (人工 DEPLOY=true) → Deploy (人工 DEPLOY=true)
        → Health Check (条件) → Post
 ```
 
-- **Deploy / Health Check 阶段**仅在手动设置 `DEPLOY=true` 时执行，避免普通 `main` / `develop` push 因本机部署凭据缺失而失败，也避免每次 push 都重建本地生产容器。
+- **Deploy / Health Check 阶段**仅在人工 `Build with Parameters` 且 `DEPLOY=true` 时执行。Webhook、SCM 轮询和普通 `Build Now` 即使带有历史参数值，也只做可构建性验证，避免普通 `main` / `develop` push 因本机部署凭据缺失而失败，也避免每次 push 都重建本地生产容器。
 - **Post**：无论成功失败都收集 JUnit/JaCoCo/HTML 报告，并发送邮件。
 
 ---

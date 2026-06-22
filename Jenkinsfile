@@ -4,7 +4,7 @@
 //
 // 运行环境：Windows 原生 Jenkins（MSI 安装），节点需有 mvn、docker、git、curl 在 PATH
 // 流水线阶段：Checkout → Backend Build → Backend Test → Backend Package
-//           → Docker Build → Deploy(DEPLOY=true) → Health Check → Report & Email
+//           → Docker Build → Deploy(人工 DEPLOY=true) → Health Check → Report & Email
 //
 // 触发方式：
 //   - 手动 Build Now
@@ -26,6 +26,14 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20'))
         timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
+    }
+
+    parameters {
+        booleanParam(
+            name: 'DEPLOY',
+            defaultValue: false,
+            description: '仅人工 Build with Parameters 勾选后执行部署；Webhook/SCM 轮询构建只验证可构建性。'
+        )
     }
 
     // 流水线级环境变量（节点级机密请在 Jenkins Credentials 中配置后引用）
@@ -107,7 +115,10 @@ pipeline {
 
         stage('Deployment Config Check') {
             when {
-                expression { env.DEPLOY == 'true' }
+                allOf {
+                    triggeredBy 'UserIdCause'
+                    expression { params.DEPLOY == true }
+                }
             }
             steps {
                 withCredentials([string(credentialsId: "${env.JWT_SECRET_CREDENTIAL_ID}", variable: 'JWT_SECRET')]) {
@@ -120,8 +131,11 @@ pipeline {
 
         stage('Deploy') {
             when {
-                // 只在手动指定 DEPLOY=true 时部署；普通 main/develop 构建只验证可构建性。
-                expression { env.DEPLOY == 'true' }
+                // 只在人工 Build with Parameters 且 DEPLOY=true 时部署。
+                allOf {
+                    triggeredBy 'UserIdCause'
+                    expression { params.DEPLOY == true }
+                }
             }
             steps {
                 // 滚动重建并等待健康检查通过
@@ -135,7 +149,10 @@ pipeline {
 
         stage('Health Check') {
             when {
-                expression { env.DEPLOY == 'true' }
+                allOf {
+                    triggeredBy 'UserIdCause'
+                    expression { params.DEPLOY == true }
+                }
             }
             steps {
                 script {
