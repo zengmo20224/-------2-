@@ -14,6 +14,13 @@
 pipeline {
     agent any
 
+    // 显式声明使用 Jenkins 全局工具配置的 JDK 与 Maven
+    // 名称需与 Manage Jenkins → Tools 里的 installation name 一致
+    tools {
+        jdk 'JDK21'
+        maven 'M3'
+    }
+
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '20'))
