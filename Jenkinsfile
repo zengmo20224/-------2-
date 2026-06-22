@@ -123,7 +123,7 @@ pipeline {
                     def ok = false
                     for (int i = 0; i < attempts; i++) {
                         sleep(time: 5, unit: 'SECONDS')
-                        def status = sh(script: 'curl -fsS http://localhost:8080/api/v1/public/services || echo "PENDING"',
+                        def status = sh(script: 'curl -fsS http://localhost:8080/api/v1/system/health || echo "PENDING"',
                                         returnStdout: true).trim()
                         echo "Health check attempt ${i + 1}/${attempts}: ${status}"
                         if (status != 'PENDING' && status != '') {

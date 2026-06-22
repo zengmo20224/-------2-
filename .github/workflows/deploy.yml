@@ -101,7 +101,7 @@ jobs:
           sleep 10
           curl -fsS http://localhost:8080/ >/dev/null && echo "admin-web OK"
           curl -fsS http://localhost:8081/ >/dev/null && echo "h5 OK"
-          curl -fsS http://localhost:8082/ >/dev/null || echo "api root endpoint expected (non-2xx is normal)"
+          curl -fsS http://localhost:8082/api/v1/system/health >/dev/null && echo "api OK" || echo "api health endpoint check"
 
       - name: Notify
         if: always()

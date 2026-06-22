@@ -35,10 +35,9 @@ RUN groupadd -r petcare && useradd -r -g petcare -d /app -s /sbin/nologin petcar
 # 拷贝构建产物
 COPY --from=builder /workspace/app.jar /app/app.jar
 
-# 健康检查：用 TCP 端口探测（不依赖 actuator 依赖）
-# 启动 Spring Boot 后 8080 端口监听即视为就绪
+# 健康检查：用 permitAll 的健康端点（根路径 / 返回 401，不能用）
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
-  CMD curl -fsS http://localhost:8080/ || exit 1
+  CMD curl -fsS http://localhost:8080/api/v1/system/health || exit 1
 
 USER petcare
 

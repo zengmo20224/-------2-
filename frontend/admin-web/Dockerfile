@@ -4,11 +4,12 @@
 
 # ---------- 阶段 1：构建 ----------
 # 注意：build context 为仓库根（见 docker-compose.yml），前端源码在 frontend/admin-web/
-FROM node:20-alpine AS builder
+# node 24 与本地开发环境保持一致（避免 npm 10/11 的 lock 文件格式差异）
+FROM node:24-alpine AS builder
 WORKDIR /workspace
 
 # 利用层缓存：先复制 package 元数据
-COPY frontend/admin-web/package.json frontend/admin-web/package-lock.json* ./
+COPY frontend/admin-web/package.json frontend/admin-web/package-lock.json ./
 RUN npm ci
 
 # 复制源码并构建（产物在 /workspace/dist）
@@ -31,7 +32,7 @@ COPY --from=builder /workspace/dist /usr/share/nginx/html
 COPY nginx/admin-web.conf /etc/nginx/conf.d/default.conf
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -q --spider http://localhost/ || exit 1
+  CMD wget -q --spider http://127.0.0.1/ || exit 1
 
 EXPOSE 80
 
