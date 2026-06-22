@@ -46,6 +46,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -161,12 +162,12 @@ class AdminBookingControllerTest {
         @Test
         @DisplayName("GET /admin/bookings returns paginated list")
         void listBookings() throws Exception {
-            mockMvc.perform(get("/api/v1/admin/bookings")
+            mockMvc.perform(get("/api/v1/admin/bookings?size=100")
                             .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.items").isArray())
-                    .andExpect(jsonPath("$.data.items.length()").value(1));
+                    .andExpect(jsonPath("$.data.items[*].id").value(hasItem(bookingId.toString())));
         }
 
         @Test

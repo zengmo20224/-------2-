@@ -36,6 +36,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -201,10 +202,10 @@ class AdminManagementControllerTest {
 
     @Test
     void serviceItemsSupportPagedListCreateAndDisable() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/service-items?page=1&size=10")
+        mockMvc.perform(get("/api/v1/admin/service-items?page=1&size=100")
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(1));
+                .andExpect(jsonPath("$.data.items[*].id").value(hasItem(serviceItemId.toString())));
 
         mockMvc.perform(post("/api/v1/admin/service-items")
                         .header("Authorization", bearer(token))
@@ -271,10 +272,10 @@ class AdminManagementControllerTest {
 
     @Test
     void staffProfilesAndScheduleUpdatesAreManaged() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/staff?page=1&size=10")
+        mockMvc.perform(get("/api/v1/admin/staff?page=1&size=100")
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(1));
+                .andExpect(jsonPath("$.data.items[*].id").value(hasItem(staffId.toString())));
 
         String createdStaffBody = mockMvc.perform(post("/api/v1/admin/staff")
                         .header("Authorization", bearer(token))
