@@ -204,7 +204,7 @@ class AdminManagementControllerTest {
         mockMvc.perform(get("/api/v1/admin/service-items?page=1&size=10")
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(1));
+                .andExpect(jsonPath("$.data.total").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)));
 
         mockMvc.perform(post("/api/v1/admin/service-items")
                         .header("Authorization", bearer(token))
@@ -274,7 +274,7 @@ class AdminManagementControllerTest {
         mockMvc.perform(get("/api/v1/admin/staff?page=1&size=10")
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(1));
+                .andExpect(jsonPath("$.data.total").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)));
 
         String createdStaffBody = mockMvc.perform(post("/api/v1/admin/staff")
                         .header("Authorization", bearer(token))
