@@ -43,3 +43,29 @@ data/
 
 # Docker local state
 docker-compose.override.yml
+
+# Docker runtime volumes（防止误提交容器数据）
+mysql-data/
+*.tar
+
+# Maven local repo（Jenkins 流水线内 .m2-repo）
+.m2-repo/
+
+# CI 测试报告产物（不进版本库，由 CI 归档）
+target/site/jacoco/
+frontend/*/coverage/
+
+# 审计证据（图片/视频可能较大，按需手动归档）
+docs/audit-evidence/**/*.mp4
+docs/audit-evidence/**/*.mov
+
+# Agent/工具临时产物（不纳入版本库）
+.claude/
+docgen/
+
+# 微信小程序个人配置（含 appid / 本地路径，不应共享）
+project.private.config.json
+**/project.private.config.json
+
+# 误产物（Windows nul 是保留设备名，不应作为文件存在）
+nul
