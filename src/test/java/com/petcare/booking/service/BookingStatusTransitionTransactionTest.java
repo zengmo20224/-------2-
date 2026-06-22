@@ -48,6 +48,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @ActiveProfiles("test")
 @Tag("status-transition")
+// 每个测试方法结束后重建 Spring 上下文 + H2 schema，避免 843 个测试
+// 共用同一个内存库时数据污染（Jenkins 全量 test 时 oldStatus 被前面残留数据置空）
+@org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class BookingStatusTransitionTransactionTest {
 
     @Autowired private BookingApplicationService bookingApplicationService;
