@@ -181,7 +181,7 @@ pipeline {
                 """.stripIndent(),
                 to: "${env.TEAM_EMAIL ?: ''}",
                 attachmentsPattern: 'target/site/jacoco/index.html',
-                attachBuildLog: false
+                attachLog: false
             )
             // 收集容器日志便于排障（失败也无所谓）
             bat 'docker compose logs --tail=100 2>nul || exit /b 0'
