@@ -82,7 +82,7 @@ docker version       # 在 Jenkins 节点验证
 docker compose version
 ```
 
-### 4.4 JWT_SECRET 凭据（部署必填）
+### 4.4 JWT_SECRET 凭据（仅 DEPLOY=true 部署必填）
 
 `docker compose` 的生产后端使用 `JWT_SECRET` 签发登录令牌。该值不能写进仓库，也不会随本地 `.env` 提交到 Jenkins 工作区；必须在 Jenkins Credentials 中配置。
 
@@ -98,7 +98,7 @@ docker compose version
 4. `Secret` 填上一步生成的值。
 5. `ID` 必须填写：`petcare-jwt-secret`。
 
-流水线会在部署前校验该凭据是否存在且 UTF-8 字节长度不少于 32；未配置时会在 `Deployment Config Check` 阶段直接失败，避免后端容器启动后才显示 unhealthy。
+普通 CI 构建不会读取该凭据；只有手动设置 `DEPLOY=true` 进入部署时，流水线才会在部署前校验该凭据是否存在且 UTF-8 字节长度不少于 32。未配置时会在 `Deployment Config Check` 阶段直接失败，避免后端容器启动后才显示 unhealthy。
 
 ### 4.5 Docker Compose 本地 `.env`
 
@@ -131,8 +131,8 @@ AI_PROVIDER_ENABLED=false
 
 1. Jenkins 首页 → `New Item` → 名字填 `petcare-o2o` → 选 **Pipeline** → OK。
 2. **General**：
-   - 勾选 "This project is parameterized"（可选），加：
-     - Boolean Parameter `DEPLOY`（默认 false）：手动触发部署。
+   - 勾选 "This project is parameterized"，加：
+     - Boolean Parameter `DEPLOY`（默认 false）：普通构建只做编译/测试/打包/镜像构建；手动勾选后才部署。
      - String Parameter `GIT_BRANCH`（默认 `*/main`）。
 3. **Build Triggers**：
    - ☑ **GitHub hook trigger for GITScm polling**（配合 Webhook）。
@@ -171,11 +171,11 @@ GitHub 仓库 → `Settings → Webhooks → Add webhook`：
 
 ```
 Checkout → Backend Build → Backend Test → Backend Package
-       → Docker Build → Deployment Config Check (条件) → Deploy (条件)
+       → Docker Build → Deployment Config Check (DEPLOY=true) → Deploy (DEPLOY=true)
        → Health Check (条件) → Post
 ```
 
-- **Deploy / Health Check 阶段**仅在 `main` / `develop` 分支或 `DEPLOY=true` 时执行，避免每次 push 都重建生产。
+- **Deploy / Health Check 阶段**仅在手动设置 `DEPLOY=true` 时执行，避免普通 `main` / `develop` push 因本机部署凭据缺失而失败，也避免每次 push 都重建本地生产容器。
 - **Post**：无论成功失败都收集 JUnit/JaCoCo/HTML 报告，并发送邮件。
 
 ---
@@ -188,7 +188,7 @@ Checkout → Backend Build → Backend Test → Backend Package
    git commit -m "feat(h5): tweak hero text"
    git push
    ```
-3. 切到 Jenkins，观察 webhook 触发 → 流水线各阶段实时日志（编译/测试/打包/镜像构建/部署）。
+3. 切到 Jenkins，观察 webhook 触发 → 流水线各阶段实时日志（编译/测试/打包/镜像构建）。如需演示部署，手动 Build with Parameters 并勾选 `DEPLOY=true`。
 4. 等流水线绿 → 浏览器刷新三端：
    - 管理端 PC Web：http://localhost:8080
    - 用户端 H5：http://localhost:8081

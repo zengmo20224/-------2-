@@ -4,7 +4,7 @@
 //
 // 运行环境：Windows 原生 Jenkins（MSI 安装），节点需有 mvn、docker、git、curl 在 PATH
 // 流水线阶段：Checkout → Backend Build → Backend Test → Backend Package
-//           → Docker Build → Deploy → Health Check → Report & Email
+//           → Docker Build → Deploy(DEPLOY=true) → Health Check → Report & Email
 //
 // 触发方式：
 //   - 手动 Build Now
@@ -107,11 +107,7 @@ pipeline {
 
         stage('Deployment Config Check') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                    expression { env.DEPLOY == 'true' }
-                }
+                expression { env.DEPLOY == 'true' }
             }
             steps {
                 withCredentials([string(credentialsId: "${env.JWT_SECRET_CREDENTIAL_ID}", variable: 'JWT_SECRET')]) {
@@ -124,12 +120,8 @@ pipeline {
 
         stage('Deploy') {
             when {
-                // 只在主分支或手动指定 DEPLOY=true 时部署
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                    expression { env.DEPLOY == 'true' }
-                }
+                // 只在手动指定 DEPLOY=true 时部署；普通 main/develop 构建只验证可构建性。
+                expression { env.DEPLOY == 'true' }
             }
             steps {
                 // 滚动重建并等待健康检查通过
@@ -143,11 +135,7 @@ pipeline {
 
         stage('Health Check') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                    expression { env.DEPLOY == 'true' }
-                }
+                expression { env.DEPLOY == 'true' }
             }
             steps {
                 script {
