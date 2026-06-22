@@ -12,6 +12,7 @@ import com.petcare.community.mapper.PostFavoriteMapper;
 import com.petcare.community.mapper.PostLikeMapper;
 import com.petcare.community.mapper.PostMapper;
 import com.petcare.community.mapper.PostReportMapper;
+import com.petcare.notification.service.NotificationService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,15 +28,18 @@ public class CommunityInteractionService {
     private final PostLikeMapper likeMapper;
     private final PostFavoriteMapper favoriteMapper;
     private final PostReportMapper reportMapper;
+    private final NotificationService notificationService;
 
     public CommunityInteractionService(PostMapper postMapper,
                                         PostLikeMapper likeMapper,
                                         PostFavoriteMapper favoriteMapper,
-                                        PostReportMapper reportMapper) {
+                                        PostReportMapper reportMapper,
+                                        NotificationService notificationService) {
         this.postMapper = postMapper;
         this.likeMapper = likeMapper;
         this.favoriteMapper = favoriteMapper;
         this.reportMapper = reportMapper;
+        this.notificationService = notificationService;
     }
 
     // ==================== Like Operations ====================
@@ -70,6 +74,10 @@ public class CommunityInteractionService {
 
         post.setLikeCount(post.getLikeCount() + 1);
         postMapper.updateById(post);
+
+        // Notify post author
+        notificationService.createNotification(post.getUserId(), currentUserId,
+                "LIKE", postId, null, null);
     }
 
     /**
@@ -122,6 +130,10 @@ public class CommunityInteractionService {
 
         post.setFavoriteCount(post.getFavoriteCount() + 1);
         postMapper.updateById(post);
+
+        // Notify post author
+        notificationService.createNotification(post.getUserId(), currentUserId,
+                "FAVORITE", postId, null, null);
     }
 
     /**

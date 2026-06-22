@@ -12,6 +12,7 @@ import com.petcare.community.mapper.PostFavoriteMapper;
 import com.petcare.community.mapper.PostLikeMapper;
 import com.petcare.community.mapper.PostMapper;
 import com.petcare.community.mapper.PostReportMapper;
+import com.petcare.notification.service.NotificationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,9 @@ class CommunityInteractionServiceTest {
 
     @Mock
     private PostReportMapper reportMapper;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private CommunityInteractionService service;

@@ -1,6 +1,7 @@
 package com.petcare.service.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.petcare.common.api.ApiResponse;
 import com.petcare.common.pagination.PageResponse;
@@ -8,7 +9,9 @@ import com.petcare.service.dto.ServiceCategoryResponse;
 import com.petcare.service.dto.ServiceItemResponse;
 import com.petcare.service.entity.ServiceCategory;
 import com.petcare.service.entity.ServiceItem;
+import com.petcare.service.entity.ServiceItemImage;
 import com.petcare.service.service.ServiceCategoryService;
+import com.petcare.service.service.ServiceItemImageService;
 import com.petcare.service.service.ServiceItemService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,11 +31,14 @@ public class ServiceCatalogController {
 
     private final ServiceCategoryService serviceCategoryService;
     private final ServiceItemService serviceItemService;
+    private final ServiceItemImageService serviceItemImageService;
 
     public ServiceCatalogController(ServiceCategoryService serviceCategoryService,
-                                    ServiceItemService serviceItemService) {
+                                    ServiceItemService serviceItemService,
+                                    ServiceItemImageService serviceItemImageService) {
         this.serviceCategoryService = serviceCategoryService;
         this.serviceItemService = serviceItemService;
+        this.serviceItemImageService = serviceItemImageService;
     }
 
     /**
@@ -89,6 +95,16 @@ public class ServiceCatalogController {
         return new ServiceItemResponse(
                 i.getId(), i.getCategoryId(), i.getName(), i.getServiceMode(),
                 i.getPrice(), i.getDurationMinutes(), i.getPetType(), i.getPetSize(),
-                i.getNeedAddress(), i.getNeedPet(), i.getDescription(), i.getCoverUrl());
+                i.getNeedAddress(), i.getNeedPet(), i.getDescription(), i.getCoverUrl(),
+                imageUrls(i.getId()));
+    }
+
+    private List<String> imageUrls(Long serviceItemId) {
+        return serviceItemImageService.list(new LambdaQueryWrapper<ServiceItemImage>()
+                        .eq(ServiceItemImage::getServiceItemId, serviceItemId)
+                        .orderByAsc(ServiceItemImage::getSort))
+                .stream()
+                .map(ServiceItemImage::getImageUrl)
+                .toList();
     }
 }

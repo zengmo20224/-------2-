@@ -9,6 +9,7 @@ import com.petcare.community.dto.CommentResponse;
 import com.petcare.community.dto.PostCreateRequest;
 import com.petcare.community.dto.PostResponse;
 import com.petcare.community.dto.PublicCommentResponse;
+import com.petcare.community.dto.PublicCommentTreeResponse;
 import com.petcare.community.dto.PublicPostDetailResponse;
 import com.petcare.community.dto.PublicPostSummaryResponse;
 import com.petcare.community.dto.ReportPostRequest;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * User-facing post and comment endpoints.
@@ -52,9 +55,11 @@ public class PostController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<PublicPostSummaryResponse>>> listPosts(
             @RequestParam(required = false) Long topicId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        PageResponse<PublicPostSummaryResponse> result = postService.listPublicPosts(topicId, page, size);
+        PageResponse<PublicPostSummaryResponse> result = postService.listPublicPosts(topicId, keyword, tag, page, size);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
@@ -80,16 +85,13 @@ public class PostController {
     }
 
     /**
-     * List published comments for a published post. The parent post must be
-     * PUBLISHED; otherwise a safe 404 is returned. Only PUBLISHED comments are
-     * returned, without private identifiers or internal status.
+     * List published comments for a published post in tree structure.
+     * Returns top-level comments with nested replies.
      */
     @GetMapping("/{postId}/comments")
-    public ResponseEntity<ApiResponse<PageResponse<PublicCommentResponse>>> listComments(
-            @PathVariable Long postId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        PageResponse<PublicCommentResponse> result = postService.listPublicComments(postId, page, size);
+    public ResponseEntity<ApiResponse<List<PublicCommentTreeResponse>>> listComments(
+            @PathVariable Long postId) {
+        List<PublicCommentTreeResponse> result = postService.listPublicCommentsTree(postId);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
@@ -103,6 +105,16 @@ public class PostController {
         Long currentUserId = resolveCurrentUserId();
         CommentResponse result = postService.createComment(currentUserId, postId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(result));
+    }
+
+    /**
+     * Delete a post. Only the post author can delete.
+     */
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
+        Long currentUserId = resolveCurrentUserId();
+        postService.deletePost(currentUserId, postId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     /**
@@ -142,6 +154,42 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> unfavoritePost(@PathVariable Long postId) {
         Long currentUserId = resolveCurrentUserId();
         interactionService.unfavoritePost(currentUserId, postId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /**
+     * Delete a comment. Only the comment author can delete.
+     */
+    @DeleteMapping("/{postId}/comments/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId) {
+        Long currentUserId = resolveCurrentUserId();
+        postService.deleteComment(currentUserId, commentId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /**
+     * Like a comment. Idempotent.
+     */
+    @PostMapping("/{postId}/comments/{commentId}/like")
+    public ResponseEntity<ApiResponse<Void>> likeComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId) {
+        Long currentUserId = resolveCurrentUserId();
+        postService.likeComment(currentUserId, commentId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /**
+     * Remove like from a comment. Idempotent.
+     */
+    @DeleteMapping("/{postId}/comments/{commentId}/like")
+    public ResponseEntity<ApiResponse<Void>> unlikeComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId) {
+        Long currentUserId = resolveCurrentUserId();
+        postService.unlikeComment(currentUserId, commentId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

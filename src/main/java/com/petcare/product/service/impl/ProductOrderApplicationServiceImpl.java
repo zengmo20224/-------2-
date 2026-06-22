@@ -42,9 +42,7 @@ public class ProductOrderApplicationServiceImpl implements ProductOrderApplicati
 
     @Override
     public ProductOrderResponse createOrder(Long currentUserId, ProductOrderCreateRequest request) {
-        ProductOrder order = transactionService.createOrder(
-                currentUserId, request.storeId(),
-                request.contactName(), request.contactPhone(), request.remark());
+        ProductOrder order = transactionService.createOrder(currentUserId, request);
         return toOrderResponse(order);
     }
 
@@ -84,6 +82,7 @@ public class ProductOrderApplicationServiceImpl implements ProductOrderApplicati
     private ProductOrderResponse toOrderResponse(ProductOrder order) {
         return new ProductOrderResponse(
                 order.getId(), order.getOrderNo(), order.getTotalAmount(),
+                order.getDeliveryMethod(), order.getAddressSnapshot(),
                 order.getPaymentMethod(), order.getPaymentStatus(),
                 order.getPickupStatus(), order.getStatus(),
                 order.getContactName(), order.getContactPhone(), order.getRemark(),
@@ -103,6 +102,7 @@ public class ProductOrderApplicationServiceImpl implements ProductOrderApplicati
         return new ProductOrderDetailResponse(
                 order.getId(), order.getOrderNo(), order.getUserId(),
                 order.getStoreId(), order.getTotalAmount(),
+                order.getDeliveryMethod(), order.getAddressSnapshot(),
                 order.getPaymentMethod(), order.getPaymentStatus(),
                 order.getPickupStatus(), order.getStatus(),
                 order.getContactName(), order.getContactPhone(),

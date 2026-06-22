@@ -2,18 +2,47 @@ package com.petcare.product.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 /**
- * Request DTO for creating a pickup order.
+ * Request DTO for creating a product order.
  * Does NOT contain userId, price, or amount — those come from server-side.
+ *
+ * <p>Supports two fulfillment modes:
+ * <ul>
+ *   <li><b>PICKUP</b> — customer picks up at a store; {@code storeId} required.</li>
+ *   <li><b>EXPRESS</b> — delivered to an address; {@code addressId} required.</li>
+ * </ul>
+ * The cross-field rule is enforced by {@link #isValidDelivery()}.
  */
 public record ProductOrderCreateRequest(
-        @NotNull(message = "门店ID不能为空")
         Long storeId,
+        @NotNull(message = "配送方式不能为空")
+        @Pattern(regexp = "PICKUP|EXPRESS", message = "配送方式只能是 PICKUP 或 EXPRESS")
+        String deliveryMethod,
+        Long addressId,
         @NotBlank(message = "联系人姓名不能为空")
         String contactName,
         @NotBlank(message = "联系电话不能为空")
         String contactPhone,
         String remark
 ) {
+    /**
+     * Cross-field validation: pickup requires storeId, express requires addressId.
+     * Bean Validation invokes methods named {@code is...} annotated with
+     * {@link jakarta.validation.constraints.AssertTrue @AssertTrue}.
+     */
+    @jakarta.validation.constraints.AssertTrue(message = "自提需选择门店，快递需选择收货地址")
+    public boolean isValidDelivery() {
+        if (deliveryMethod == null) {
+            return true; // @NotNull on deliveryMethod handles the null case
+        }
+        if ("PICKUP".equals(deliveryMethod)) {
+            return storeId != null;
+        }
+        if ("EXPRESS".equals(deliveryMethod)) {
+            return addressId != null;
+        }
+        return false;
+    }
 }

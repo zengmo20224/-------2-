@@ -23,6 +23,9 @@ public record PublicPostDetailResponse(
         Integer favoriteCount,
         LocalDateTime publishTime,
         LocalDateTime createTime,
-        List<String> imageUrls
+        List<String> imageUrls,
+        List<String> tags,
+        String authorName,
+        String authorAvatar
 ) {
 }

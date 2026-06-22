@@ -224,7 +224,7 @@ class SnowflakeIdSerializationContractTest {
             var dto = new AdminManagementDtos.ServiceItemView(
                     BIG_ID, BIG_ID, "洗护", "STORE",
                     new BigDecimal("99.00"), 60, "ALL", "ALL",
-                    true, false, "描述", null, "ACTIVE", 0);
+                    true, false, "描述", null, List.of(), "ACTIVE", 0);
             String json = toJson(dto);
             assertIdIsString(json, "id");
             assertIdIsString(json, "categoryId");
@@ -235,7 +235,7 @@ class SnowflakeIdSerializationContractTest {
             var dto = new AdminManagementDtos.ServiceItemView(
                     BIG_ID, BIG_ID, "洗护", "STORE",
                     new BigDecimal("99.00"), 60, "ALL", "ALL",
-                    true, false, "描述", null, "ACTIVE", 0);
+                    true, false, "描述", null, List.of(), "ACTIVE", 0);
             String json = toJson(dto);
             assertNonIdIsNumber(json, "durationMinutes");
             assertNonIdIsNumber(json, "sort");
@@ -293,7 +293,7 @@ class SnowflakeIdSerializationContractTest {
         @Test
         void bookingResponse_allIds_areJsonStrings() throws Exception {
             var dto = new BookingResponse(
-                    BIG_ID, "BK001", BIG_ID, BIG_ID, BIG_ID, BIG_ID, BIG_ID,
+                    BIG_ID, "BK001", BIG_ID, BIG_ID, BIG_ID, BIG_ID, "洗护服务", BIG_ID,
                     "STORE", LocalDate.of(2026, 6, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                     BIG_ID, new BigDecimal("5.0"), "张三", "13800000000",
                     new BigDecimal("99.00"), "CASH", "UNPAID", "PENDING_CONFIRM",
@@ -311,7 +311,7 @@ class SnowflakeIdSerializationContractTest {
         @Test
         void bookingResponse_priceAndDistance_remainJsonNumbers() throws Exception {
             var dto = new BookingResponse(
-                    BIG_ID, "BK001", BIG_ID, BIG_ID, BIG_ID, BIG_ID, BIG_ID,
+                    BIG_ID, "BK001", BIG_ID, BIG_ID, BIG_ID, BIG_ID, "洗护服务", BIG_ID,
                     "STORE", LocalDate.of(2026, 6, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                     BIG_ID, new BigDecimal("5.0"), "张三", "13800000000",
                     new BigDecimal("99.00"), "CASH", "UNPAID", "PENDING_CONFIRM",
@@ -335,7 +335,7 @@ class SnowflakeIdSerializationContractTest {
         void productView_id_and_categoryId_areJsonStrings() throws Exception {
             var dto = new AdminManagementDtos.ProductView(
                     BIG_ID, BIG_ID, "宠物零食", null,
-                    new BigDecimal("20.00"), 10, 5, "描述", true, "ON_SALE", 0);
+                    new BigDecimal("20.00"), 10, 5, "描述", true, List.of(), List.of(), "ON_SALE", 0);
             String json = toJson(dto);
             assertIdIsString(json, "id");
             assertIdIsString(json, "categoryId");
@@ -345,7 +345,7 @@ class SnowflakeIdSerializationContractTest {
         void productView_stock_salesCount_remainJsonNumbers() throws Exception {
             var dto = new AdminManagementDtos.ProductView(
                     BIG_ID, BIG_ID, "宠物零食", null,
-                    new BigDecimal("20.00"), 10, 5, "描述", true, "ON_SALE", 0);
+                    new BigDecimal("20.00"), 10, 5, "描述", true, List.of(), List.of(), "ON_SALE", 0);
             String json = toJson(dto);
             assertNonIdIsNumber(json, "stock");
             assertNonIdIsNumber(json, "salesCount");
@@ -364,8 +364,9 @@ class SnowflakeIdSerializationContractTest {
         @Test
         void productOrderResponse_id_isJsonString() throws Exception {
             var dto = new ProductOrderResponse(
-                    BIG_ID, "ORD001", new BigDecimal("99.00"), "CASH", "UNPAID",
-                    "PENDING", "PENDING", "张三", "13800000000", null,
+                    BIG_ID, "ORD001", new BigDecimal("99.00"), "PICKUP", null,
+                    "OFFLINE_STORE", "UNPAID", "WAIT_PREPARE", "PENDING_CONFIRM",
+                    "张三", "13800000000", null,
                     LocalDateTime.now(), null, null, null);
             String json = toJson(dto);
             assertIdIsString(json, "id");
@@ -374,8 +375,9 @@ class SnowflakeIdSerializationContractTest {
         @Test
         void productOrderResponse_totalAmount_remainJsonNumber() throws Exception {
             var dto = new ProductOrderResponse(
-                    BIG_ID, "ORD001", new BigDecimal("99.00"), "CASH", "UNPAID",
-                    "PENDING", "PENDING", "张三", "13800000000", null,
+                    BIG_ID, "ORD001", new BigDecimal("99.00"), "PICKUP", null,
+                    "OFFLINE_STORE", "UNPAID", "WAIT_PREPARE", "PENDING_CONFIRM",
+                    "张三", "13800000000", null,
                     LocalDateTime.now(), null, null, null);
             String json = toJson(dto);
             assertNonIdIsNumber(json, "totalAmount");
@@ -388,8 +390,8 @@ class SnowflakeIdSerializationContractTest {
                     new BigDecimal("20.00"), 3, new BigDecimal("60.00"));
             var dto = new ProductOrderDetailResponse(
                     BIG_ID, "ORD001", BIG_ID, BIG_ID,
-                    new BigDecimal("60.00"), "CASH", "UNPAID", "PENDING",
-                    "CONFIRMED", "张三", "13800000000", null, null,
+                    new BigDecimal("60.00"), "PICKUP", null, "OFFLINE_STORE", "UNPAID",
+                    "WAIT_PREPARE", "PENDING_CONFIRM", "张三", "13800000000", null, null,
                     LocalDateTime.now(), null, null, null,
                     List.of(orderItem));
             String json = toJson(dto);
@@ -405,8 +407,8 @@ class SnowflakeIdSerializationContractTest {
                     new BigDecimal("20.00"), 3, new BigDecimal("60.00"));
             var dto = new ProductOrderDetailResponse(
                     BIG_ID, "ORD001", BIG_ID, BIG_ID,
-                    new BigDecimal("60.00"), "CASH", "UNPAID", "PENDING",
-                    "CONFIRMED", "张三", "13800000000", null, null,
+                    new BigDecimal("60.00"), "PICKUP", null, "OFFLINE_STORE", "UNPAID",
+                    "WAIT_PREPARE", "PENDING_CONFIRM", "张三", "13800000000", null, null,
                     LocalDateTime.now(), null, null, null,
                     List.of(orderItem));
             String json = toJson(dto);
@@ -528,6 +530,25 @@ class SnowflakeIdSerializationContractTest {
             String json = toJson(dto);
             assertIdIsString(json, "id");
             assertIdIsString(json, "adminId");
+        }
+    }
+
+    @Nested
+    @DisplayName("10B. Marketing activity cards")
+    class MarketingActivityDtoTests {
+
+        @Test
+        void marketingActivityAssociationCardIds_areJsonStrings() throws Exception {
+            var productCard = new com.petcare.marketing.dto.MarketingActivityDtos.ActivityProductCard(
+                    BIG_ID, "冻干零食", "/uploads/images/product.jpg", java.math.BigDecimal.TEN, 12);
+            var serviceCard = new com.petcare.marketing.dto.MarketingActivityDtos.ActivityServiceCard(
+                    BIG_ID, "基础洗护", "/uploads/images/service.jpg", java.math.BigDecimal.ONE, 60, "STORE");
+
+            String productJson = toJson(productCard);
+            String serviceJson = toJson(serviceCard);
+
+            assertIdIsString(productJson, "id");
+            assertIdIsString(serviceJson, "id");
         }
     }
 
@@ -700,7 +721,7 @@ class SnowflakeIdSerializationContractTest {
         @Test
         void serviceItemResponse_id_and_categoryId_areJsonStrings() throws Exception {
             var dto = new ServiceItemResponse(BIG_ID, BIG_ID, "洗澡", "STORE",
-                    new BigDecimal("99.00"), 60, "ALL", "ALL", 0, 1, "描述", "cover.jpg");
+                    new BigDecimal("99.00"), 60, "ALL", "ALL", 0, 1, "描述", "cover.jpg", List.of());
             String json = toJson(dto);
             assertIdIsString(json, "id");
             assertIdIsString(json, "categoryId");
@@ -709,7 +730,7 @@ class SnowflakeIdSerializationContractTest {
         @Test
         void serviceItemResponse_priceAndDuration_remainJsonNumbers() throws Exception {
             var dto = new ServiceItemResponse(BIG_ID, BIG_ID, "洗澡", "STORE",
-                    new BigDecimal("99.00"), 60, "ALL", "ALL", 0, 1, "描述", "cover.jpg");
+                    new BigDecimal("99.00"), 60, "ALL", "ALL", 0, 1, "描述", "cover.jpg", List.of());
             String json = toJson(dto);
             assertNonIdIsNumber(json, "durationMinutes");
         }
@@ -746,7 +767,7 @@ class SnowflakeIdSerializationContractTest {
         void nullableId_staysNull_notString() throws Exception {
             // BookingResponse.staffId is nullable
             var dto = new BookingResponse(
-                    BIG_ID, "BK001", BIG_ID, BIG_ID, BIG_ID, BIG_ID, null,
+                    BIG_ID, "BK001", BIG_ID, BIG_ID, BIG_ID, BIG_ID, null, null,
                     "STORE", LocalDate.of(2026, 6, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                     null, new BigDecimal("5.0"), "张三", "13800000000",
                     new BigDecimal("99.00"), "CASH", "UNPAID", "PENDING_CONFIRM",

@@ -7,6 +7,7 @@ import com.petcare.common.security.JwtTokenService;
 import com.petcare.user.dto.*;
 import com.petcare.user.entity.User;
 import com.petcare.user.entity.UserSecurityQuestion;
+import com.petcare.user.service.PhoneBlacklistService;
 import com.petcare.user.service.UserSecurityQuestionService;
 import com.petcare.user.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,15 +28,18 @@ public class UserAuthService {
 
     private final UserService userService;
     private final UserSecurityQuestionService securityQuestionService;
+    private final PhoneBlacklistService phoneBlacklistService;
     private final JwtTokenService jwtTokenService;
     private final PasswordEncoder passwordEncoder;
 
     public UserAuthService(UserService userService,
                            UserSecurityQuestionService securityQuestionService,
+                           PhoneBlacklistService phoneBlacklistService,
                            JwtTokenService jwtTokenService,
                            PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.securityQuestionService = securityQuestionService;
+        this.phoneBlacklistService = phoneBlacklistService;
         this.jwtTokenService = jwtTokenService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -52,6 +56,12 @@ public class UserAuthService {
         );
         if (existing > 0) {
             throw new BusinessException(ErrorCode.PHONE_ALREADY_REGISTERED, "该手机号已注册");
+        }
+
+        // Check phone blacklist — a banned phone cannot be used to register again,
+        // even if the original account was deleted.
+        if (phoneBlacklistService.isPhoneBanned(request.phone())) {
+            throw new BusinessException(ErrorCode.PHONE_BANNED, "该手机号已被封禁，无法注册");
         }
 
         // Validate security questions: at least 2, from preset list, no duplicate indices

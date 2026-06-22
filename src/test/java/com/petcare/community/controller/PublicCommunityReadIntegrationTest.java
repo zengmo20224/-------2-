@@ -139,12 +139,12 @@ class PublicCommunityReadIntegrationTest {
     void commentListShowsOnlyPublished() throws Exception {
         mockMvc.perform(get("/api/v1/posts/" + publishedPostId + "/comments"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.items[?(@.content=='已发布评论_pubT')]").exists())
-                .andExpect(jsonPath("$.data.items[?(@.content=='待审核评论_pubT')]").doesNotExist())
-                .andExpect(jsonPath("$.data.items[0].userId").doesNotExist())
-                .andExpect(jsonPath("$.data.items[0].status").doesNotExist())
-                .andExpect(jsonPath("$.data.items[0].riskLevel").doesNotExist())
-                .andExpect(jsonPath("$.data.items[0].deleted").doesNotExist());
+                .andExpect(jsonPath("$.data[?(@.content=='已发布评论_pubT')]").exists())
+                .andExpect(jsonPath("$.data[?(@.content=='待审核评论_pubT')]").doesNotExist())
+                .andExpect(jsonPath("$.data[0].userId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].status").doesNotExist())
+                .andExpect(jsonPath("$.data[0].riskLevel").doesNotExist())
+                .andExpect(jsonPath("$.data[0].deleted").doesNotExist());
     }
 
     @Test

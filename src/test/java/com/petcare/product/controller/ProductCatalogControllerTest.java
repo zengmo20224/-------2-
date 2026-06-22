@@ -11,8 +11,10 @@ import com.petcare.admin.service.AdminUserService;
 import com.petcare.common.security.JwtTokenService;
 import com.petcare.product.entity.Product;
 import com.petcare.product.entity.ProductCategory;
+import com.petcare.product.entity.ProductDetailImage;
 import com.petcare.product.entity.ProductImage;
 import com.petcare.product.service.ProductCategoryService;
+import com.petcare.product.service.ProductDetailImageService;
 import com.petcare.product.service.ProductImageService;
 import com.petcare.product.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +60,9 @@ class ProductCatalogControllerTest {
     private ProductImageService productImageService;
 
     @Autowired
+    private ProductDetailImageService productDetailImageService;
+
+    @Autowired
     private AdminUserService adminUserService;
 
     @Autowired
@@ -73,6 +79,9 @@ class ProductCatalogControllerTest {
 
     @Autowired
     private JwtTokenService jwtTokenService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private String authToken;
     private Long catId;
@@ -129,6 +138,18 @@ class ProductCatalogControllerTest {
         img2.setImageUrl("https://example.com/img2.jpg");
         img2.setSort(2);
         productImageService.save(img2);
+
+        ProductDetailImage detailImg1 = new ProductDetailImage();
+        detailImg1.setProductId(productId);
+        detailImg1.setImageUrl("https://example.com/detail-img1.jpg");
+        detailImg1.setSort(1);
+        productDetailImageService.save(detailImg1);
+
+        ProductDetailImage detailImg2 = new ProductDetailImage();
+        detailImg2.setProductId(productId);
+        detailImg2.setImageUrl("https://example.com/detail-img2.jpg");
+        detailImg2.setSort(2);
+        productDetailImageService.save(detailImg2);
 
         // Create off-sale product (should be excluded from listing)
         Product offSale = new Product();
@@ -216,6 +237,18 @@ class ProductCatalogControllerTest {
                     .andExpect(jsonPath("$.data.items.length()").value(1))
                     .andExpect(jsonPath("$.data.items[0].name").value("皇家猫粮_catalogTest"));
         }
+
+        @Test
+        @DisplayName("filters by keyword across product names")
+        void filterByKeyword() throws Exception {
+            mockMvc.perform(get("/api/v1/products")
+                            .param("keyword", "猫粮")
+                            .header("Authorization", "Bearer " + authToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.items[?(@.name=='皇家猫粮_catalogTest')]").exists())
+                    .andExpect(jsonPath("$.data.items[?(@.name=='皇家狗粮_catalogTest')]").doesNotExist());
+        }
     }
 
     // ==================== Get Product Detail ====================
@@ -237,7 +270,11 @@ class ProductCatalogControllerTest {
                     .andExpect(jsonPath("$.data.categoryName").value("猫粮_catalogTest"))
                     .andExpect(jsonPath("$.data.description").value("优质猫粮"))
                     .andExpect(jsonPath("$.data.imageUrls").isArray())
-                    .andExpect(jsonPath("$.data.imageUrls.length()").value(2));
+                    .andExpect(jsonPath("$.data.imageUrls.length()").value(2))
+                    .andExpect(jsonPath("$.data.imageUrls[0]").value("https://example.com/img1.jpg"))
+                    .andExpect(jsonPath("$.data.detailImageUrls").isArray())
+                    .andExpect(jsonPath("$.data.detailImageUrls.length()").value(2))
+                    .andExpect(jsonPath("$.data.detailImageUrls[0]").value("https://example.com/detail-img1.jpg"));
         }
 
         @Test
@@ -273,6 +310,42 @@ class ProductCatalogControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data[?(@.name=='猫粮_catalogTest')]").exists())
                     .andExpect(jsonPath("$.data[?(@.name=='下架分类_catalogTest')]").doesNotExist());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/product-carousel-images")
+    class ListProductCarouselImagesTests {
+
+        @Test
+        @DisplayName("returns active carousel images ordered by sort")
+        void listProductCarouselImagesReturnsActiveOrdered() throws Exception {
+            jdbcTemplate.update("""
+                    INSERT INTO product_carousel_image
+                    (id, title, image_url, link_type, link_target_id, status, sort)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, 92001L, "第二张", "https://example.com/banner-2.jpg", "PRODUCT", productId, "ACTIVE", 2);
+            jdbcTemplate.update("""
+                    INSERT INTO product_carousel_image
+                    (id, title, image_url, link_type, link_target_id, status, sort)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, 92002L, "第一张", "https://example.com/banner-1.jpg", "PRODUCT", productId, "ACTIVE", 1);
+            jdbcTemplate.update("""
+                    INSERT INTO product_carousel_image
+                    (id, title, image_url, link_type, link_target_id, status, sort)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, 92003L, "停用图", "https://example.com/banner-off.jpg", "NONE", null, "INACTIVE", 3);
+
+            mockMvc.perform(get("/api/v1/product-carousel-images"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.length()").value(2))
+                    .andExpect(jsonPath("$.data[0].title").value("第一张"))
+                    .andExpect(jsonPath("$.data[0].imageUrl").value("https://example.com/banner-1.jpg"))
+                    .andExpect(jsonPath("$.data[0].linkType").value("PRODUCT"))
+                    .andExpect(jsonPath("$.data[0].linkTargetId").value(productId.toString()))
+                    .andExpect(jsonPath("$.data[1].title").value("第二张"))
+                    .andExpect(jsonPath("$.data[?(@.title=='停用图')]").doesNotExist());
         }
     }
 

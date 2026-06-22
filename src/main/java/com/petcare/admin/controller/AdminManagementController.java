@@ -1,6 +1,8 @@
 package com.petcare.admin.controller;
 
 import com.petcare.admin.dto.AdminManagementDtos.OperationLogView;
+import com.petcare.admin.dto.AdminManagementDtos.ProductCarouselImageView;
+import com.petcare.admin.dto.AdminManagementDtos.ProductCarouselImagesUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.ProductRequest;
 import com.petcare.admin.dto.AdminManagementDtos.ProductStockUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.ProductView;
@@ -16,11 +18,17 @@ import com.petcare.admin.dto.AdminManagementDtos.StoreConfigUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.StoreConfigView;
 import com.petcare.admin.dto.AdminManagementDtos.StoreUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.StoreView;
+import com.petcare.admin.dto.AdminManagementDtos.UserBanRequest;
+import com.petcare.admin.dto.AdminManagementDtos.UserBanResult;
+import com.petcare.admin.dto.AdminManagementDtos.UserView;
 import com.petcare.admin.service.AdminManagementService;
+import com.petcare.booking.dto.BookingResponse;
 import com.petcare.common.api.ApiResponse;
 import com.petcare.common.pagination.PageResponse;
+import com.petcare.product.dto.ProductOrderResponse;
 import com.petcare.common.security.SecurityContextHelper;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -192,6 +200,19 @@ public class AdminManagementController {
         return ok(service.updateProductStock(id, request.stock(), operatorId()));
     }
 
+    @GetMapping("/product-carousel-images")
+    @PreAuthorize("hasAuthority('product:item:read')")
+    public ResponseEntity<ApiResponse<List<ProductCarouselImageView>>> listProductCarouselImages() {
+        return ok(service.listProductCarouselImages());
+    }
+
+    @PutMapping("/product-carousel-images")
+    @PreAuthorize("hasAuthority('product:item:update')")
+    public ResponseEntity<ApiResponse<List<ProductCarouselImageView>>> replaceProductCarouselImages(
+            @Valid @RequestBody ProductCarouselImagesUpdateRequest request) {
+        return ok(service.replaceProductCarouselImages(request, operatorId()));
+    }
+
     @GetMapping("/operation-logs")
     @PreAuthorize("hasAuthority('admin:operation-log:read')")
     public ResponseEntity<ApiResponse<PageResponse<OperationLogView>>> listOperationLogs(
@@ -199,6 +220,57 @@ public class AdminManagementController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String module) {
         return ok(service.listOperationLogs(page, size, module));
+    }
+
+    // ─── User management ───
+
+    @GetMapping("/users")
+    @PreAuthorize("hasAuthority('user:profile:read')")
+    public ResponseEntity<ApiResponse<PageResponse<UserView>>> listUsers(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
+        return ok(service.listUsers(page, size, status, keyword));
+    }
+
+    @GetMapping("/users/{id}")
+    @PreAuthorize("hasAuthority('user:profile:read')")
+    public ResponseEntity<ApiResponse<UserView>> getUser(@PathVariable Long id) {
+        return ok(service.getUser(id));
+    }
+
+    @PostMapping("/users/{id}/ban")
+    @PreAuthorize("hasAuthority('user:profile:ban')")
+    public ResponseEntity<ApiResponse<UserBanResult>> banUser(
+            @PathVariable Long id,
+            @RequestBody(required = false) UserBanRequest request) {
+        String reason = request != null ? request.reason() : null;
+        return ok(service.banUser(id, reason, operatorId()));
+    }
+
+    @PostMapping("/users/{id}/unban")
+    @PreAuthorize("hasAuthority('user:profile:ban')")
+    public ResponseEntity<ApiResponse<UserView>> unbanUser(@PathVariable Long id) {
+        return ok(service.unbanUser(id, operatorId()));
+    }
+
+    @GetMapping("/users/{id}/bookings")
+    @PreAuthorize("hasAuthority('user:profile:read')")
+    public ResponseEntity<ApiResponse<PageResponse<BookingResponse>>> listUserBookings(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ok(service.listUserBookings(id, page, size));
+    }
+
+    @GetMapping("/users/{id}/orders")
+    @PreAuthorize("hasAuthority('user:profile:read')")
+    public ResponseEntity<ApiResponse<PageResponse<ProductOrderResponse>>> listUserOrders(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ok(service.listUserOrders(id, page, size));
     }
 
     private Long operatorId() {

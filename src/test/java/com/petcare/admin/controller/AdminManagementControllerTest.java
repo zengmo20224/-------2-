@@ -24,6 +24,7 @@ import com.petcare.store.entity.StoreConfig;
 import com.petcare.store.service.StoreConfigService;
 import com.petcare.store.service.StoreService;
 import java.math.BigDecimal;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -352,20 +353,27 @@ class AdminManagementControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"categoryId":%d,"name":"升级洗护","serviceMode":"BOTH",
-                                 "price":129,"durationMinutes":90,"needAddress":true,"needPet":true}
+                                 "price":129,"durationMinutes":90,"needAddress":true,"needPet":true,
+                                 "imageUrls":["https://example.com/service-a.jpg","https://example.com/service-b.jpg"]}
                                 """.formatted(serviceCategoryId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value("升级洗护"));
+                .andExpect(jsonPath("$.data.name").value("升级洗护"))
+                .andExpect(jsonPath("$.data.imageUrls.length()").value(2))
+                .andExpect(jsonPath("$.data.imageUrls[0]").value("https://example.com/service-a.jpg"));
 
         String productBody = mockMvc.perform(post("/api/v1/admin/products")
                         .header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"categoryId":%d,"name":"新商品","price":30,
-                                 "pickupOnly":true,"sort":1}
+                                 "pickupOnly":true,"sort":1,
+                                 "imageUrls":["https://example.com/product-a.jpg"],
+                                 "detailImageUrls":["https://example.com/product-intro-a.jpg"]}
                                 """.formatted(productCategoryId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.stock").value(0))
+                .andExpect(jsonPath("$.data.imageUrls.length()").value(1))
+                .andExpect(jsonPath("$.data.detailImageUrls.length()").value(1))
                 .andReturn().getResponse().getContentAsString();
         String createdProductId = productBody.replaceAll(".*\"id\":\"?(\\d+)\"?.*", "$1");
 
@@ -374,15 +382,130 @@ class AdminManagementControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"categoryId":%d,"name":"新商品更新","price":35,
-                                 "pickupOnly":true,"sort":2}
+                                 "pickupOnly":true,"sort":2,
+                                 "imageUrls":["https://example.com/product-b.jpg","https://example.com/product-c.jpg"],
+                                 "detailImageUrls":["https://example.com/product-intro-b.jpg","https://example.com/product-intro-c.jpg"]}
                                 """.formatted(productCategoryId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value("新商品更新"));
+                .andExpect(jsonPath("$.data.name").value("新商品更新"))
+                .andExpect(jsonPath("$.data.imageUrls.length()").value(2))
+                .andExpect(jsonPath("$.data.imageUrls[0]").value("https://example.com/product-b.jpg"))
+                .andExpect(jsonPath("$.data.detailImageUrls.length()").value(2))
+                .andExpect(jsonPath("$.data.detailImageUrls[0]").value("https://example.com/product-intro-b.jpg"));
 
         mockMvc.perform(post("/api/v1/admin/products/" + createdProductId + "/disable")
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("OFF_SALE"));
+    }
+
+    @Test
+    void serviceDetailImagesAcceptTwentyAndProductCarouselAcceptsFiveAndProductIntroImagesAcceptTwenty()
+            throws Exception {
+        mockMvc.perform(put("/api/v1/admin/service-items/" + serviceItemId)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"categoryId":%d,"name":"二十图洗护","serviceMode":"BOTH",
+                                 "price":129,"durationMinutes":90,"needAddress":true,"needPet":true,
+                                 "imageUrls":%s}
+                                """.formatted(serviceCategoryId, imageUrlsJson(20, "service"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.imageUrls.length()").value(20))
+                .andExpect(jsonPath("$.data.imageUrls[19]").value("https://example.com/service-20.jpg"));
+
+        mockMvc.perform(post("/api/v1/admin/products")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"categoryId":%d,"name":"五图商品","price":30,
+                                 "pickupOnly":true,"sort":1,
+                                 "imageUrls":%s,
+                                 "detailImageUrls":%s}
+                                """.formatted(productCategoryId, imageUrlsJson(5, "product-carousel"),
+                                        imageUrlsJson(20, "product-intro"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.imageUrls.length()").value(5))
+                .andExpect(jsonPath("$.data.imageUrls[4]").value("https://example.com/product-carousel-5.jpg"))
+                .andExpect(jsonPath("$.data.detailImageUrls.length()").value(20))
+                .andExpect(jsonPath("$.data.detailImageUrls[19]").value("https://example.com/product-intro-20.jpg"));
+
+        mockMvc.perform(put("/api/v1/admin/service-items/" + serviceItemId)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"categoryId":%d,"name":"二十一图洗护","serviceMode":"BOTH",
+                                 "price":129,"durationMinutes":90,"needAddress":true,"needPet":true,
+                                 "imageUrls":%s}
+                                """.formatted(serviceCategoryId, imageUrlsJson(21, "service"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("validation_error"));
+
+        mockMvc.perform(post("/api/v1/admin/products")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"categoryId":%d,"name":"六图商品","price":30,
+                                 "pickupOnly":true,"sort":1,
+                                 "imageUrls":%s}
+                                """.formatted(productCategoryId, imageUrlsJson(6, "product"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("validation_error"));
+
+        mockMvc.perform(post("/api/v1/admin/products")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"categoryId":%d,"name":"二十一张介绍图商品","price":30,
+                                 "pickupOnly":true,"sort":1,
+                                 "imageUrls":%s,
+                                 "detailImageUrls":%s}
+                                """.formatted(productCategoryId, imageUrlsJson(5, "product-carousel"),
+                                        imageUrlsJson(21, "product-intro"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("validation_error"));
+    }
+
+    @Test
+    void productCarouselImagesCanBeConfiguredFromAdmin() throws Exception {
+        mockMvc.perform(put("/api/v1/admin/product-carousel-images")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"images":[
+                                  {"title":"新品推荐","imageUrl":"https://example.com/carousel-1.jpg",
+                                   "linkType":"PRODUCT","linkTargetId":%d,"status":"ACTIVE","sort":2},
+                                  {"title":"门店精选","imageUrl":"https://example.com/carousel-2.jpg",
+                                   "linkType":"NONE","status":"ACTIVE","sort":1},
+                                  {"title":"热卖主粮","imageUrl":"https://example.com/carousel-3.jpg",
+                                   "linkType":"NONE","status":"ACTIVE","sort":3},
+                                  {"title":"护理专区","imageUrl":"https://example.com/carousel-4.jpg",
+                                   "linkType":"NONE","status":"ACTIVE","sort":4},
+                                  {"title":"到店自提","imageUrl":"https://example.com/carousel-5.jpg",
+                                   "linkType":"NONE","status":"ACTIVE","sort":5}
+                                ]}
+                                """.formatted(productId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(5))
+                .andExpect(jsonPath("$.data[0].title").value("门店精选"))
+                .andExpect(jsonPath("$.data[1].title").value("新品推荐"))
+                .andExpect(jsonPath("$.data[4].title").value("到店自提"));
+
+        mockMvc.perform(get("/api/v1/admin/product-carousel-images")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(5))
+                .andExpect(jsonPath("$.data[0].imageUrl").value("https://example.com/carousel-2.jpg"));
+    }
+
+    @Test
+    void productCarouselImagesRejectMoreThanFive() throws Exception {
+        mockMvc.perform(put("/api/v1/admin/product-carousel-images")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"images\":%s}".formatted(carouselImagesJson(6))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("validation_error"));
     }
 
     @Test
@@ -466,5 +589,20 @@ class AdminManagementControllerTest {
 
     private String bearer(String jwt) {
         return "Bearer " + jwt;
+    }
+
+    private String imageUrlsJson(int count, String prefix) {
+        return IntStream.rangeClosed(1, count)
+                .mapToObj(i -> "\"https://example.com/" + prefix + "-" + i + ".jpg\"")
+                .collect(java.util.stream.Collectors.joining(",", "[", "]"));
+    }
+
+    private String carouselImagesJson(int count) {
+        return IntStream.rangeClosed(1, count)
+                .mapToObj(i -> """
+                        {"title":"展示图%d","imageUrl":"https://example.com/carousel-%d.jpg",
+                         "linkType":"NONE","status":"ACTIVE","sort":%d}
+                        """.formatted(i, i, i))
+                .collect(java.util.stream.Collectors.joining(",", "[", "]"));
     }
 }

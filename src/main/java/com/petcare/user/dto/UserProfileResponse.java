@@ -14,6 +14,9 @@ public record UserProfileResponse(
         String nickname,
         String phone,
         String avatarUrl,
+        String realName,
+        String idCardNo,
+        String idCardImageUrl,
         LocalDateTime createdAt
 ) {
     /**
@@ -26,6 +29,9 @@ public record UserProfileResponse(
                 user.getNickname(),
                 maskPhone(user.getPhone()),
                 user.getAvatarUrl(),
+                user.getRealName(),
+                user.getIdCardNo(),
+                user.getIdCardImageUrl(),
                 user.getCreateTime()
         );
     }

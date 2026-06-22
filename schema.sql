@@ -24,6 +24,9 @@ CREATE TABLE `user` (
   `openid`          VARCHAR(128)    DEFAULT NULL COMMENT '微信 openid',
   `unionid`         VARCHAR(128)    DEFAULT NULL COMMENT '微信 unionid',
   `nickname`        VARCHAR(64)     DEFAULT NULL COMMENT '用户昵称',
+  `real_name`       VARCHAR(64)     DEFAULT NULL COMMENT '真实姓名',
+  `id_card_no`      VARCHAR(32)     DEFAULT NULL COMMENT '身份证号',
+  `id_card_image_url` VARCHAR(255)  DEFAULT NULL COMMENT '身份证图片地址',
   `avatar_url`      VARCHAR(255)    DEFAULT NULL COMMENT '头像地址',
   `phone`           VARCHAR(20)     DEFAULT NULL COMMENT '手机号',
   `password_hash`   VARCHAR(128)    DEFAULT NULL COMMENT 'BCrypt 密码哈希',
@@ -179,6 +182,17 @@ CREATE TABLE `service_item` (
   KEY `idx_service_mode` (`service_mode`),
   KEY `idx_pet_type` (`pet_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='服务项目表';
+
+-- 服务项目图片表
+CREATE TABLE `service_item_image` (
+  `id`              BIGINT       NOT NULL COMMENT '主键，雪花 ID',
+  `service_item_id` BIGINT       NOT NULL COMMENT '服务项目 ID',
+  `image_url`       VARCHAR(255) NOT NULL COMMENT '图片地址',
+  `sort`            INT          NOT NULL DEFAULT 0 COMMENT '排序序号',
+  `create_time`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_service_item_id` (`service_item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='服务项目图片表';
 
 -- 员工表
 CREATE TABLE `staff` (
@@ -528,6 +542,33 @@ CREATE TABLE `product_image` (
   KEY `idx_product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商品图片表';
 
+-- 商品介绍图片表
+CREATE TABLE `product_detail_image` (
+  `id`          BIGINT       NOT NULL COMMENT '主键，雪花 ID',
+  `product_id`  BIGINT       NOT NULL COMMENT '商品 ID',
+  `image_url`   VARCHAR(255) NOT NULL COMMENT '图片地址',
+  `sort`        INT          NOT NULL DEFAULT 0 COMMENT '排序序号',
+  `create_time` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商品介绍图片表';
+
+-- 商品展示页轮播图表
+CREATE TABLE `product_carousel_image` (
+  `id`             BIGINT       NOT NULL COMMENT '主键，雪花 ID',
+  `title`          VARCHAR(80)  DEFAULT NULL COMMENT '轮播标题',
+  `image_url`      VARCHAR(255) NOT NULL COMMENT '轮播图片地址',
+  `link_type`      VARCHAR(32)  DEFAULT 'NONE' COMMENT '跳转类型：NONE / PRODUCT',
+  `link_target_id` BIGINT       DEFAULT NULL COMMENT '跳转目标 ID',
+  `status`         VARCHAR(32)  NOT NULL DEFAULT 'ACTIVE' COMMENT '状态：ACTIVE / INACTIVE',
+  `sort`           INT          NOT NULL DEFAULT 0 COMMENT '排序序号',
+  `create_time`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`        TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-正常 1-已删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_status_sort` (`status`, `sort`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商品展示页轮播图表';
+
 -- 购物车表
 CREATE TABLE `cart_item` (
   `id`          BIGINT   NOT NULL COMMENT '主键，雪花 ID',
@@ -548,6 +589,9 @@ CREATE TABLE `product_order` (
   `user_id`         BIGINT        NOT NULL COMMENT '下单用户 ID',
   `store_id`        BIGINT        NOT NULL COMMENT '门店 ID',
   `total_amount`    DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
+  `delivery_method` VARCHAR(16)   NOT NULL DEFAULT 'PICKUP' COMMENT '交付方式：PICKUP / DELIVERY',
+  `address_id`      BIGINT        DEFAULT NULL COMMENT '配送地址 ID',
+  `address_snapshot` VARCHAR(500) DEFAULT NULL COMMENT '配送地址快照',
   `payment_method`  VARCHAR(32)   DEFAULT NULL COMMENT '付款方式：OFFLINE_STORE / ONLINE_WECHAT / FREE',
   `payment_status`  VARCHAR(32)   NOT NULL DEFAULT 'UNPAID' COMMENT '支付状态：UNPAID / OFFLINE_PAID / REFUNDED',
   `pickup_status`   VARCHAR(32)   NOT NULL DEFAULT 'WAIT_PREPARE' COMMENT '自提状态：WAIT_PREPARE / READY_FOR_PICKUP / PICKED_UP',
@@ -596,6 +640,7 @@ CREATE TABLE `marketing_activity` (
   `title`        VARCHAR(100) DEFAULT NULL COMMENT '活动标题',
   `activity_type` VARCHAR(32) NOT NULL DEFAULT 'MIXED' COMMENT '活动类型：SERVICE / PRODUCT / COMMUNITY / MIXED',
   `description`  TEXT         DEFAULT NULL COMMENT '活动描述',
+  `cover_url`    VARCHAR(255) DEFAULT NULL COMMENT '活动封面图 URL',
   `start_time`   DATETIME     DEFAULT NULL COMMENT '活动开始时间',
   `end_time`     DATETIME     DEFAULT NULL COMMENT '活动结束时间',
   `status`       VARCHAR(32)  NOT NULL DEFAULT 'DRAFT' COMMENT '状态：DRAFT / ACTIVE / ENDED / CANCELLED',
@@ -807,3 +852,93 @@ CREATE TABLE `admin_operation_log` (
   KEY `idx_module` (`module`),
   KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员操作日志表';
+
+-- ============================================================================
+-- K. 用户风控、社区标签与通知模块
+-- ============================================================================
+
+-- 手机号黑名单表
+CREATE TABLE `phone_blacklist` (
+  `id`           BIGINT       NOT NULL COMMENT '主键，雪花 ID',
+  `phone`        VARCHAR(20)  NOT NULL COMMENT '手机号',
+  `user_id`      BIGINT       DEFAULT NULL COMMENT '关联用户 ID',
+  `reason`       VARCHAR(255) DEFAULT NULL COMMENT '封禁原因',
+  `operator_id`  BIGINT       DEFAULT NULL COMMENT '操作管理员 ID',
+  `status`       VARCHAR(16)  NOT NULL DEFAULT 'ACTIVE' COMMENT '状态：ACTIVE / INACTIVE',
+  `ban_level`    INT          NOT NULL DEFAULT 1 COMMENT '封禁等级',
+  `ban_days`     INT          DEFAULT NULL COMMENT '封禁天数',
+  `ban_until`    DATETIME     DEFAULT NULL COMMENT '封禁截止时间',
+  `unban_time`   DATETIME     DEFAULT NULL COMMENT '解封时间',
+  `create_time`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_phone` (`phone`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='手机号黑名单表';
+
+-- 社区标签表
+CREATE TABLE `community_tag` (
+  `id`           BIGINT      NOT NULL COMMENT '主键，雪花 ID',
+  `name`         VARCHAR(64) NOT NULL COMMENT '标签名称',
+  `usage_count`  INT         NOT NULL DEFAULT 0 COMMENT '使用次数',
+  `create_time`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time`  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`      TINYINT     NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-正常 1-已删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='社区标签表';
+
+-- 帖子标签关联表
+CREATE TABLE `post_tag_rel` (
+  `id`           BIGINT   NOT NULL COMMENT '主键，雪花 ID',
+  `post_id`      BIGINT   NOT NULL COMMENT '帖子 ID',
+  `tag_id`       BIGINT   NOT NULL COMMENT '标签 ID',
+  `create_time`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_post_tag` (`post_id`, `tag_id`),
+  KEY `idx_tag_id` (`tag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子标签关联表';
+
+-- 评论点赞表
+CREATE TABLE `comment_like` (
+  `id`           BIGINT   NOT NULL COMMENT '主键，雪花 ID',
+  `comment_id`   BIGINT   NOT NULL COMMENT '评论 ID',
+  `user_id`      BIGINT   NOT NULL COMMENT '用户 ID',
+  `create_time`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_comment_user` (`comment_id`, `user_id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评论点赞表';
+
+-- 公告表
+CREATE TABLE `announcement` (
+  `id`           BIGINT       NOT NULL COMMENT '主键，雪花 ID',
+  `title`        VARCHAR(200) NOT NULL COMMENT '公告标题',
+  `content`      TEXT         NOT NULL COMMENT '公告内容',
+  `status`       VARCHAR(32)  NOT NULL DEFAULT 'PUBLISHED' COMMENT '状态：DRAFT / PUBLISHED',
+  `sort`         INT          NOT NULL DEFAULT 0 COMMENT '排序值',
+  `create_time`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`      TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-正常 1-已删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_sort` (`sort`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='公告表';
+
+-- 用户通知表
+CREATE TABLE `user_notification` (
+  `id`             BIGINT       NOT NULL COMMENT '主键，雪花 ID',
+  `user_id`        BIGINT       NOT NULL COMMENT '接收用户 ID',
+  `actor_id`       BIGINT       DEFAULT NULL COMMENT '触发用户 ID',
+  `type`           VARCHAR(32)  NOT NULL COMMENT '通知类型：LIKE / COMMENT / FAVORITE',
+  `post_id`        BIGINT       DEFAULT NULL COMMENT '帖子 ID',
+  `comment_id`     BIGINT       DEFAULT NULL COMMENT '评论 ID',
+  `content`        VARCHAR(500) DEFAULT NULL COMMENT '通知内容',
+  `is_read`        TINYINT      NOT NULL DEFAULT 0 COMMENT '是否已读：0-未读 1-已读',
+  `create_time`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted`        TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除：0-正常 1-已删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_read` (`user_id`, `is_read`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户通知表';

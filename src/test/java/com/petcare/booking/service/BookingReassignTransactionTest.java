@@ -239,7 +239,7 @@ class BookingReassignTransactionTest {
 
         ServiceBooking saved = bookingTransactionService.createBookingOnce(booking);
         return new BookingResponse(saved.getId(), saved.getBookingNo(), saved.getUserId(),
-                saved.getPetId(), saved.getStoreId(), saved.getServiceItemId(), saved.getStaffId(),
+                saved.getPetId(), saved.getStoreId(), saved.getServiceItemId(), "改派测试服务", saved.getStaffId(),
                 saved.getServiceMode(), saved.getBookingDate(), saved.getStartTime(), saved.getEndTime(),
                 saved.getAddressId(), saved.getDistanceKm(), saved.getContactName(), saved.getContactPhone(),
                 saved.getPrice(), saved.getPaymentMethod(), saved.getPaymentStatus(),

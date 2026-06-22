@@ -27,6 +27,9 @@ public class MarketingActivity extends BaseEntity {
     @TableField("description")
     private String description;
 
+    @TableField("cover_url")
+    private String coverUrl;
+
     @TableField("start_time")
     private LocalDateTime startTime;
 

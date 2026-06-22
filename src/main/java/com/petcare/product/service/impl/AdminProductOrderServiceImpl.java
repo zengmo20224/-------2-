@@ -190,6 +190,7 @@ public class AdminProductOrderServiceImpl implements AdminProductOrderService {
     private ProductOrderResponse toOrderResponse(ProductOrder order) {
         return new ProductOrderResponse(
                 order.getId(), order.getOrderNo(), order.getTotalAmount(),
+                order.getDeliveryMethod(), order.getAddressSnapshot(),
                 order.getPaymentMethod(), order.getPaymentStatus(),
                 order.getPickupStatus(), order.getStatus(),
                 order.getContactName(), order.getContactPhone(), order.getRemark(),
@@ -209,6 +210,7 @@ public class AdminProductOrderServiceImpl implements AdminProductOrderService {
         return new ProductOrderDetailResponse(
                 order.getId(), order.getOrderNo(), order.getUserId(),
                 order.getStoreId(), order.getTotalAmount(),
+                order.getDeliveryMethod(), order.getAddressSnapshot(),
                 order.getPaymentMethod(), order.getPaymentStatus(),
                 order.getPickupStatus(), order.getStatus(),
                 order.getContactName(), order.getContactPhone(),

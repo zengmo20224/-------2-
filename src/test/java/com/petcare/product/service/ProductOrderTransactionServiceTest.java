@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
+import com.petcare.product.dto.ProductOrderCreateRequest;
 import com.petcare.product.entity.CartItem;
 import com.petcare.product.entity.Product;
 import com.petcare.product.entity.ProductOrder;
@@ -22,6 +23,7 @@ import com.petcare.product.mapper.ProductMapper;
 import com.petcare.product.mapper.ProductOrderItemMapper;
 import com.petcare.product.mapper.ProductOrderMapper;
 import com.petcare.product.service.impl.ProductOrderTransactionServiceImpl;
+import com.petcare.user.mapper.UserAddressMapper;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +58,9 @@ class ProductOrderTransactionServiceTest {
 
     @Mock
     private ProductOrderItemMapper orderItemMapper;
+
+    @Mock
+    private UserAddressMapper userAddressMapper;
 
     @InjectMocks
     private ProductOrderTransactionServiceImpl orderService;
@@ -98,6 +103,7 @@ class ProductOrderTransactionServiceTest {
         defaultOrder.setUserId(USER_ID);
         defaultOrder.setStoreId(STORE_ID);
         defaultOrder.setTotalAmount(new BigDecimal("198.00"));
+        defaultOrder.setDeliveryMethod("PICKUP");
         defaultOrder.setPaymentMethod("OFFLINE_STORE");
         defaultOrder.setPaymentStatus("UNPAID");
         defaultOrder.setPickupStatus(PickupStatus.WAIT_PREPARE.getCode());
@@ -132,7 +138,7 @@ class ProductOrderTransactionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", null))
+                    USER_ID, pickupOrderRequest(null)))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.CART_NO_CHECKED_ITEMS);
 
@@ -150,7 +156,7 @@ class ProductOrderTransactionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", null))
+                    USER_ID, pickupOrderRequest(null)))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_NOT_ON_SALE);
 
@@ -168,7 +174,7 @@ class ProductOrderTransactionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", null))
+                    USER_ID, pickupOrderRequest(null)))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_NOT_PICKUP_ONLY);
 
@@ -186,7 +192,7 @@ class ProductOrderTransactionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", null))
+                    USER_ID, pickupOrderRequest(null)))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_NOT_ON_SALE);
 
@@ -202,7 +208,7 @@ class ProductOrderTransactionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", null))
+                    USER_ID, pickupOrderRequest(null)))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_NOT_ON_SALE);
         }
@@ -217,7 +223,7 @@ class ProductOrderTransactionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", null))
+                    USER_ID, pickupOrderRequest(null)))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_STOCK_INSUFFICIENT);
 
@@ -237,12 +243,13 @@ class ProductOrderTransactionServiceTest {
 
             // Act
             ProductOrder result = orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", "请小心轻放");
+                    USER_ID, pickupOrderRequest("请小心轻放"));
 
             // Assert — order fields
             assertThat(result).isNotNull();
             assertThat(result.getUserId()).isEqualTo(USER_ID);
             assertThat(result.getStoreId()).isEqualTo(STORE_ID);
+            assertThat(result.getDeliveryMethod()).isEqualTo("PICKUP");
             assertThat(result.getTotalAmount()).isEqualByComparingTo(new BigDecimal("198.00"));
             assertThat(result.getPaymentMethod()).isEqualTo("OFFLINE_STORE");
             assertThat(result.getPaymentStatus()).isEqualTo("UNPAID");
@@ -271,10 +278,15 @@ class ProductOrderTransactionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> orderService.createOrder(
-                    USER_ID, STORE_ID, "张三", "13800000000", null))
+                    USER_ID, pickupOrderRequest(null)))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.PRODUCT_NOT_PICKUP_ONLY);
         }
+    }
+
+    private ProductOrderCreateRequest pickupOrderRequest(String remark) {
+        return new ProductOrderCreateRequest(
+                STORE_ID, "PICKUP", null, "张三", "13800000000", remark);
     }
 
     // ==================== cancelOrder ====================

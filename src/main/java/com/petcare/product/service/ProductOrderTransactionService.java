@@ -1,5 +1,6 @@
 package com.petcare.product.service;
 
+import com.petcare.product.dto.ProductOrderCreateRequest;
 import com.petcare.product.entity.ProductOrder;
 
 /**
@@ -10,23 +11,22 @@ import com.petcare.product.entity.ProductOrder;
 public interface ProductOrderTransactionService {
 
     /**
-     * Creates a pickup order within a single transaction:
+     * Creates an order within a single transaction:
      * 1. Load checked cart items
      * 2. Load products by ID ascending (deadlock prevention)
      * 3. Atomically deduct stock for each product
      * 4. Insert order + order items with price snapshots
      * 5. Delete settled cart items
      *
+     * <p>Supports two fulfillment modes per {@link ProductOrderCreateRequest#deliveryMethod()}:
+     * PICKUP requires a storeId; EXPRESS requires an addressId (the address is
+     * snapshotted so later edits/deletes do not affect historical orders).
+     *
      * @param currentUserId the authenticated user ID
-     * @param storeId       the pickup store ID
-     * @param contactName   contact name
-     * @param contactPhone  contact phone
-     * @param remark        optional remark
+     * @param request       validated order request (deliveryMethod, storeId/addressId, contact, remark)
      * @return the created order
      */
-    ProductOrder createOrder(Long currentUserId, Long storeId,
-                             String contactName, String contactPhone,
-                             String remark);
+    ProductOrder createOrder(Long currentUserId, ProductOrderCreateRequest request);
 
     /**
      * Cancels an order and restores stock within a transaction.

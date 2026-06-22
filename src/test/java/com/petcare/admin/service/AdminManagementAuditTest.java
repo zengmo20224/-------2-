@@ -2,16 +2,24 @@ package com.petcare.admin.service;
 
 import com.petcare.admin.entity.AdminOperationLog;
 import com.petcare.admin.service.impl.AdminManagementServiceImpl;
+import com.petcare.booking.service.BookingApplicationService;
 import com.petcare.booking.service.StaffScheduleService;
 import com.petcare.product.entity.Product;
 import com.petcare.product.service.ProductCategoryService;
+import com.petcare.product.service.ProductCarouselImageService;
+import com.petcare.product.service.ProductDetailImageService;
+import com.petcare.product.service.ProductImageService;
+import com.petcare.product.service.ProductOrderApplicationService;
 import com.petcare.product.service.ProductService;
 import com.petcare.service.service.ServiceCategoryService;
+import com.petcare.service.service.ServiceItemImageService;
 import com.petcare.service.service.ServiceItemService;
 import com.petcare.staff.service.StaffService;
 import com.petcare.staff.service.StaffSkillService;
 import com.petcare.store.service.StoreConfigService;
 import com.petcare.store.service.StoreService;
+import com.petcare.user.service.PhoneBlacklistService;
+import com.petcare.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +47,15 @@ class AdminManagementAuditTest {
     @Mock private StaffScheduleService staffScheduleService;
     @Mock private ProductCategoryService productCategoryService;
     @Mock private ProductService productService;
+    @Mock private ProductImageService productImageService;
+    @Mock private ProductDetailImageService productDetailImageService;
+    @Mock private ProductCarouselImageService productCarouselImageService;
+    @Mock private ServiceItemImageService serviceItemImageService;
     @Mock private AdminOperationLogService operationLogService;
+    @Mock private UserService userService;
+    @Mock private PhoneBlacklistService phoneBlacklistService;
+    @Mock private BookingApplicationService bookingApplicationService;
+    @Mock private ProductOrderApplicationService productOrderApplicationService;
 
     private AdminManagementServiceImpl service;
     private Product product;
@@ -49,7 +65,10 @@ class AdminManagementAuditTest {
         service = new AdminManagementServiceImpl(
                 storeService, storeConfigService, serviceCategoryService, serviceItemService,
                 staffService, staffSkillService, staffScheduleService, productCategoryService,
-                productService, operationLogService);
+                productService, productImageService, productDetailImageService,
+                productCarouselImageService, serviceItemImageService,
+                operationLogService, userService, phoneBlacklistService,
+                bookingApplicationService, productOrderApplicationService);
         product = new Product();
         product.setId(100L);
         product.setStock(10);

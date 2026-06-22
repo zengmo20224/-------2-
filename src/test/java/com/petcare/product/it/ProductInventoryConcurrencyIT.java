@@ -2,6 +2,7 @@ package com.petcare.product.it;
 
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.persistence.AbstractTcMySqlIT;
+import com.petcare.product.dto.ProductOrderCreateRequest;
 import com.petcare.product.entity.CartItem;
 import com.petcare.product.entity.Product;
 import com.petcare.product.mapper.CartItemMapper;
@@ -156,7 +157,8 @@ class ProductInventoryConcurrencyIT extends AbstractTcMySqlIT {
                           AtomicInteger successCount, AtomicInteger failCount, List<Throwable> errors) {
         try {
             startLatch.await();
-            orderService.createOrder(userId, STORE_ID, "测试联系人", "13800000000", "并发测试");
+            orderService.createOrder(userId, new ProductOrderCreateRequest(
+                    STORE_ID, "PICKUP", null, "测试联系人", "13800000000", "并发测试"));
             successCount.incrementAndGet();
         } catch (Throwable t) {
             errors.add(t);

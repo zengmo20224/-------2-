@@ -20,6 +20,7 @@ public record ProductDetailResponse(
         Integer salesCount,
         String description,
         Integer pickupOnly,
-        List<String> imageUrls
+        List<String> imageUrls,
+        List<String> detailImageUrls
 ) {
 }

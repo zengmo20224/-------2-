@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.petcare.admin.dto.AdminManagementDtos.OperationLogView;
+import com.petcare.admin.dto.AdminManagementDtos.ProductCarouselImageRequest;
+import com.petcare.admin.dto.AdminManagementDtos.ProductCarouselImageView;
+import com.petcare.admin.dto.AdminManagementDtos.ProductCarouselImagesUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.ProductRequest;
 import com.petcare.admin.dto.AdminManagementDtos.ProductView;
 import com.petcare.admin.dto.AdminManagementDtos.ServiceItemRequest;
@@ -17,21 +20,34 @@ import com.petcare.admin.dto.AdminManagementDtos.StoreConfigUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.StoreConfigView;
 import com.petcare.admin.dto.AdminManagementDtos.StoreUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.StoreView;
+import com.petcare.admin.dto.AdminManagementDtos.UserView;
 import com.petcare.admin.entity.AdminOperationLog;
 import com.petcare.admin.service.AdminManagementService;
 import com.petcare.admin.service.AdminOperationLogService;
+import com.petcare.booking.dto.BookingResponse;
 import com.petcare.booking.entity.StaffSchedule;
+import com.petcare.booking.service.BookingApplicationService;
 import com.petcare.booking.service.StaffScheduleService;
 import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
 import com.petcare.common.pagination.PageResponse;
+import com.petcare.product.dto.ProductOrderResponse;
 import com.petcare.product.entity.Product;
+import com.petcare.product.entity.ProductCarouselImage;
 import com.petcare.product.entity.ProductCategory;
+import com.petcare.product.entity.ProductDetailImage;
+import com.petcare.product.entity.ProductImage;
 import com.petcare.product.service.ProductCategoryService;
+import com.petcare.product.service.ProductCarouselImageService;
+import com.petcare.product.service.ProductDetailImageService;
+import com.petcare.product.service.ProductImageService;
+import com.petcare.product.service.ProductOrderApplicationService;
 import com.petcare.product.service.ProductService;
 import com.petcare.service.entity.ServiceCategory;
 import com.petcare.service.entity.ServiceItem;
+import com.petcare.service.entity.ServiceItemImage;
 import com.petcare.service.service.ServiceCategoryService;
+import com.petcare.service.service.ServiceItemImageService;
 import com.petcare.service.service.ServiceItemService;
 import com.petcare.staff.entity.Staff;
 import com.petcare.staff.entity.StaffSkill;
@@ -41,6 +57,11 @@ import com.petcare.store.entity.Store;
 import com.petcare.store.entity.StoreConfig;
 import com.petcare.store.service.StoreConfigService;
 import com.petcare.store.service.StoreService;
+import com.petcare.user.entity.User;
+import com.petcare.user.entity.PhoneBlacklist;
+import com.petcare.user.service.PhoneBlacklistService;
+import com.petcare.user.service.UserService;
+import com.petcare.admin.dto.AdminManagementDtos.UserBanResult;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.slf4j.Logger;
@@ -62,14 +83,28 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     private final StaffScheduleService scheduleService;
     private final ProductCategoryService productCategoryService;
     private final ProductService productService;
+    private final ProductImageService productImageService;
+    private final ProductDetailImageService productDetailImageService;
+    private final ProductCarouselImageService productCarouselImageService;
+    private final ServiceItemImageService serviceItemImageService;
     private final AdminOperationLogService operationLogService;
+    private final UserService userService;
+    private final PhoneBlacklistService phoneBlacklistService;
+    private final BookingApplicationService bookingApplicationService;
+    private final ProductOrderApplicationService productOrderApplicationService;
 
     public AdminManagementServiceImpl(StoreService storeService, StoreConfigService storeConfigService,
             ServiceCategoryService serviceCategoryService, ServiceItemService serviceItemService,
             StaffService staffService, StaffSkillService staffSkillService,
             StaffScheduleService scheduleService, ProductCategoryService productCategoryService,
-            ProductService productService,
-            AdminOperationLogService operationLogService) {
+            ProductService productService, ProductImageService productImageService,
+            ProductDetailImageService productDetailImageService,
+            ProductCarouselImageService productCarouselImageService,
+            ServiceItemImageService serviceItemImageService,
+            AdminOperationLogService operationLogService,
+            UserService userService, PhoneBlacklistService phoneBlacklistService,
+            BookingApplicationService bookingApplicationService,
+            ProductOrderApplicationService productOrderApplicationService) {
         this.storeService = storeService;
         this.storeConfigService = storeConfigService;
         this.serviceCategoryService = serviceCategoryService;
@@ -79,7 +114,15 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         this.scheduleService = scheduleService;
         this.productCategoryService = productCategoryService;
         this.productService = productService;
+        this.productImageService = productImageService;
+        this.productDetailImageService = productDetailImageService;
+        this.productCarouselImageService = productCarouselImageService;
+        this.serviceItemImageService = serviceItemImageService;
         this.operationLogService = operationLogService;
+        this.userService = userService;
+        this.phoneBlacklistService = phoneBlacklistService;
+        this.bookingApplicationService = bookingApplicationService;
+        this.productOrderApplicationService = productOrderApplicationService;
     }
 
     @Override
@@ -157,6 +200,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             apply(item, request);
             item.setStatus("ON_SALE");
             serviceItemService.save(item);
+            replaceServiceItemImages(item.getId(), request.imageUrls());
             audit(operatorId, "service", "create-item", "POST", url, "SUCCESS", null);
             return serviceItemView(item);
         } catch (RuntimeException e) {
@@ -174,6 +218,7 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             ServiceItem item = requireServiceItem(id);
             apply(item, request);
             serviceItemService.updateById(item);
+            replaceServiceItemImages(item.getId(), request.imageUrls());
             audit(operatorId, "service", "update-item", "PUT", url, "SUCCESS", null);
             return serviceItemView(item);
         } catch (RuntimeException e) {
@@ -353,6 +398,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             product.setSalesCount(0);
             product.setStatus("ON_SALE");
             productService.save(product);
+            replaceProductImages(product.getId(), request.imageUrls());
+            replaceProductDetailImages(product.getId(), request.detailImageUrls());
             audit(operatorId, "product", "create-item", "POST", url, "SUCCESS", null);
             return productView(product);
         } catch (RuntimeException e) {
@@ -370,6 +417,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
             Product product = requireProduct(id);
             apply(product, request);
             productService.updateById(product);
+            replaceProductImages(product.getId(), request.imageUrls());
+            replaceProductDetailImages(product.getId(), request.detailImageUrls());
             audit(operatorId, "product", "update-item", "PUT", url, "SUCCESS", null);
             return productView(product);
         } catch (RuntimeException e) {
@@ -411,12 +460,157 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     }
 
     @Override
+    public List<ProductCarouselImageView> listProductCarouselImages() {
+        LambdaQueryWrapper<ProductCarouselImage> query = new LambdaQueryWrapper<ProductCarouselImage>()
+                .eq(ProductCarouselImage::getDeleted, 0)
+                .orderByAsc(ProductCarouselImage::getSort)
+                .orderByAsc(ProductCarouselImage::getCreateTime);
+        return productCarouselImageService.list(query).stream()
+                .map(this::productCarouselImageView)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<ProductCarouselImageView> replaceProductCarouselImages(
+            ProductCarouselImagesUpdateRequest request, Long operatorId) {
+        String url = "/api/v1/admin/product-carousel-images";
+        try {
+            productCarouselImageService.remove(new LambdaQueryWrapper<ProductCarouselImage>()
+                    .eq(ProductCarouselImage::getDeleted, 0));
+            int sort = 0;
+            for (ProductCarouselImageRequest imageRequest : request.images()) {
+                validateCarouselLink(imageRequest);
+                ProductCarouselImage image = new ProductCarouselImage();
+                apply(image, imageRequest, sort);
+                productCarouselImageService.save(image);
+                sort++;
+            }
+            audit(operatorId, "product", "replace-carousel-images", "PUT", url, "SUCCESS", null);
+            return listProductCarouselImages();
+        } catch (RuntimeException e) {
+            audit(operatorId, "product", "replace-carousel-images", "PUT", url, "FAIL", auditFailureMessage(e));
+            throw e;
+        }
+    }
+
+    @Override
     public PageResponse<OperationLogView> listOperationLogs(int page, int size, String module) {
         LambdaQueryWrapper<AdminOperationLog> query = new LambdaQueryWrapper<AdminOperationLog>()
                 .eq(hasText(module), AdminOperationLog::getModule, module)
                 .orderByDesc(AdminOperationLog::getCreateTime);
         IPage<AdminOperationLog> result = operationLogService.page(page(page, size), query);
         return response(result, page, size, this::operationLogView);
+    }
+
+    // ─── User management ───
+
+    @Override
+    public PageResponse<UserView> listUsers(int page, int size, String status, String keyword) {
+        LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
+                .eq(hasText(status), User::getStatus, status)
+                .and(hasText(keyword), w -> w
+                        .like(User::getPhone, keyword)
+                        .or().like(User::getNickname, keyword))
+                .orderByDesc(User::getCreateTime);
+        IPage<User> result = userService.page(page(page, size), query);
+        return response(result, page, size, this::userView);
+    }
+
+    @Override
+    public UserView getUser(Long id) {
+        return userView(requireUser(id));
+    }
+
+    @Override
+    @Transactional
+    public UserBanResult banUser(Long id, String reason, Long operatorId) {
+        String url = "/api/v1/admin/users/" + id + "/ban";
+        try {
+            User user = requireUser(id);
+            // Progressive ban: compute next level + duration from ban history
+            PhoneBlacklist ban = null;
+            if (hasText(user.getPhone())) {
+                ban = phoneBlacklistService.banPhone(user.getPhone(), user.getId(), reason, operatorId);
+            }
+            user.setStatus("BANNED");
+            userService.updateById(user);
+            audit(operatorId, "user", "ban-user", "POST", url, "SUCCESS", null);
+            String description = (ban != null) ? phoneBlacklistService.describeRemaining(ban) : "已封禁";
+            return new UserBanResult(
+                    user.getId(),
+                    user.getStatus(),
+                    ban != null ? ban.getBanLevel() : 1,
+                    ban != null ? ban.getBanDays() : null,
+                    ban != null ? ban.getBanUntil() : null,
+                    description);
+        } catch (RuntimeException e) {
+            audit(operatorId, "user", "ban-user", "POST", url, "FAIL", auditFailureMessage(e));
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional
+    public UserView unbanUser(Long id, Long operatorId) {
+        String url = "/api/v1/admin/users/" + id + "/unban";
+        try {
+            User user = requireUser(id);
+            if (!"BANNED".equals(user.getStatus())) {
+                throw new BusinessException(ErrorCode.STATE_CONFLICT, "该用户未被封禁");
+            }
+            user.setStatus("ACTIVE");
+            userService.updateById(user);
+            // Mark the active ban record as UNBANNED (history preserved for level escalation)
+            if (hasText(user.getPhone())) {
+                phoneBlacklistService.unbanPhone(user.getPhone());
+            }
+            audit(operatorId, "user", "unban-user", "POST", url, "SUCCESS", null);
+            return userView(user);
+        } catch (RuntimeException e) {
+            audit(operatorId, "user", "unban-user", "POST", url, "FAIL", auditFailureMessage(e));
+            throw e;
+        }
+    }
+
+    @Override
+    public PageResponse<BookingResponse> listUserBookings(Long userId, int page, int size) {
+        requireUser(userId);
+        return bookingApplicationService.getMyBookings(userId, page, size);
+    }
+
+    @Override
+    public PageResponse<ProductOrderResponse> listUserOrders(Long userId, int page, int size) {
+        requireUser(userId);
+        return productOrderApplicationService.getMyOrders(userId, page, size);
+    }
+
+    private User requireUser(Long id) {
+        User user = userService.getById(id);
+        if (user == null || Integer.valueOf(1).equals(user.getDeleted())) {
+            throw notFound("用户不存在");
+        }
+        return user;
+    }
+
+    private UserView userView(User user) {
+        // Describe active ban (remaining time) for display in the user list
+        String banDescription = null;
+        if ("BANNED".equals(user.getStatus()) && hasText(user.getPhone())) {
+            PhoneBlacklist active = phoneBlacklistService.getActiveBan(user.getPhone());
+            banDescription = phoneBlacklistService.describeRemaining(active);
+        }
+        return new UserView(
+                user.getId(),
+                user.getNickname(),
+                user.getPhone(),
+                user.getAvatarUrl(),
+                user.getGender(),
+                user.getStatus(),
+                user.getRealName(),
+                banDescription,
+                user.getLastLoginTime(),
+                user.getCreateTime());
     }
 
     private void audit(Long operatorId, String module, String operation,
@@ -618,6 +812,104 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         product.setSort(request.sort() == null ? 0 : request.sort());
     }
 
+    private void apply(ProductCarouselImage image, ProductCarouselImageRequest request, int fallbackSort) {
+        String linkType = hasText(request.linkType()) ? request.linkType() : "NONE";
+        image.setTitle(request.title());
+        image.setImageUrl(request.imageUrl().trim());
+        image.setLinkType(linkType);
+        image.setLinkTargetId("PRODUCT".equals(linkType) ? request.linkTargetId() : null);
+        image.setStatus(hasText(request.status()) ? request.status() : "ACTIVE");
+        image.setSort(request.sort() == null ? fallbackSort : request.sort());
+    }
+
+    private void replaceServiceItemImages(Long serviceItemId, List<String> imageUrls) {
+        serviceItemImageService.remove(new LambdaQueryWrapper<ServiceItemImage>()
+                .eq(ServiceItemImage::getServiceItemId, serviceItemId));
+        List<String> urls = normalizeImageUrls(imageUrls);
+        for (int i = 0; i < urls.size(); i++) {
+            ServiceItemImage image = new ServiceItemImage();
+            image.setServiceItemId(serviceItemId);
+            image.setImageUrl(urls.get(i));
+            image.setSort(i + 1);
+            serviceItemImageService.save(image);
+        }
+    }
+
+    private void replaceProductImages(Long productId, List<String> imageUrls) {
+        productImageService.remove(new LambdaQueryWrapper<ProductImage>()
+                .eq(ProductImage::getProductId, productId));
+        List<String> urls = normalizeImageUrls(imageUrls);
+        for (int i = 0; i < urls.size(); i++) {
+            ProductImage image = new ProductImage();
+            image.setProductId(productId);
+            image.setImageUrl(urls.get(i));
+            image.setSort(i + 1);
+            productImageService.save(image);
+        }
+    }
+
+    private void replaceProductDetailImages(Long productId, List<String> imageUrls) {
+        productDetailImageService.remove(new LambdaQueryWrapper<ProductDetailImage>()
+                .eq(ProductDetailImage::getProductId, productId));
+        List<String> urls = normalizeImageUrls(imageUrls);
+        for (int i = 0; i < urls.size(); i++) {
+            ProductDetailImage image = new ProductDetailImage();
+            image.setProductId(productId);
+            image.setImageUrl(urls.get(i));
+            image.setSort(i + 1);
+            productDetailImageService.save(image);
+        }
+    }
+
+    private List<String> normalizeImageUrls(List<String> imageUrls) {
+        if (imageUrls == null) {
+            return List.of();
+        }
+        return imageUrls.stream()
+                .filter(this::hasText)
+                .map(String::trim)
+                .distinct()
+                .toList();
+    }
+
+    private List<String> serviceItemImageUrls(Long serviceItemId) {
+        return serviceItemImageService.list(new LambdaQueryWrapper<ServiceItemImage>()
+                        .eq(ServiceItemImage::getServiceItemId, serviceItemId)
+                        .orderByAsc(ServiceItemImage::getSort))
+                .stream()
+                .map(ServiceItemImage::getImageUrl)
+                .toList();
+    }
+
+    private List<String> productImageUrls(Long productId) {
+        return productImageService.list(new LambdaQueryWrapper<ProductImage>()
+                        .eq(ProductImage::getProductId, productId)
+                        .orderByAsc(ProductImage::getSort))
+                .stream()
+                .map(ProductImage::getImageUrl)
+                .toList();
+    }
+
+    private List<String> productDetailImageUrls(Long productId) {
+        return productDetailImageService.list(new LambdaQueryWrapper<ProductDetailImage>()
+                        .eq(ProductDetailImage::getProductId, productId)
+                        .orderByAsc(ProductDetailImage::getSort))
+                .stream()
+                .map(ProductDetailImage::getImageUrl)
+                .toList();
+    }
+
+    private void validateCarouselLink(ProductCarouselImageRequest request) {
+        String linkType = hasText(request.linkType()) ? request.linkType() : "NONE";
+        if (!"PRODUCT".equals(linkType)) {
+            return;
+        }
+        if (request.linkTargetId() == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "商品轮播图跳转商品不能为空");
+        }
+        requireProduct(request.linkTargetId());
+    }
+
     private StoreView storeView(Store store) {
         return new StoreView(store.getId(), store.getStoreName(), store.getPhone(), store.getAddress(),
                 store.getLongitude(), store.getLatitude(), store.getBusinessHours(), store.getStatus(),
@@ -634,7 +926,8 @@ public class AdminManagementServiceImpl implements AdminManagementService {
         return new ServiceItemView(item.getId(), item.getCategoryId(), item.getName(), item.getServiceMode(),
                 item.getPrice(), item.getDurationMinutes(), item.getPetType(), item.getPetSize(),
                 Integer.valueOf(1).equals(item.getNeedAddress()), Integer.valueOf(1).equals(item.getNeedPet()),
-                item.getDescription(), item.getCoverUrl(), item.getStatus(), item.getSort());
+                item.getDescription(), item.getCoverUrl(), serviceItemImageUrls(item.getId()),
+                item.getStatus(), item.getSort());
     }
 
     private StaffView staffView(Staff staff) {
@@ -651,7 +944,19 @@ public class AdminManagementServiceImpl implements AdminManagementService {
     private ProductView productView(Product product) {
         return new ProductView(product.getId(), product.getCategoryId(), product.getName(), product.getCoverUrl(),
                 product.getPrice(), product.getStock(), product.getSalesCount(), product.getDescription(),
-                Integer.valueOf(1).equals(product.getPickupOnly()), product.getStatus(), product.getSort());
+                Integer.valueOf(1).equals(product.getPickupOnly()), productImageUrls(product.getId()),
+                productDetailImageUrls(product.getId()), product.getStatus(), product.getSort());
+    }
+
+    private ProductCarouselImageView productCarouselImageView(ProductCarouselImage image) {
+        return new ProductCarouselImageView(
+                image.getId(),
+                image.getTitle(),
+                image.getImageUrl(),
+                image.getLinkType(),
+                image.getLinkTargetId(),
+                image.getStatus(),
+                image.getSort());
     }
 
     private OperationLogView operationLogView(AdminOperationLog entry) {

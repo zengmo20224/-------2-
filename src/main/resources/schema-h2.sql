@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS `user` (
   `gender`          TINYINT         DEFAULT NULL,
   `status`          VARCHAR(32)     NOT NULL DEFAULT 'ACTIVE',
   `last_login_time` TIMESTAMP       DEFAULT NULL,
+  `real_name`       VARCHAR(64)     DEFAULT NULL,
+  `id_card_no`      VARCHAR(32)     DEFAULT NULL,
+  `id_card_image_url` VARCHAR(255)  DEFAULT NULL,
   `create_time`     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time`     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted`         TINYINT         NOT NULL DEFAULT 0,
@@ -131,6 +134,15 @@ CREATE TABLE IF NOT EXISTS `service_item` (
   `create_time`      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time`      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted`          TINYINT      NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `service_item_image` (
+  `id`              BIGINT       NOT NULL,
+  `service_item_id` BIGINT       NOT NULL,
+  `image_url`       VARCHAR(255) NOT NULL,
+  `sort`            INT          NOT NULL DEFAULT 0,
+  `create_time`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -397,6 +409,29 @@ CREATE TABLE IF NOT EXISTS `product_image` (
   PRIMARY KEY (`id`)
 );
 
+CREATE TABLE IF NOT EXISTS `product_detail_image` (
+  `id`          BIGINT       NOT NULL,
+  `product_id`  BIGINT       NOT NULL,
+  `image_url`   VARCHAR(255) NOT NULL,
+  `sort`        INT          NOT NULL DEFAULT 0,
+  `create_time` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `product_carousel_image` (
+  `id`             BIGINT       NOT NULL,
+  `title`          VARCHAR(80)  DEFAULT NULL,
+  `image_url`      VARCHAR(255) NOT NULL,
+  `link_type`      VARCHAR(32)  DEFAULT 'NONE',
+  `link_target_id` BIGINT       DEFAULT NULL,
+  `status`         VARCHAR(32)  NOT NULL DEFAULT 'ACTIVE',
+  `sort`           INT          NOT NULL DEFAULT 0,
+  `create_time`    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted`        TINYINT      NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);
+
 CREATE TABLE IF NOT EXISTS `cart_item` (
   `id`          BIGINT   NOT NULL,
   `user_id`     BIGINT   NOT NULL,
@@ -412,8 +447,11 @@ CREATE TABLE IF NOT EXISTS `product_order` (
   `id`              BIGINT        NOT NULL,
   `order_no`        VARCHAR(64)   NOT NULL,
   `user_id`         BIGINT        NOT NULL,
-  `store_id`        BIGINT        NOT NULL,
+  `store_id`        BIGINT        NULL,
   `total_amount`    DECIMAL(10,2) NOT NULL,
+  `delivery_method` VARCHAR(16)   NOT NULL DEFAULT 'PICKUP',
+  `address_id`      BIGINT        DEFAULT NULL,
+  `address_snapshot` VARCHAR(500) DEFAULT NULL,
   `payment_method`  VARCHAR(32)   DEFAULT NULL,
   `payment_status`  VARCHAR(32)   NOT NULL DEFAULT 'UNPAID',
   `pickup_status`   VARCHAR(32)   NOT NULL DEFAULT 'WAIT_PREPARE',
@@ -450,6 +488,7 @@ CREATE TABLE IF NOT EXISTS `marketing_activity` (
   `title`         VARCHAR(100) DEFAULT NULL,
   `activity_type` VARCHAR(32)  NOT NULL DEFAULT 'MIXED',
   `description`   CLOB         DEFAULT NULL,
+  `cover_url`     VARCHAR(255) DEFAULT NULL,
   `start_time`    TIMESTAMP    DEFAULT NULL,
   `end_time`      TIMESTAMP    DEFAULT NULL,
   `status`        VARCHAR(32)  NOT NULL DEFAULT 'DRAFT',
@@ -600,5 +639,78 @@ CREATE TABLE IF NOT EXISTS `admin_operation_log` (
   `result`         VARCHAR(32)  DEFAULT NULL,
   `error_message`  VARCHAR(1000) DEFAULT NULL,
   `create_time`    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
+-- Phase 8: Phone blacklist (progressive ban history)
+CREATE TABLE IF NOT EXISTS `phone_blacklist` (
+  `id`           BIGINT       NOT NULL,
+  `phone`        VARCHAR(20)  NOT NULL,
+  `user_id`      BIGINT       DEFAULT NULL,
+  `reason`       VARCHAR(255) DEFAULT NULL,
+  `operator_id`  BIGINT       DEFAULT NULL,
+  `status`       VARCHAR(16)  NOT NULL DEFAULT 'ACTIVE',
+  `ban_level`    INT          NOT NULL DEFAULT 1,
+  `ban_days`     INT          DEFAULT NULL,
+  `ban_until`    TIMESTAMP    DEFAULT NULL,
+  `unban_time`   TIMESTAMP    DEFAULT NULL,
+  `create_time`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
+-- Phase 4: Community tag system
+CREATE TABLE IF NOT EXISTS `community_tag` (
+  `id`           BIGINT       NOT NULL,
+  `name`         VARCHAR(64)  NOT NULL,
+  `usage_count`  INT          NOT NULL DEFAULT 0,
+  `create_time`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted`      TINYINT      NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `post_tag_rel` (
+  `id`           BIGINT       NOT NULL,
+  `post_id`      BIGINT       NOT NULL,
+  `tag_id`       BIGINT       NOT NULL,
+  `create_time`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
+-- Phase 2: Comment likes
+CREATE TABLE IF NOT EXISTS `comment_like` (
+  `id`           BIGINT       NOT NULL,
+  `comment_id`   BIGINT       NOT NULL,
+  `user_id`      BIGINT       NOT NULL,
+  `create_time`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE (`comment_id`, `user_id`)
+);
+
+-- Phase 5: Announcements and notifications
+CREATE TABLE IF NOT EXISTS `announcement` (
+  `id`           BIGINT        NOT NULL,
+  `title`        VARCHAR(200)  NOT NULL,
+  `content`      CLOB          NOT NULL,
+  `status`       VARCHAR(32)   NOT NULL DEFAULT 'PUBLISHED',
+  `sort`         INT           NOT NULL DEFAULT 0,
+  `create_time`  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted`      TINYINT       NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `user_notification` (
+  `id`             BIGINT        NOT NULL,
+  `user_id`        BIGINT        NOT NULL,
+  `actor_id`       BIGINT        DEFAULT NULL,
+  `type`           VARCHAR(32)   NOT NULL,
+  `post_id`        BIGINT        DEFAULT NULL,
+  `comment_id`     BIGINT        DEFAULT NULL,
+  `content`        VARCHAR(500)  DEFAULT NULL,
+  `is_read`        TINYINT       NOT NULL DEFAULT 0,
+  `create_time`    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time`    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted`        TINYINT       NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 );

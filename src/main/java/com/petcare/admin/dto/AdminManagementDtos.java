@@ -2,6 +2,7 @@ package com.petcare.admin.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.petcare.common.serialization.SnowflakeIdSerializer;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -69,6 +70,7 @@ public final class AdminManagementDtos {
             @NotNull Boolean needPet,
             String description,
             @Size(max = 255) String coverUrl,
+            @Size(max = 20) List<@Size(max = 255) String> imageUrls,
             @Min(0) Integer sort) {
     }
 
@@ -78,7 +80,8 @@ public final class AdminManagementDtos {
             String name, String serviceMode,
             BigDecimal price, Integer durationMinutes, String petType,
             String petSize, Boolean needAddress, Boolean needPet,
-            String description, String coverUrl, String status, Integer sort) {
+            String description, String coverUrl, List<String> imageUrls,
+            String status, Integer sort) {
     }
 
     public record StaffRequest(
@@ -129,6 +132,8 @@ public final class AdminManagementDtos {
             @NotNull @DecimalMin("0.0") BigDecimal price,
             String description,
             @NotNull Boolean pickupOnly,
+            @Size(max = 5) List<@Size(max = 255) String> imageUrls,
+            @Size(max = 20) List<@Size(max = 255) String> detailImageUrls,
             @Min(0) Integer sort) {
     }
 
@@ -140,7 +145,31 @@ public final class AdminManagementDtos {
             @JsonSerialize(using = SnowflakeIdSerializer.class) Long categoryId,
             String name, String coverUrl,
             BigDecimal price, Integer stock, Integer salesCount,
-            String description, Boolean pickupOnly, String status, Integer sort) {
+            String description, Boolean pickupOnly, List<String> imageUrls, List<String> detailImageUrls,
+            String status, Integer sort) {
+    }
+
+    public record ProductCarouselImageRequest(
+            @Size(max = 80) String title,
+            @NotBlank @Size(max = 255) String imageUrl,
+            @Pattern(regexp = "NONE|PRODUCT") String linkType,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long linkTargetId,
+            @Pattern(regexp = "ACTIVE|INACTIVE") String status,
+            @Min(0) Integer sort) {
+    }
+
+    public record ProductCarouselImagesUpdateRequest(
+            @NotNull @Size(max = 5) List<@Valid ProductCarouselImageRequest> images) {
+    }
+
+    public record ProductCarouselImageView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            String title,
+            String imageUrl,
+            String linkType,
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long linkTargetId,
+            String status,
+            Integer sort) {
     }
 
     public record OperationLogView(
@@ -149,5 +178,34 @@ public final class AdminManagementDtos {
             String module, String operation,
             String requestMethod, String requestUrl, String result,
             String errorMessage, LocalDateTime createTime) {
+    }
+
+    /** Admin-facing user view. Phone is shown as-is for management purposes. */
+    public record UserView(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            String nickname,
+            String phone,
+            String avatarUrl,
+            Integer gender,
+            String status,
+            String realName,
+            String banDescription,
+            LocalDateTime lastLoginTime,
+            LocalDateTime createTime) {
+    }
+
+    /** Request body for banning a user. */
+    public record UserBanRequest(
+            @Size(max = 255) String reason) {
+    }
+
+    /** Result of a ban operation (includes the computed level/duration). */
+    public record UserBanResult(
+            @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
+            String status,
+            Integer banLevel,
+            Integer banDays,
+            LocalDateTime banUntil,
+            String description) {
     }
 }

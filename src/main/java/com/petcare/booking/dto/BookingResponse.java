@@ -19,6 +19,7 @@ public record BookingResponse(
         @JsonSerialize(using = SnowflakeIdSerializer.class) Long petId,
         @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
         @JsonSerialize(using = SnowflakeIdSerializer.class) Long serviceItemId,
+        String serviceItemName,
         @JsonSerialize(using = SnowflakeIdSerializer.class) Long staffId,
         String serviceMode,
         LocalDate bookingDate,

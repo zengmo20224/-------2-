@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 /**
  * Application service for marketing activity operations.
@@ -51,9 +51,16 @@ public class MarketingApplicationService {
     // ---- Public reads ----
 
     public PageResponse<MarketingActivityDtos.PublicActivitySummary> listPublicActivities(int page, int size) {
+        LocalDateTime now = LocalDateTime.now();
         Page<MarketingActivity> pageParam = new Page<>(page, Math.min(size, 50));
         IPage<MarketingActivity> result = activityService.lambdaQuery()
                 .eq(MarketingActivity::getStatus, ActivityStatus.ACTIVE.getCode())
+                .and(w -> w.isNull(MarketingActivity::getStartTime)
+                        .or()
+                        .le(MarketingActivity::getStartTime, now))
+                .and(w -> w.isNull(MarketingActivity::getEndTime)
+                        .or()
+                        .ge(MarketingActivity::getEndTime, now))
                 .orderByDesc(MarketingActivity::getCreateTime)
                 .page(pageParam);
 
@@ -66,7 +73,7 @@ public class MarketingApplicationService {
 
     public MarketingActivityDtos.PublicActivitySummary getPublicActivity(Long id) {
         MarketingActivity activity = activityService.getById(id);
-        if (activity == null || !ActivityStatus.ACTIVE.getCode().equals(activity.getStatus())) {
+        if (!isPubliclyVisible(activity, LocalDateTime.now())) {
             throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "活动不存在或未上线");
         }
         return toPublicSummary(activity);
@@ -74,9 +81,10 @@ public class MarketingApplicationService {
 
     // ---- Admin CRUD ----
 
-    public PageResponse<MarketingActivityDtos.AdminActivitySummary> listAdminActivities(int page, int size) {
+    public PageResponse<MarketingActivityDtos.AdminActivitySummary> listAdminActivities(int page, int size, String status) {
         Page<MarketingActivity> pageParam = new Page<>(page, Math.min(size, 100));
         IPage<MarketingActivity> result = activityService.lambdaQuery()
+                .eq(status != null && !status.isBlank(), MarketingActivity::getStatus, status)
                 .orderByDesc(MarketingActivity::getCreateTime)
                 .page(pageParam);
 
@@ -105,7 +113,7 @@ public class MarketingApplicationService {
 
         return new MarketingActivityDtos.AdminActivityDetail(
                 activity.getId(), activity.getTitle(), activity.getActivityType(),
-                activity.getDescription(), activity.getStartTime(), activity.getEndTime(),
+                activity.getDescription(), activity.getCoverUrl(), activity.getStartTime(), activity.getEndTime(),
                 activity.getStatus(), productIds, serviceItemIds);
     }
 
@@ -115,6 +123,7 @@ public class MarketingApplicationService {
         activity.setTitle(request.title());
         activity.setActivityType(request.activityType());
         activity.setDescription(request.description());
+        activity.setCoverUrl(request.coverUrl());
         activity.setStartTime(request.startTime());
         activity.setEndTime(request.endTime());
         activity.setStatus(ActivityStatus.DRAFT.getCode());
@@ -135,6 +144,7 @@ public class MarketingApplicationService {
         activity.setTitle(request.title());
         activity.setActivityType(request.activityType());
         activity.setDescription(request.description());
+        activity.setCoverUrl(request.coverUrl());
         activity.setStartTime(request.startTime());
         activity.setEndTime(request.endTime());
         activityService.updateById(activity);
@@ -217,23 +227,26 @@ public class MarketingApplicationService {
     }
 
     private MarketingActivityDtos.PublicActivitySummary toPublicSummary(MarketingActivity activity) {
-        List<String> productNames = getProductNames(activity.getId());
-        List<String> serviceNames = getServiceNames(activity.getId());
+        List<MarketingActivityDtos.ActivityProductCard> products = getProductCards(activity.getId());
+        List<MarketingActivityDtos.ActivityServiceCard> services = getServiceCards(activity.getId());
+        List<String> productNames = products.stream().map(MarketingActivityDtos.ActivityProductCard::name).toList();
+        List<String> serviceNames = services.stream().map(MarketingActivityDtos.ActivityServiceCard::name).toList();
 
         return new MarketingActivityDtos.PublicActivitySummary(
                 activity.getId(), activity.getTitle(), activity.getActivityType(),
-                activity.getDescription(), activity.getStartTime(), activity.getEndTime(),
+                activity.getDescription(), activity.getCoverUrl(), activity.getStartTime(), activity.getEndTime(),
+                products, services,
                 productNames, serviceNames);
     }
 
     private MarketingActivityDtos.AdminActivitySummary toAdminSummary(MarketingActivity activity) {
         return new MarketingActivityDtos.AdminActivitySummary(
                 activity.getId(), activity.getTitle(), activity.getActivityType(),
-                activity.getDescription(), activity.getStartTime(), activity.getEndTime(),
+                activity.getDescription(), activity.getCoverUrl(), activity.getStartTime(), activity.getEndTime(),
                 activity.getStatus());
     }
 
-    private List<String> getProductNames(Long activityId) {
+    private List<MarketingActivityDtos.ActivityProductCard> getProductCards(Long activityId) {
         List<ActivityProduct> links = activityProductService.lambdaQuery()
                 .eq(ActivityProduct::getActivityId, activityId)
                 .list();
@@ -242,13 +255,16 @@ public class MarketingApplicationService {
         List<Long> productIds = links.stream().map(ActivityProduct::getProductId).toList();
         return productService.lambdaQuery()
                 .in(Product::getId, productIds)
+                .eq(Product::getStatus, "ON_SALE")
                 .list()
                 .stream()
-                .map(Product::getName)
+                .map(product -> new MarketingActivityDtos.ActivityProductCard(
+                        product.getId(), product.getName(), product.getCoverUrl(),
+                        product.getPrice(), product.getSalesCount()))
                 .toList();
     }
 
-    private List<String> getServiceNames(Long activityId) {
+    private List<MarketingActivityDtos.ActivityServiceCard> getServiceCards(Long activityId) {
         List<ActivityService> links = activityServiceLinkService.lambdaQuery()
                 .eq(ActivityService::getActivityId, activityId)
                 .list();
@@ -257,9 +273,21 @@ public class MarketingApplicationService {
         List<Long> serviceItemIds = links.stream().map(ActivityService::getServiceItemId).toList();
         return serviceItemService.lambdaQuery()
                 .in(ServiceItem::getId, serviceItemIds)
+                .eq(ServiceItem::getStatus, "ON_SALE")
                 .list()
                 .stream()
-                .map(ServiceItem::getName)
+                .map(service -> new MarketingActivityDtos.ActivityServiceCard(
+                        service.getId(), service.getName(), service.getCoverUrl(),
+                        service.getPrice(), service.getDurationMinutes(), service.getServiceMode()))
                 .toList();
+    }
+
+    private boolean isPubliclyVisible(MarketingActivity activity, LocalDateTime now) {
+        if (activity == null || !ActivityStatus.ACTIVE.getCode().equals(activity.getStatus())) {
+            return false;
+        }
+        boolean started = activity.getStartTime() == null || !activity.getStartTime().isAfter(now);
+        boolean notEnded = activity.getEndTime() == null || !activity.getEndTime().isBefore(now);
+        return started && notEnded;
     }
 }

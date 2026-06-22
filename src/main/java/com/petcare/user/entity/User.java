@@ -28,6 +28,15 @@ public class User extends BaseEntity {
     @TableField("nickname")
     private String nickname;
 
+    @TableField("real_name")
+    private String realName;
+
+    @TableField("id_card_no")
+    private String idCardNo;
+
+    @TableField("id_card_image_url")
+    private String idCardImageUrl;
+
     @TableField("avatar_url")
     private String avatarUrl;
 

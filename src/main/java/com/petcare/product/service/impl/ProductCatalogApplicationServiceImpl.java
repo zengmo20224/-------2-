@@ -7,16 +7,22 @@ import com.petcare.common.exception.BusinessException;
 import com.petcare.common.exception.ErrorCode;
 import com.petcare.common.pagination.PageResponse;
 import com.petcare.product.dto.ProductCategoryResponse;
+import com.petcare.product.dto.ProductCarouselImageResponse;
 import com.petcare.product.dto.ProductDetailResponse;
 import com.petcare.product.dto.ProductSummaryResponse;
 import com.petcare.product.entity.Product;
+import com.petcare.product.entity.ProductCarouselImage;
 import com.petcare.product.entity.ProductCategory;
+import com.petcare.product.entity.ProductDetailImage;
 import com.petcare.product.entity.ProductImage;
+import com.petcare.product.mapper.ProductCarouselImageMapper;
 import com.petcare.product.mapper.ProductCategoryMapper;
+import com.petcare.product.mapper.ProductDetailImageMapper;
 import com.petcare.product.mapper.ProductImageMapper;
 import com.petcare.product.mapper.ProductMapper;
 import com.petcare.product.service.ProductCatalogApplicationService;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -30,14 +36,20 @@ public class ProductCatalogApplicationServiceImpl implements ProductCatalogAppli
     private final ProductCategoryMapper categoryMapper;
     private final ProductMapper productMapper;
     private final ProductImageMapper imageMapper;
+    private final ProductDetailImageMapper detailImageMapper;
+    private final ProductCarouselImageMapper carouselImageMapper;
 
     public ProductCatalogApplicationServiceImpl(
             ProductCategoryMapper categoryMapper,
             ProductMapper productMapper,
-            ProductImageMapper imageMapper) {
+            ProductImageMapper imageMapper,
+            ProductDetailImageMapper detailImageMapper,
+            ProductCarouselImageMapper carouselImageMapper) {
         this.categoryMapper = categoryMapper;
         this.productMapper = productMapper;
         this.imageMapper = imageMapper;
+        this.detailImageMapper = detailImageMapper;
+        this.carouselImageMapper = carouselImageMapper;
     }
 
     @Override
@@ -54,12 +66,18 @@ public class ProductCatalogApplicationServiceImpl implements ProductCatalogAppli
     }
 
     @Override
-    public PageResponse<ProductSummaryResponse> listProducts(Long categoryId, int page, int size) {
+    public PageResponse<ProductSummaryResponse> listProducts(Long categoryId, String keyword, int page, int size) {
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Product::getStatus, "ON_SALE")
                .eq(Product::getDeleted, 0);
         if (categoryId != null) {
             wrapper.eq(Product::getCategoryId, categoryId);
+        }
+        if (StringUtils.hasText(keyword)) {
+            String normalizedKeyword = keyword.trim();
+            wrapper.and(w -> w.like(Product::getName, normalizedKeyword)
+                    .or()
+                    .like(Product::getDescription, normalizedKeyword));
         }
         wrapper.orderByAsc(Product::getSort);
 
@@ -99,10 +117,41 @@ public class ProductCatalogApplicationServiceImpl implements ProductCatalogAppli
                 .map(ProductImage::getImageUrl)
                 .toList();
 
+        LambdaQueryWrapper<ProductDetailImage> detailImgWrapper = new LambdaQueryWrapper<>();
+        detailImgWrapper.eq(ProductDetailImage::getProductId, productId)
+                .orderByAsc(ProductDetailImage::getSort);
+        List<String> detailImageUrls = detailImageMapper.selectList(detailImgWrapper).stream()
+                .map(ProductDetailImage::getImageUrl)
+                .toList();
+
         return new ProductDetailResponse(
                 product.getId(), product.getCategoryId(), categoryName,
                 product.getName(), product.getCoverUrl(), product.getPrice(),
                 product.getStock(), product.getSalesCount(), product.getDescription(),
-                product.getPickupOnly(), imageUrls);
+                product.getPickupOnly(), imageUrls, detailImageUrls);
+    }
+
+    @Override
+    public List<ProductCarouselImageResponse> listCarouselImages() {
+        LambdaQueryWrapper<ProductCarouselImage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProductCarouselImage::getStatus, "ACTIVE")
+               .eq(ProductCarouselImage::getDeleted, 0)
+               .orderByAsc(ProductCarouselImage::getSort)
+               .orderByAsc(ProductCarouselImage::getCreateTime);
+
+        return carouselImageMapper.selectList(wrapper).stream()
+                .map(this::toCarouselImageResponse)
+                .toList();
+    }
+
+    private ProductCarouselImageResponse toCarouselImageResponse(ProductCarouselImage image) {
+        return new ProductCarouselImageResponse(
+                image.getId(),
+                image.getTitle(),
+                image.getImageUrl(),
+                image.getLinkType(),
+                image.getLinkTargetId(),
+                image.getStatus(),
+                image.getSort());
     }
 }

@@ -23,6 +23,7 @@ import com.petcare.community.mapper.TopicMapper;
 import com.petcare.moderation.domain.MatchedSensitiveWord;
 import com.petcare.moderation.dto.ContentReviewResult;
 import com.petcare.moderation.service.ContentModerationService;
+import com.petcare.notification.service.NotificationService;
 import com.petcare.user.entity.Pet;
 import com.petcare.user.mapper.PetMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -70,6 +71,9 @@ class CommunityPostApplicationServiceTest {
 
     @Mock
     private ContentModerationService moderationService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private CommunityPostApplicationService service;
@@ -153,7 +157,8 @@ class CommunityPostApplicationServiceTest {
         @DisplayName("With no sensitive words -> PUBLISHED status, publishTime set")
         void publishedWhenNoSensitiveWords() {
             // Arrange
-            PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "我家猫咪", "今天天气真好");
+            PostCreateRequest request = new PostCreateRequest(
+                    TOPIC_ID, PET_ID, "我家猫咪", "今天天气真好", List.of(), List.of());
             Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
             when(petMapper.selectById(PET_ID)).thenReturn(buildPet(PET_ID, USER_ID));
@@ -186,7 +191,8 @@ class CommunityPostApplicationServiceTest {
         @DisplayName("With level 1 sensitive words -> PENDING_REVIEW status")
         void pendingReviewWhenLevel1SensitiveWords() {
             // Arrange
-            PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "敏感标题", "敏感内容");
+            PostCreateRequest request = new PostCreateRequest(
+                    TOPIC_ID, PET_ID, "敏感标题", "敏感内容", List.of(), List.of());
             Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
             when(petMapper.selectById(PET_ID)).thenReturn(buildPet(PET_ID, USER_ID));
@@ -211,7 +217,8 @@ class CommunityPostApplicationServiceTest {
         @DisplayName("With level 3 sensitive words -> REJECTED status")
         void rejectedWhenLevel3SensitiveWords() {
             // Arrange
-            PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "严重违规", "严重违规内容");
+            PostCreateRequest request = new PostCreateRequest(
+                    TOPIC_ID, PET_ID, "严重违规", "严重违规内容", List.of(), List.of());
             Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
             when(petMapper.selectById(PET_ID)).thenReturn(buildPet(PET_ID, USER_ID));
@@ -236,7 +243,8 @@ class CommunityPostApplicationServiceTest {
         @DisplayName("With invalid topicId -> throws COMMUNITY_TOPIC_NOT_FOUND")
         void throwsWhenTopicIdInvalid() {
             // Arrange
-            PostCreateRequest request = new PostCreateRequest(9999L, PET_ID, "标题", "内容");
+            PostCreateRequest request = new PostCreateRequest(
+                    9999L, PET_ID, "标题", "内容", List.of(), List.of());
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
 
             // Act & Assert
@@ -249,7 +257,8 @@ class CommunityPostApplicationServiceTest {
         @Test
         @DisplayName("With petId not owned by current user -> throws FORBIDDEN")
         void throwsWhenPetDoesNotBelongToCurrentUser() {
-            PostCreateRequest request = new PostCreateRequest(TOPIC_ID, PET_ID, "标题", "内容");
+            PostCreateRequest request = new PostCreateRequest(
+                    TOPIC_ID, PET_ID, "标题", "内容", List.of(), List.of());
             Topic topic = buildTopic(TOPIC_ID, "日常分享", "分享日常", 1, "ACTIVE");
             when(topicMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(topic);
 

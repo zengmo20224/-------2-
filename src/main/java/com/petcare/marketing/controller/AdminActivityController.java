@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/admin/activities")
-@PreAuthorize("hasRole('ADMIN')")
 public class AdminActivityController {
 
     private final MarketingApplicationService applicationService;
@@ -34,15 +33,18 @@ public class AdminActivityController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('marketing:activity:read')")
     public ResponseEntity<ApiResponse<PageResponse<MarketingActivityDtos.AdminActivitySummary>>> listActivities(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String status) {
         PageResponse<MarketingActivityDtos.AdminActivitySummary> result =
-                applicationService.listAdminActivities(page, size);
+                applicationService.listAdminActivities(page, size, status);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('marketing:activity:read')")
     public ResponseEntity<ApiResponse<MarketingActivityDtos.AdminActivityDetail>> getActivity(
             @PathVariable Long id) {
         MarketingActivityDtos.AdminActivityDetail result =
@@ -51,6 +53,7 @@ public class AdminActivityController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('marketing:activity:manage')")
     public ResponseEntity<ApiResponse<MarketingActivityDtos.AdminActivityDetail>> createActivity(
             @Valid @RequestBody MarketingActivityDtos.ActivityUpsertRequest request) {
         MarketingActivityDtos.AdminActivityDetail result =
@@ -59,6 +62,7 @@ public class AdminActivityController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('marketing:activity:manage')")
     public ResponseEntity<ApiResponse<MarketingActivityDtos.AdminActivityDetail>> updateActivity(
             @PathVariable Long id,
             @Valid @RequestBody MarketingActivityDtos.ActivityUpsertRequest request) {
@@ -68,6 +72,7 @@ public class AdminActivityController {
     }
 
     @PostMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('marketing:activity:manage')")
     public ResponseEntity<ApiResponse<Void>> updateActivityStatus(
             @PathVariable Long id,
             @Valid @RequestBody MarketingActivityDtos.ActivityStatusRequest request) {
@@ -76,6 +81,7 @@ public class AdminActivityController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('marketing:activity:manage')")
     public ResponseEntity<ApiResponse<Void>> deleteActivity(@PathVariable Long id) {
         applicationService.deleteActivity(id);
         return ResponseEntity.ok(ApiResponse.ok(null));

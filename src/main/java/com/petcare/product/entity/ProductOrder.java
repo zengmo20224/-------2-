@@ -31,6 +31,15 @@ public class ProductOrder extends BaseEntity {
     @TableField("total_amount")
     private BigDecimal totalAmount;
 
+    @TableField("delivery_method")
+    private String deliveryMethod;
+
+    @TableField("address_id")
+    private Long addressId;
+
+    @TableField("address_snapshot")
+    private String addressSnapshot;
+
     @TableField("payment_method")
     private String paymentMethod;
 

@@ -13,23 +13,42 @@ import com.petcare.community.dto.PostCreateRequest;
 import com.petcare.community.dto.PostDetailResponse;
 import com.petcare.community.dto.PostResponse;
 import com.petcare.community.dto.PublicCommentResponse;
+import com.petcare.community.dto.PublicCommentTreeResponse;
 import com.petcare.community.dto.PublicPostDetailResponse;
 import com.petcare.community.dto.PublicPostSummaryResponse;
+import com.petcare.community.dto.TagResponse;
 import com.petcare.community.dto.TopicResponse;
+import com.petcare.community.entity.CommentLike;
+import com.petcare.community.entity.CommunityTag;
 import com.petcare.community.entity.Post;
 import com.petcare.community.entity.PostComment;
 import com.petcare.community.entity.PostImage;
+import com.petcare.community.entity.PostTagRel;
 import com.petcare.community.entity.Topic;
+import com.petcare.community.entity.PostLike;
+import com.petcare.community.entity.PostFavorite;
+import com.petcare.community.mapper.CommentLikeMapper;
+import com.petcare.community.mapper.CommunityTagMapper;
 import com.petcare.community.mapper.PostCommentMapper;
+import com.petcare.community.mapper.PostFavoriteMapper;
 import com.petcare.community.mapper.PostImageMapper;
+import com.petcare.community.mapper.PostLikeMapper;
 import com.petcare.community.mapper.PostMapper;
+import com.petcare.community.mapper.PostTagRelMapper;
 import com.petcare.community.mapper.TopicMapper;
 import com.petcare.moderation.dto.ContentReviewResult;
 import com.petcare.moderation.service.ContentModerationService;
+import com.petcare.notification.service.NotificationService;
 import com.petcare.user.entity.Pet;
+import com.petcare.user.entity.User;
 import com.petcare.user.mapper.PetMapper;
+import com.petcare.user.service.UserService;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,19 +65,42 @@ public class CommunityPostApplicationService {
     private final TopicMapper topicMapper;
     private final PetMapper petMapper;
     private final ContentModerationService moderationService;
+    private final CommunityTagMapper tagMapper;
+    private final PostTagRelMapper postTagRelMapper;
+    private final CommentLikeMapper commentLikeMapper;
+    private final PostLikeMapper postLikeMapper;
+    private final PostFavoriteMapper postFavoriteMapper;
+    private final NotificationService notificationService;
+    private final UserService userService;
+
+    private static final int MAX_TAGS_PER_POST = 3;
 
     public CommunityPostApplicationService(PostMapper postMapper,
                                             PostCommentMapper commentMapper,
                                             PostImageMapper imageMapper,
                                             TopicMapper topicMapper,
                                             PetMapper petMapper,
-                                            ContentModerationService moderationService) {
+                                            ContentModerationService moderationService,
+                                            CommunityTagMapper tagMapper,
+                                            PostTagRelMapper postTagRelMapper,
+                                            CommentLikeMapper commentLikeMapper,
+                                            PostLikeMapper postLikeMapper,
+                                            PostFavoriteMapper postFavoriteMapper,
+                                            NotificationService notificationService,
+                                            UserService userService) {
         this.postMapper = postMapper;
         this.commentMapper = commentMapper;
         this.imageMapper = imageMapper;
         this.topicMapper = topicMapper;
         this.petMapper = petMapper;
         this.moderationService = moderationService;
+        this.tagMapper = tagMapper;
+        this.postTagRelMapper = postTagRelMapper;
+        this.commentLikeMapper = commentLikeMapper;
+        this.postLikeMapper = postLikeMapper;
+        this.postFavoriteMapper = postFavoriteMapper;
+        this.notificationService = notificationService;
+        this.userService = userService;
     }
 
     // ==================== Topic Queries ====================
@@ -145,7 +187,62 @@ public class CommunityPostApplicationService {
 
         postMapper.insert(post);
 
+        // Process tags (max 3)
+        List<String> tagNames = request.tags();
+        if (tagNames != null && !tagNames.isEmpty()) {
+            linkTags(post.getId(), tagNames);
+        }
+
+        // Process images (max 9)
+        List<String> imageUrls = request.imageUrls();
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            savePostImages(post.getId(), imageUrls);
+        }
+
         return toPostResponse(post);
+    }
+
+    /**
+     * Deletes a post (logical delete). Only the post author can delete.
+     * Also logical deletes associated comments, images, and tag relations.
+     */
+    @Transactional
+    public void deletePost(Long currentUserId, Long postId) {
+        Post post = postMapper.selectOne(
+                new LambdaQueryWrapper<Post>()
+                        .eq(Post::getId, postId)
+                        .eq(Post::getDeleted, 0)
+        );
+        if (post == null) {
+            throw new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND, "帖子不存在");
+        }
+        if (!post.getUserId().equals(currentUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "只能删除自己的帖子");
+        }
+
+        // Logical delete the post (deleteById triggers @TableLogic)
+        postMapper.deleteById(postId);
+
+        // Logical delete associated comments
+        List<PostComment> comments = commentMapper.selectList(
+                new LambdaQueryWrapper<PostComment>()
+                        .eq(PostComment::getPostId, postId)
+        );
+        for (PostComment c : comments) {
+            commentMapper.deleteById(c.getId());
+        }
+
+        // Delete associated images
+        imageMapper.delete(
+                new LambdaQueryWrapper<PostImage>()
+                        .eq(PostImage::getPostId, postId)
+        );
+
+        // Delete tag relations
+        postTagRelMapper.delete(
+                new LambdaQueryWrapper<PostTagRel>()
+                        .eq(PostTagRel::getPostId, postId)
+        );
     }
 
     /**
@@ -256,6 +353,13 @@ public class CommunityPostApplicationService {
         if ("PUBLISHED".equals(modResult.contentStatus())) {
             post.setCommentCount(post.getCommentCount() + 1);
             postMapper.updateById(post);
+
+            // Notify post author
+            String snippet = request.content().length() > 50
+                    ? request.content().substring(0, 50) + "..."
+                    : request.content();
+            notificationService.createNotification(post.getUserId(), currentUserId,
+                    "COMMENT", postId, comment.getId(), snippet);
         }
 
         return toCommentResponse(comment);
@@ -294,7 +398,7 @@ public class CommunityPostApplicationService {
      * Lists published posts for anonymous readers. Only PUBLISHED, non-deleted posts
      * are returned, without private identifiers or internal status.
      */
-    public PageResponse<PublicPostSummaryResponse> listPublicPosts(Long topicId, int page, int size) {
+    public PageResponse<PublicPostSummaryResponse> listPublicPosts(Long topicId, String keyword, String tag, int page, int size) {
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
                 .eq(Post::getStatus, "PUBLISHED")
                 .eq(Post::getDeleted, 0);
@@ -302,11 +406,61 @@ public class CommunityPostApplicationService {
         if (topicId != null) {
             wrapper.eq(Post::getTopicId, topicId);
         }
+        if (keyword != null && !keyword.isBlank()) {
+            String trimmed = keyword.trim();
+            wrapper.and(w -> w.like(Post::getTitle, trimmed).or().like(Post::getContent, trimmed));
+        }
+
+        // Filter by tag name: find tag ID, then post IDs from post_tag_rel
+        if (tag != null && !tag.isBlank()) {
+            String trimmedTag = tag.trim();
+            CommunityTag tagEntity = tagMapper.selectOne(
+                    new LambdaQueryWrapper<CommunityTag>()
+                            .eq(CommunityTag::getName, trimmedTag)
+                            .eq(CommunityTag::getDeleted, 0)
+            );
+            if (tagEntity == null) {
+                // No such tag → empty result
+                return PageResponse.of(Collections.emptyList(), 0L, page, size);
+            }
+            List<PostTagRel> rels = postTagRelMapper.selectList(
+                    new LambdaQueryWrapper<PostTagRel>()
+                            .eq(PostTagRel::getTagId, tagEntity.getId())
+            );
+            if (rels.isEmpty()) {
+                return PageResponse.of(Collections.emptyList(), 0L, page, size);
+            }
+            List<Long> postIds = rels.stream().map(PostTagRel::getPostId).toList();
+            wrapper.in(Post::getId, postIds);
+        }
+
         wrapper.orderByDesc(Post::getPublishTime);
 
         Page<Post> pageResult = postMapper.selectPage(new Page<>(page, size), wrapper);
-        List<PublicPostSummaryResponse> items = pageResult.getRecords().stream()
-                .map(this::toPublicPostSummary)
+        List<Post> posts = pageResult.getRecords();
+
+        // Batch load tags for all posts in this page
+        Map<Long, List<String>> tagsByPostId = loadTagsForPosts(posts);
+
+        // Batch load author info
+        Map<Long, AuthorInfo> authorByUserId = loadAuthorInfo(
+                posts.stream().map(Post::getUserId).toList()
+        );
+
+        // Batch load cover images
+        Map<Long, List<String>> imagesByPostId = loadImageUrls(
+                posts.stream().map(Post::getId).toList()
+        );
+
+        List<PublicPostSummaryResponse> items = posts.stream()
+                .map(p -> {
+                    AuthorInfo author = authorByUserId.get(p.getUserId());
+                    return toPublicPostSummary(p,
+                            tagsByPostId.getOrDefault(p.getId(), Collections.emptyList()),
+                            author != null ? author.name() : null,
+                            author != null ? author.avatar() : null,
+                            imagesByPostId.getOrDefault(p.getId(), Collections.emptyList()));
+                })
                 .toList();
         return PageResponse.of(items, pageResult.getTotal(), page, size);
     }
@@ -333,22 +487,28 @@ public class CommunityPostApplicationService {
                         .orderByAsc(PostImage::getSort)
         ).stream().map(PostImage::getImageUrl).toList();
 
+        List<String> tags = loadTagsForPost(postId);
+
+        // Load author info
+        AuthorInfo author = loadAuthorInfo(List.of(post.getUserId())).get(post.getUserId());
+
         return new PublicPostDetailResponse(
                 post.getId(), post.getTopicId(),
                 post.getTitle(), post.getContent(),
                 post.getViewCount(), post.getLikeCount(), post.getCommentCount(),
                 post.getFavoriteCount(), post.getPublishTime(), post.getCreateTime(),
-                imageUrls
+                imageUrls,
+                tags,
+                author != null ? author.name() : null,
+                author != null ? author.avatar() : null
         );
     }
 
     /**
      * Lists published comments under a published post for anonymous readers.
-     * The parent post must be PUBLISHED and non-deleted; otherwise a safe 404 is
-     * returned so pending/rejected/hidden posts cannot be probed via comments.
-     * Only PUBLISHED, non-deleted comments are returned.
+     * Returns a tree structure: top-level comments with nested replies.
      */
-    public PageResponse<PublicCommentResponse> listPublicComments(Long postId, int page, int size) {
+    public List<PublicCommentTreeResponse> listPublicCommentsTree(Long postId) {
         Long postCount = postMapper.selectCount(
                 new LambdaQueryWrapper<Post>()
                         .eq(Post::getId, postId)
@@ -359,15 +519,259 @@ public class CommunityPostApplicationService {
             throw new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND, "帖子不存在");
         }
 
-        LambdaQueryWrapper<PostComment> wrapper = new LambdaQueryWrapper<PostComment>()
-                .eq(PostComment::getPostId, postId)
-                .eq(PostComment::getStatus, "PUBLISHED")
-                .eq(PostComment::getDeleted, 0)
-                .orderByAsc(PostComment::getCreateTime);
+        // Load all published, non-deleted comments for this post
+        List<PostComment> allComments = commentMapper.selectList(
+                new LambdaQueryWrapper<PostComment>()
+                        .eq(PostComment::getPostId, postId)
+                        .eq(PostComment::getStatus, "PUBLISHED")
+                        .eq(PostComment::getDeleted, 0)
+                        .orderByAsc(PostComment::getCreateTime)
+        );
 
-        Page<PostComment> pageResult = commentMapper.selectPage(new Page<>(page, size), wrapper);
-        List<PublicCommentResponse> items = pageResult.getRecords().stream()
-                .map(this::toPublicCommentResponse)
+        // Partition into top-level and replies
+        List<PostComment> topLevel = allComments.stream()
+                .filter(c -> c.getParentId() == null)
+                .toList();
+
+        Map<Long, List<PostComment>> repliesByParent = allComments.stream()
+                .filter(c -> c.getParentId() != null)
+                .collect(Collectors.groupingBy(PostComment::getParentId));
+
+        // Batch load author info for all commenters
+        Map<Long, AuthorInfo> authorByUserId = loadAuthorInfo(
+                allComments.stream().map(PostComment::getUserId).toList()
+        );
+
+        return topLevel.stream()
+                .map(c -> toCommentTree(c, repliesByParent, authorByUserId))
+                .toList();
+    }
+
+    /**
+     * Deletes a comment (logical delete). Only the comment author can delete.
+     * Decrement post comment count.
+     */
+    @Transactional
+    public void deleteComment(Long currentUserId, Long commentId) {
+        PostComment comment = commentMapper.selectOne(
+                new LambdaQueryWrapper<PostComment>()
+                        .eq(PostComment::getId, commentId)
+                        .eq(PostComment::getDeleted, 0)
+        );
+        if (comment == null) {
+            throw new BusinessException(ErrorCode.COMMUNITY_COMMENT_NOT_FOUND, "评论不存在");
+        }
+        if (!comment.getUserId().equals(currentUserId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "只能删除自己的评论");
+        }
+
+        // Logical delete this comment (deleteById triggers @TableLogic)
+        commentMapper.deleteById(commentId);
+
+        // Also logical delete all child replies (if this is a top-level comment)
+        List<PostComment> children = commentMapper.selectList(
+                new LambdaQueryWrapper<PostComment>()
+                        .eq(PostComment::getParentId, commentId)
+        );
+        for (PostComment child : children) {
+            commentMapper.deleteById(child.getId());
+        }
+
+        // Decrement post comment count (count this comment + its replies)
+        int removedCount = 1 + children.size();
+        Post post = postMapper.selectById(comment.getPostId());
+        if (post != null) {
+            post.setCommentCount(Math.max(0, post.getCommentCount() - removedCount));
+            postMapper.updateById(post);
+        }
+    }
+
+    /**
+     * Likes a comment. Idempotent.
+     */
+    @Transactional
+    public void likeComment(Long currentUserId, Long commentId) {
+        PostComment comment = commentMapper.selectOne(
+                new LambdaQueryWrapper<PostComment>()
+                        .eq(PostComment::getId, commentId)
+                        .eq(PostComment::getStatus, "PUBLISHED")
+                        .eq(PostComment::getDeleted, 0)
+        );
+        if (comment == null) {
+            throw new BusinessException(ErrorCode.COMMUNITY_COMMENT_NOT_FOUND, "评论不存在");
+        }
+
+        boolean alreadyLiked = commentLikeMapper.exists(
+                new LambdaQueryWrapper<CommentLike>()
+                        .eq(CommentLike::getCommentId, commentId)
+                        .eq(CommentLike::getUserId, currentUserId)
+        );
+        if (alreadyLiked) {
+            return;
+        }
+
+        CommentLike like = new CommentLike();
+        like.setCommentId(commentId);
+        like.setUserId(currentUserId);
+        try {
+            commentLikeMapper.insert(like);
+        } catch (org.springframework.dao.DuplicateKeyException ex) {
+            return;
+        }
+
+        comment.setLikeCount(comment.getLikeCount() + 1);
+        commentMapper.updateById(comment);
+    }
+
+    /**
+     * Removes a like from a comment. Idempotent.
+     */
+    @Transactional
+    public void unlikeComment(Long currentUserId, Long commentId) {
+        PostComment comment = commentMapper.selectOne(
+                new LambdaQueryWrapper<PostComment>()
+                        .eq(PostComment::getId, commentId)
+                        .eq(PostComment::getDeleted, 0)
+        );
+        if (comment == null) {
+            return;
+        }
+
+        CommentLike existing = commentLikeMapper.selectOne(
+                new LambdaQueryWrapper<CommentLike>()
+                        .eq(CommentLike::getCommentId, commentId)
+                        .eq(CommentLike::getUserId, currentUserId)
+        );
+        if (existing == null) {
+            return;
+        }
+
+        commentLikeMapper.deleteById(existing.getId());
+        comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+        commentMapper.updateById(comment);
+    }
+
+    // ==================== Personal Community Center ====================
+
+    /**
+     * Lists current user's posts (all statuses, non-deleted). Paginated.
+     */
+    public PageResponse<PublicPostSummaryResponse> listMyPosts(Long userId, int page, int size) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
+                .eq(Post::getUserId, userId)
+                .eq(Post::getDeleted, 0)
+                .orderByDesc(Post::getCreateTime);
+
+        Page<Post> pageResult = postMapper.selectPage(new Page<>(page, size), wrapper);
+        List<Post> posts = pageResult.getRecords();
+
+        Map<Long, List<String>> tagsByPostId = loadTagsForPosts(posts);
+        Map<Long, AuthorInfo> authorByUserId = loadAuthorInfo(
+                posts.stream().map(Post::getUserId).toList()
+        );
+        Map<Long, List<String>> imagesByPostId = loadImageUrls(
+                posts.stream().map(Post::getId).toList()
+        );
+
+        List<PublicPostSummaryResponse> items = posts.stream()
+                .map(p -> {
+                    AuthorInfo author = authorByUserId.get(p.getUserId());
+                    return toPublicPostSummary(p,
+                            tagsByPostId.getOrDefault(p.getId(), Collections.emptyList()),
+                            author != null ? author.name() : null,
+                            author != null ? author.avatar() : null,
+                            imagesByPostId.getOrDefault(p.getId(), Collections.emptyList()));
+                })
+                .toList();
+        return PageResponse.of(items, pageResult.getTotal(), page, size);
+    }
+
+    /**
+     * Lists posts the current user has liked. Only PUBLISHED posts are returned.
+     */
+    public PageResponse<PublicPostSummaryResponse> listMyLikedPosts(Long userId, int page, int size) {
+        List<PostLike> likes = postLikeMapper.selectList(
+                new LambdaQueryWrapper<PostLike>()
+                        .eq(PostLike::getUserId, userId)
+        );
+
+        if (likes.isEmpty()) {
+            return PageResponse.empty(page, size);
+        }
+
+        List<Long> likedPostIds = likes.stream().map(PostLike::getPostId).toList();
+
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
+                .in(Post::getId, likedPostIds)
+                .eq(Post::getStatus, "PUBLISHED")
+                .eq(Post::getDeleted, 0)
+                .orderByDesc(Post::getPublishTime);
+
+        Page<Post> pageResult = postMapper.selectPage(new Page<>(page, size), wrapper);
+        List<Post> posts = pageResult.getRecords();
+
+        Map<Long, List<String>> tagsByPostId = loadTagsForPosts(posts);
+        Map<Long, AuthorInfo> authorByUserId = loadAuthorInfo(
+                posts.stream().map(Post::getUserId).toList()
+        );
+        Map<Long, List<String>> imagesByPostId = loadImageUrls(
+                posts.stream().map(Post::getId).toList()
+        );
+
+        List<PublicPostSummaryResponse> items = posts.stream()
+                .map(p -> {
+                    AuthorInfo author = authorByUserId.get(p.getUserId());
+                    return toPublicPostSummary(p,
+                            tagsByPostId.getOrDefault(p.getId(), Collections.emptyList()),
+                            author != null ? author.name() : null,
+                            author != null ? author.avatar() : null,
+                            imagesByPostId.getOrDefault(p.getId(), Collections.emptyList()));
+                })
+                .toList();
+        return PageResponse.of(items, pageResult.getTotal(), page, size);
+    }
+
+    /**
+     * Lists posts the current user has favorited. Only PUBLISHED posts are returned.
+     */
+    public PageResponse<PublicPostSummaryResponse> listMyFavoritedPosts(Long userId, int page, int size) {
+        List<PostFavorite> favorites = postFavoriteMapper.selectList(
+                new LambdaQueryWrapper<PostFavorite>()
+                        .eq(PostFavorite::getUserId, userId)
+        );
+
+        if (favorites.isEmpty()) {
+            return PageResponse.empty(page, size);
+        }
+
+        List<Long> favoritedPostIds = favorites.stream().map(PostFavorite::getPostId).toList();
+
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<Post>()
+                .in(Post::getId, favoritedPostIds)
+                .eq(Post::getStatus, "PUBLISHED")
+                .eq(Post::getDeleted, 0)
+                .orderByDesc(Post::getPublishTime);
+
+        Page<Post> pageResult = postMapper.selectPage(new Page<>(page, size), wrapper);
+        List<Post> posts = pageResult.getRecords();
+
+        Map<Long, List<String>> tagsByPostId = loadTagsForPosts(posts);
+        Map<Long, AuthorInfo> authorByUserId = loadAuthorInfo(
+                posts.stream().map(Post::getUserId).toList()
+        );
+        Map<Long, List<String>> imagesByPostId = loadImageUrls(
+                posts.stream().map(Post::getId).toList()
+        );
+
+        List<PublicPostSummaryResponse> items = posts.stream()
+                .map(p -> {
+                    AuthorInfo author = authorByUserId.get(p.getUserId());
+                    return toPublicPostSummary(p,
+                            tagsByPostId.getOrDefault(p.getId(), Collections.emptyList()),
+                            author != null ? author.name() : null,
+                            author != null ? author.avatar() : null,
+                            imagesByPostId.getOrDefault(p.getId(), Collections.emptyList()));
+                })
                 .toList();
         return PageResponse.of(items, pageResult.getTotal(), page, size);
     }
@@ -391,12 +795,18 @@ public class CommunityPostApplicationService {
         );
     }
 
-    private PublicPostSummaryResponse toPublicPostSummary(Post post) {
+    private PublicPostSummaryResponse toPublicPostSummary(Post post, List<String> tags,
+                                                            String authorName, String authorAvatar,
+                                                            List<String> imageUrls) {
         return new PublicPostSummaryResponse(
                 post.getId(), post.getTopicId(),
                 post.getTitle(), post.getContent(),
                 post.getViewCount(), post.getLikeCount(), post.getCommentCount(),
-                post.getFavoriteCount(), post.getPublishTime(), post.getCreateTime()
+                post.getFavoriteCount(), post.getPublishTime(), post.getCreateTime(),
+                imageUrls,
+                tags,
+                authorName,
+                authorAvatar
         );
     }
 
@@ -404,6 +814,23 @@ public class CommunityPostApplicationService {
         return new PublicCommentResponse(
                 comment.getId(), comment.getParentId(),
                 comment.getContent(), comment.getLikeCount(), comment.getCreateTime()
+        );
+    }
+
+    private PublicCommentTreeResponse toCommentTree(PostComment comment,
+                                                     Map<Long, List<PostComment>> repliesByParent,
+                                                     Map<Long, AuthorInfo> authorByUserId) {
+        List<PostComment> childComments = repliesByParent.getOrDefault(comment.getId(), Collections.emptyList());
+        List<PublicCommentTreeResponse> replies = childComments.stream()
+                .map(child -> toCommentTree(child, repliesByParent, authorByUserId))
+                .toList();
+        AuthorInfo author = authorByUserId.get(comment.getUserId());
+        return new PublicCommentTreeResponse(
+                comment.getId(), comment.getParentId(),
+                comment.getContent(), comment.getLikeCount(), comment.getCreateTime(),
+                author != null ? author.name() : null,
+                author != null ? author.avatar() : null,
+                replies
         );
     }
 
@@ -419,5 +846,200 @@ public class CommunityPostApplicationService {
         if (!currentUserId.equals(pet.getUserId())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "不能关联其他用户的宠物");
         }
+    }
+
+    // ==================== User Helpers ====================
+
+    /** Simple record to hold public author info. */
+    private record AuthorInfo(String name, String avatar) {}
+
+    /**
+     * Batch loads author info (nickname + avatar) for a set of user IDs.
+     */
+    private Map<Long, AuthorInfo> loadAuthorInfo(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> distinctIds = userIds.stream().distinct().toList();
+        return userService.listByIds(distinctIds).stream()
+                .collect(Collectors.toMap(
+                        User::getId,
+                        u -> new AuthorInfo(u.getNickname(), u.getAvatarUrl())
+                ));
+    }
+
+    // ==================== Image Helpers ====================
+
+    /**
+     * Saves post images to post_image table. Max 9 per post.
+     */
+    private void savePostImages(Long postId, List<String> imageUrls) {
+        List<String> validUrls = imageUrls.stream()
+                .filter(u -> u != null && !u.isBlank())
+                .limit(9)
+                .toList();
+
+        for (int i = 0; i < validUrls.size(); i++) {
+            PostImage img = new PostImage();
+            img.setId(IdWorker.getId());
+            img.setPostId(postId);
+            img.setImageUrl(validUrls.get(i));
+            img.setSort(i);
+            imageMapper.insert(img);
+        }
+    }
+
+    /**
+     * Batch loads all image URLs (capped at 6 per post, sorted by sort order) for multiple posts.
+     */
+    private Map<Long, List<String>> loadImageUrls(List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<PostImage> images = imageMapper.selectList(
+                new LambdaQueryWrapper<PostImage>()
+                        .in(PostImage::getPostId, postIds)
+                        .orderByAsc(PostImage::getSort)
+        );
+        return images.stream()
+                .collect(Collectors.groupingBy(
+                        PostImage::getPostId,
+                        Collectors.mapping(PostImage::getImageUrl, Collectors.toList())
+                ))
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        java.util.Map.Entry::getKey,
+                        e -> e.getValue().stream().limit(6).toList()
+                ));
+    }
+
+    // ==================== Tag Helpers ====================
+
+    /**
+     * Links tags to a post: find-or-create each tag, save relations, increment usage count.
+     * Enforces max 3 tags; extra tags are silently ignored.
+     */
+    private void linkTags(Long postId, List<String> tagNames) {
+        // Normalize: trim, lowercase, deduplicate, max 3
+        List<String> normalized = tagNames.stream()
+                .filter(n -> n != null && !n.isBlank())
+                .map(String::trim)
+                .map(n -> n.startsWith("#") ? n.substring(1) : n)
+                .map(String::toLowerCase)
+                .distinct()
+                .limit(MAX_TAGS_PER_POST)
+                .toList();
+
+        if (normalized.isEmpty()) {
+            return;
+        }
+
+        for (String tagName : normalized) {
+            CommunityTag tag = tagMapper.selectOne(
+                    new LambdaQueryWrapper<CommunityTag>()
+                            .eq(CommunityTag::getName, tagName)
+                            .eq(CommunityTag::getDeleted, 0)
+            );
+
+            if (tag == null) {
+                tag = new CommunityTag();
+                tag.setId(IdWorker.getId());
+                tag.setName(tagName);
+                tag.setUsageCount(1);
+                tagMapper.insert(tag);
+            } else {
+                tag.setUsageCount(tag.getUsageCount() + 1);
+                tagMapper.updateById(tag);
+            }
+
+            PostTagRel rel = new PostTagRel();
+            rel.setId(IdWorker.getId());
+            rel.setPostId(postId);
+            rel.setTagId(tag.getId());
+            postTagRelMapper.insert(rel);
+        }
+    }
+
+    /**
+     * Loads tag names for a single post.
+     */
+    private List<String> loadTagsForPost(Long postId) {
+        List<PostTagRel> rels = postTagRelMapper.selectList(
+                new LambdaQueryWrapper<PostTagRel>()
+                        .eq(PostTagRel::getPostId, postId)
+        );
+        if (rels.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> tagIds = rels.stream().map(PostTagRel::getTagId).toList();
+        List<CommunityTag> tags = tagMapper.selectBatchIds(tagIds);
+        return tags.stream()
+                .filter(t -> t.getDeleted() == null || t.getDeleted() == 0)
+                .map(CommunityTag::getName)
+                .toList();
+    }
+
+    /**
+     * Batch loads tag names for multiple posts. Returns a map of postId → tag names.
+     */
+    private Map<Long, List<String>> loadTagsForPosts(List<Post> posts) {
+        if (posts.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+
+        List<PostTagRel> rels = postTagRelMapper.selectList(
+                new LambdaQueryWrapper<PostTagRel>()
+                        .in(PostTagRel::getPostId, postIds)
+        );
+        if (rels.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Long> tagIds = rels.stream().map(PostTagRel::getTagId).distinct().toList();
+        Map<Long, String> tagNameById = tagMapper.selectBatchIds(tagIds).stream()
+                .filter(t -> t.getDeleted() == null || t.getDeleted() == 0)
+                .collect(Collectors.toMap(CommunityTag::getId, CommunityTag::getName));
+
+        return rels.stream()
+                .filter(r -> tagNameById.containsKey(r.getTagId()))
+                .collect(Collectors.groupingBy(
+                        PostTagRel::getPostId,
+                        Collectors.mapping(r -> tagNameById.get(r.getTagId()), Collectors.toList())
+                ));
+    }
+
+    /**
+     * Searches tags by keyword for autocomplete, ordered by usage count desc.
+     */
+    public List<TagResponse> searchTags(String keyword, int limit) {
+        LambdaQueryWrapper<CommunityTag> wrapper = new LambdaQueryWrapper<CommunityTag>()
+                .eq(CommunityTag::getDeleted, 0)
+                .orderByDesc(CommunityTag::getUsageCount)
+                .last("LIMIT " + Math.min(limit, 50));
+
+        if (keyword != null && !keyword.isBlank()) {
+            String trimmed = keyword.trim();
+            String normalized = trimmed.startsWith("#") ? trimmed.substring(1) : trimmed;
+            wrapper.like(CommunityTag::getName, normalized);
+        }
+
+        return tagMapper.selectList(wrapper).stream()
+                .map(t -> new TagResponse(t.getId(), t.getName(), t.getUsageCount()))
+                .toList();
+    }
+
+    /**
+     * Lists popular tags ordered by usage count desc.
+     */
+    public List<TagResponse> popularTags(int limit) {
+        LambdaQueryWrapper<CommunityTag> wrapper = new LambdaQueryWrapper<CommunityTag>()
+                .eq(CommunityTag::getDeleted, 0)
+                .orderByDesc(CommunityTag::getUsageCount)
+                .last("LIMIT " + Math.min(limit, 50));
+
+        return tagMapper.selectList(wrapper).stream()
+                .map(t -> new TagResponse(t.getId(), t.getName(), t.getUsageCount()))
+                .toList();
     }
 }

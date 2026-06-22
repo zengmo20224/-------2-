@@ -1,6 +1,8 @@
 package com.petcare.admin.service;
 
 import com.petcare.admin.dto.AdminManagementDtos.OperationLogView;
+import com.petcare.admin.dto.AdminManagementDtos.ProductCarouselImageView;
+import com.petcare.admin.dto.AdminManagementDtos.ProductCarouselImagesUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.ProductRequest;
 import com.petcare.admin.dto.AdminManagementDtos.ProductView;
 import com.petcare.admin.dto.AdminManagementDtos.ServiceItemRequest;
@@ -14,7 +16,12 @@ import com.petcare.admin.dto.AdminManagementDtos.StoreConfigUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.StoreConfigView;
 import com.petcare.admin.dto.AdminManagementDtos.StoreUpdateRequest;
 import com.petcare.admin.dto.AdminManagementDtos.StoreView;
+import com.petcare.admin.dto.AdminManagementDtos.UserBanRequest;
+import com.petcare.admin.dto.AdminManagementDtos.UserBanResult;
+import com.petcare.admin.dto.AdminManagementDtos.UserView;
+import com.petcare.booking.dto.BookingResponse;
 import com.petcare.common.pagination.PageResponse;
+import com.petcare.product.dto.ProductOrderResponse;
 import java.util.List;
 
 public interface AdminManagementService {
@@ -43,6 +50,17 @@ public interface AdminManagementService {
     ProductView updateProduct(Long id, ProductRequest request, Long operatorId);
     ProductView disableProduct(Long id, Long operatorId);
     ProductView updateProductStock(Long id, Integer stock, Long operatorId);
+    List<ProductCarouselImageView> listProductCarouselImages();
+    List<ProductCarouselImageView> replaceProductCarouselImages(
+            ProductCarouselImagesUpdateRequest request, Long operatorId);
 
     PageResponse<OperationLogView> listOperationLogs(int page, int size, String module);
+
+    // ─── User management ───
+    PageResponse<UserView> listUsers(int page, int size, String status, String keyword);
+    UserView getUser(Long id);
+    UserBanResult banUser(Long id, String reason, Long operatorId);
+    UserView unbanUser(Long id, Long operatorId);
+    PageResponse<BookingResponse> listUserBookings(Long userId, int page, int size);
+    PageResponse<ProductOrderResponse> listUserOrders(Long userId, int page, int size);
 }

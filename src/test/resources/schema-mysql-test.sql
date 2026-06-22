@@ -383,6 +383,15 @@ CREATE TABLE IF NOT EXISTS `product_image` (
   PRIMARY KEY (`id`)
 );
 
+CREATE TABLE IF NOT EXISTS `product_detail_image` (
+  `id`          BIGINT       NOT NULL,
+  `product_id`  BIGINT       NOT NULL,
+  `image_url`   VARCHAR(255) NOT NULL,
+  `sort`        INT          NOT NULL DEFAULT 0,
+  `create_time` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+);
+
 CREATE TABLE IF NOT EXISTS `cart_item` (
   `id`          BIGINT   NOT NULL,
   `user_id`     BIGINT   NOT NULL,
@@ -436,6 +445,7 @@ CREATE TABLE IF NOT EXISTS `marketing_activity` (
   `title`         VARCHAR(100) DEFAULT NULL,
   `activity_type` VARCHAR(32)  NOT NULL DEFAULT 'MIXED',
   `description`   TEXT         DEFAULT NULL,
+  `cover_url`     VARCHAR(255) DEFAULT NULL,
   `start_time`    DATETIME     DEFAULT NULL,
   `end_time`      DATETIME     DEFAULT NULL,
   `status`        VARCHAR(32)  NOT NULL DEFAULT 'DRAFT',

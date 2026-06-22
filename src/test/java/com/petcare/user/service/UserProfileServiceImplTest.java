@@ -82,7 +82,8 @@ class UserProfileServiceImplTest {
         void activeUserCanUpdateProfile() {
             User user = createUser("13800138003", "旧昵称", "ACTIVE");
 
-            UpdateUserProfileRequest request = new UpdateUserProfileRequest("新昵称", "https://example.com/a.png");
+            UpdateUserProfileRequest request = new UpdateUserProfileRequest(
+                    "新昵称", "https://example.com/a.png", null, null, null);
             UserProfileResponse response = userProfileService.updateCurrentProfile(user.getId(), request);
 
             assertThat(response).isNotNull();
@@ -95,7 +96,7 @@ class UserProfileServiceImplTest {
             User user = createUser("13800138004", "禁用更新", "DISABLED");
             String originalNickname = user.getNickname();
 
-            UpdateUserProfileRequest request = new UpdateUserProfileRequest("新昵称", null);
+            UpdateUserProfileRequest request = new UpdateUserProfileRequest("新昵称", null, null, null, null);
             assertThatThrownBy(() -> userProfileService.updateCurrentProfile(user.getId(), request))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.UNAUTHORIZED);
@@ -120,7 +121,7 @@ class UserProfileServiceImplTest {
             userService.updateById(user);
 
             // Update should fail — throws UNAUTHORIZED
-            UpdateUserProfileRequest request = new UpdateUserProfileRequest("新昵称", null);
+            UpdateUserProfileRequest request = new UpdateUserProfileRequest("新昵称", null, null, null, null);
             assertThatThrownBy(() -> userProfileService.updateCurrentProfile(user.getId(), request))
                     .isInstanceOf(BusinessException.class)
                     .extracting("code").isEqualTo(ErrorCode.UNAUTHORIZED);
@@ -138,7 +139,8 @@ class UserProfileServiceImplTest {
             String originalOpenid = user.getOpenid();
             String originalStatus = user.getStatus();
 
-            UpdateUserProfileRequest request = new UpdateUserProfileRequest("更新昵称", "https://cdn.example.com/avatar.png");
+            UpdateUserProfileRequest request = new UpdateUserProfileRequest(
+                    "更新昵称", "https://cdn.example.com/avatar.png", null, null, null);
             userProfileService.updateCurrentProfile(user.getId(), request);
 
             User updated = userService.getById(user.getId());

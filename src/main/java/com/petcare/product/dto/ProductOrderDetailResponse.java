@@ -16,6 +16,8 @@ public record ProductOrderDetailResponse(
         @JsonSerialize(using = SnowflakeIdSerializer.class) Long userId,
         @JsonSerialize(using = SnowflakeIdSerializer.class) Long storeId,
         BigDecimal totalAmount,
+        String deliveryMethod,
+        String addressSnapshot,
         String paymentMethod,
         String paymentStatus,
         String pickupStatus,

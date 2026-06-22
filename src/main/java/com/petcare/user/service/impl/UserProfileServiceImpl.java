@@ -44,6 +44,7 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         // Validate avatarUrl protocol when provided
         validateAvatarUrl(request.avatarUrl());
+        validateAvatarUrl(request.idCardImageUrl());
 
         // Only update allowed fields using explicit LambdaUpdateWrapper
         // ACTIVE condition ensures disabled/deleted users cannot be modified
@@ -51,7 +52,10 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .eq(User::getId, user.getId())
                 .eq(User::getStatus, "ACTIVE")
                 .set(User::getNickname, trimmedNickname)
-                .set(User::getAvatarUrl, request.avatarUrl());
+                .set(User::getAvatarUrl, request.avatarUrl())
+                .set(User::getRealName, request.realName())
+                .set(User::getIdCardNo, request.idCardNo())
+                .set(User::getIdCardImageUrl, request.idCardImageUrl());
         if (!userService.update(updateWrapper)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户不存在或已禁用");
         }
@@ -65,10 +69,12 @@ public class UserProfileServiceImpl implements UserProfileService {
         if (avatarUrl == null || avatarUrl.isBlank()) {
             return;
         }
+        // Allow absolute URLs (http/https) and relative paths (/uploads/...)
         String lower = avatarUrl.toLowerCase();
-        if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
-            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "头像URL只允许http或https协议");
+        if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("/")) {
+            return;
         }
+        throw new BusinessException(ErrorCode.VALIDATION_ERROR, "URL格式无效");
     }
 
     private User getActiveUser(Long userId) {

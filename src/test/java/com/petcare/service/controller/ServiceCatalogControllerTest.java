@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,6 +66,9 @@ class ServiceCatalogControllerTest {
 
     @Autowired
     private JwtTokenService jwtTokenService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private String authToken;
 
@@ -145,6 +149,14 @@ class ServiceCatalogControllerTest {
         ServiceCategory cat = createCategory("美容_sccT_detail", 1);
         ServiceItem item = createItem(cat.getId(), "精洗服务_sccT", "STORE",
                 new BigDecimal("128.00"), 90, "ON_SALE");
+        jdbcTemplate.update("""
+                INSERT INTO service_item_image (id, service_item_id, image_url, sort)
+                VALUES (?, ?, ?, ?)
+                """, 91001L, item.getId(), "https://example.com/service-2.jpg", 2);
+        jdbcTemplate.update("""
+                INSERT INTO service_item_image (id, service_item_id, image_url, sort)
+                VALUES (?, ?, ?, ?)
+                """, 91002L, item.getId(), "https://example.com/service-1.jpg", 1);
 
         mockMvc.perform(get("/api/v1/service-items/" + item.getId())
                         .header("Authorization", "Bearer " + authToken))
@@ -152,7 +164,10 @@ class ServiceCatalogControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.name").value("精洗服务_sccT"))
                 .andExpect(jsonPath("$.data.price").value(128.00))
-                .andExpect(jsonPath("$.data.durationMinutes").value(90));
+                .andExpect(jsonPath("$.data.durationMinutes").value(90))
+                .andExpect(jsonPath("$.data.imageUrls.length()").value(2))
+                .andExpect(jsonPath("$.data.imageUrls[0]").value("https://example.com/service-1.jpg"))
+                .andExpect(jsonPath("$.data.imageUrls[1]").value("https://example.com/service-2.jpg"));
     }
 
     @Test

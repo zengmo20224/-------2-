@@ -27,6 +27,10 @@ public final class ErrorCode {
     public static final String EXPIRED_TOKEN = "expired_token";
     public static final String INTERNAL_ERROR = "internal_error";
 
+    // User ban error codes
+    public static final String USER_BANNED = "user_banned";
+    public static final String PHONE_BANNED = "phone_banned";
+
     // Booking error codes
     public static final String BOOKING_TIME_CONFLICT = "booking_time_conflict";
     public static final String BOOKING_SLOT_UNAVAILABLE = "booking_slot_unavailable";

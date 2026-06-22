@@ -6,6 +6,7 @@ import com.petcare.common.exception.ErrorCode;
 import com.petcare.product.domain.ProductOrderAmountCalculator;
 import com.petcare.product.domain.ProductOrderAmountCalculator.LineSnapshot;
 import com.petcare.product.domain.ProductOrderStateMachine;
+import com.petcare.product.dto.ProductOrderCreateRequest;
 import com.petcare.product.entity.CartItem;
 import com.petcare.product.entity.Product;
 import com.petcare.product.entity.ProductOrder;
@@ -17,6 +18,8 @@ import com.petcare.product.mapper.ProductMapper;
 import com.petcare.product.mapper.ProductOrderItemMapper;
 import com.petcare.product.mapper.ProductOrderMapper;
 import com.petcare.product.service.ProductOrderTransactionService;
+import com.petcare.user.entity.UserAddress;
+import com.petcare.user.mapper.UserAddressMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -44,23 +47,62 @@ public class ProductOrderTransactionServiceImpl implements ProductOrderTransacti
     private final ProductMapper productMapper;
     private final ProductOrderMapper orderMapper;
     private final ProductOrderItemMapper orderItemMapper;
+    private final UserAddressMapper userAddressMapper;
 
     public ProductOrderTransactionServiceImpl(
             CartItemMapper cartItemMapper,
             ProductMapper productMapper,
             ProductOrderMapper orderMapper,
-            ProductOrderItemMapper orderItemMapper) {
+            ProductOrderItemMapper orderItemMapper,
+            UserAddressMapper userAddressMapper) {
         this.cartItemMapper = cartItemMapper;
         this.productMapper = productMapper;
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
+        this.userAddressMapper = userAddressMapper;
+    }
+
+    /**
+     * Builds a single-line address snapshot string for historical orders.
+     * Captured at order time so later edits/deletes of the source address do not
+     * affect what was actually shipped.
+     */
+    private String buildAddressSnapshot(UserAddress addr) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(addr.getContactName() != null ? addr.getContactName() : "");
+        sb.append(" ").append(addr.getContactPhone() != null ? addr.getContactPhone() : "");
+        sb.append(" ");
+        if (addr.getProvince() != null) sb.append(addr.getProvince());
+        if (addr.getCity() != null) sb.append(addr.getCity());
+        if (addr.getDistrict() != null) sb.append(addr.getDistrict());
+        if (addr.getDetailAddress() != null) sb.append(addr.getDetailAddress());
+        return sb.toString().trim();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ProductOrder createOrder(Long currentUserId, Long storeId,
-                                   String contactName, String contactPhone,
-                                   String remark) {
+    public ProductOrder createOrder(Long currentUserId, ProductOrderCreateRequest request) {
+        String deliveryMethod = request.deliveryMethod();
+        boolean isPickup = "PICKUP".equals(deliveryMethod);
+        Long storeId = request.storeId();
+        Long addressId = request.addressId();
+
+        // 0. Validate fulfillment-specific requirements and snapshot the address.
+        //    Address snapshot is captured at order time so later edits/deletes
+        //    of user_address do not corrupt historical orders.
+        String addressSnapshot = null;
+        if (!isPickup) {
+            if (addressId == null) {
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR, "快递配送需选择收货地址");
+            }
+            UserAddress addr = userAddressMapper.selectById(addressId);
+            if (addr == null || (addr.getDeleted() != null && addr.getDeleted() == 1)
+                    || !addr.getUserId().equals(currentUserId)) {
+                throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "收货地址不存在或无权使用");
+            }
+            addressSnapshot = buildAddressSnapshot(addr);
+        }
+
         // 1. Load checked cart items for the current user
         LambdaQueryWrapper<CartItem> cartWrapper = new LambdaQueryWrapper<>();
         cartWrapper.eq(CartItem::getUserId, currentUserId)
@@ -77,7 +119,9 @@ public class ProductOrderTransactionServiceImpl implements ProductOrderTransacti
                 .sorted()
                 .toList();
 
-        // 3. Load products and validate
+        // 3. Load products and validate.
+        //    pickupOnly is only enforced when the customer chose store pickup;
+        //    express orders may include any on-sale product.
         List<Product> products = new ArrayList<>();
         for (Long pid : productIds) {
             Product product = productMapper.selectById(pid);
@@ -86,7 +130,7 @@ public class ProductOrderTransactionServiceImpl implements ProductOrderTransacti
                 throw new BusinessException(ErrorCode.PRODUCT_NOT_ON_SALE,
                         "商品不存在或已下架: " + pid);
             }
-            if (product.getPickupOnly() == null || product.getPickupOnly() != 1) {
+            if (isPickup && (product.getPickupOnly() == null || product.getPickupOnly() != 1)) {
                 throw new BusinessException(ErrorCode.PRODUCT_NOT_PICKUP_ONLY,
                         "商品不支持到店自提: " + product.getName());
             }
@@ -126,13 +170,16 @@ public class ProductOrderTransactionServiceImpl implements ProductOrderTransacti
         order.setUserId(currentUserId);
         order.setStoreId(storeId);
         order.setTotalAmount(totalAmount);
+        order.setDeliveryMethod(deliveryMethod);
+        order.setAddressId(addressId);
+        order.setAddressSnapshot(addressSnapshot);
         order.setPaymentMethod("OFFLINE_STORE");
         order.setPaymentStatus("UNPAID");
         order.setPickupStatus(PickupStatus.WAIT_PREPARE.getCode());
         order.setStatus(ProductOrderStatus.PENDING_CONFIRM.getCode());
-        order.setContactName(contactName);
-        order.setContactPhone(contactPhone);
-        order.setRemark(remark);
+        order.setContactName(request.contactName());
+        order.setContactPhone(request.contactPhone());
+        order.setRemark(request.remark());
         orderMapper.insert(order);
 
         // 8. Create order items (price snapshots)

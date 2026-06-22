@@ -568,9 +568,14 @@ public class BookingApplicationServiceImpl implements BookingApplicationService 
     }
 
     private BookingResponse toResponse(ServiceBooking b) {
+        String serviceItemName = null;
+        if (b.getServiceItemId() != null) {
+            ServiceItem item = serviceItemService.getById(b.getServiceItemId());
+            serviceItemName = item != null ? item.getName() : null;
+        }
         return new BookingResponse(
                 b.getId(), b.getBookingNo(), b.getUserId(), b.getPetId(),
-                b.getStoreId(), b.getServiceItemId(), b.getStaffId(),
+                b.getStoreId(), b.getServiceItemId(), serviceItemName, b.getStaffId(),
                 b.getServiceMode(), b.getBookingDate(), b.getStartTime(), b.getEndTime(),
                 b.getAddressId(), b.getDistanceKm(), b.getContactName(), b.getContactPhone(),
                 b.getPrice(), b.getPaymentMethod(), b.getPaymentStatus(),

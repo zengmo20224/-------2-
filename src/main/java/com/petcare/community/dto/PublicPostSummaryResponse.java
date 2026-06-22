@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.petcare.common.serialization.SnowflakeIdSerializer;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Public-facing post summary for anonymous readers.
@@ -21,6 +22,10 @@ public record PublicPostSummaryResponse(
         Integer commentCount,
         Integer favoriteCount,
         LocalDateTime publishTime,
-        LocalDateTime createTime
+        LocalDateTime createTime,
+        List<String> imageUrls,
+        List<String> tags,
+        String authorName,
+        String authorAvatar
 ) {
 }

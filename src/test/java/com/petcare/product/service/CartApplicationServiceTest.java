@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -111,7 +112,7 @@ class CartApplicationServiceTest {
             // Arrange
             CartItemCreateRequest request = new CartItemCreateRequest(PRODUCT_ID, 2);
             doReturn(defaultProduct).when(productMapper).selectById(PRODUCT_ID);
-            doReturn(1).when(cartItemMapper).upsert(null, USER_ID, PRODUCT_ID, 2);
+            doReturn(1).when(cartItemMapper).upsert(anyLong(), eq(USER_ID), eq(PRODUCT_ID), eq(2));
             doReturn(defaultCartItem).when(cartItemMapper).selectOne(any());
 
             // Act
@@ -127,7 +128,7 @@ class CartApplicationServiceTest {
             assertThat(result.checked()).isTrue();
             assertThat(result.subtotal()).isEqualByComparingTo(new BigDecimal("198.00"));
 
-            verify(cartItemMapper).upsert(null, USER_ID, PRODUCT_ID, 2);
+            verify(cartItemMapper).upsert(anyLong(), eq(USER_ID), eq(PRODUCT_ID), eq(2));
         }
 
         @Test

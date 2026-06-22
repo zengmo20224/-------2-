@@ -13,6 +13,8 @@ public record ProductOrderResponse(
         @JsonSerialize(using = SnowflakeIdSerializer.class) Long id,
         String orderNo,
         BigDecimal totalAmount,
+        String deliveryMethod,
+        String addressSnapshot,
         String paymentMethod,
         String paymentStatus,
         String pickupStatus,
