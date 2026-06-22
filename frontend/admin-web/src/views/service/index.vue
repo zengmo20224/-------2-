@@ -471,10 +471,18 @@ const validateImageLimit = () => {
   return true
 }
 
-const buildPayload = (): ServiceItemCreateParams => ({
-  ...form.value,
-  imageUrls: normalizeImageUrls(form.value.imageUrls),
-})
+const buildPayload = (): ServiceItemCreateParams => {
+  // formRef.validate 已在 submitForm 上游强制校验 categoryId 必填，
+  // 到此处 categoryId 必为 number，断言收紧类型避免 vue-tsc 报错。
+  if (form.value.categoryId === undefined) {
+    throw new Error('服务分类未选择')
+  }
+  return {
+    ...form.value,
+    categoryId: form.value.categoryId,
+    imageUrls: normalizeImageUrls(form.value.imageUrls),
+  }
+}
 
 const submitForm = async () => {
   if (!formRef.value) return
