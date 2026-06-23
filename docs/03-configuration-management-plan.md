@@ -300,16 +300,27 @@ hotfix：`v1.0.1-hf1` 或遵循 SemVer 在 hotfix 分支上递增 PATCH。
 
 ### 7.3 第 16 周配置审计证据（课程要求）
 
-按课程要求提供图片或视频证据，存放于 `docs/audit-evidence/week16/`：
+按课程要求提供图片或视频证据，存放于 `docs/audit-evidence/week16/`。
 
-1. `git-tag-list.png` — 所有基线 tag 截图
-2. `git-branch-list.png` — 分支模型截图
-3. `ci-pipeline-green.png` — Jenkins/GitHub Actions 最近一次全绿构建
-4. `coverage-report.png` — JaCoCo + Vitest 覆盖率截图
-5. `docker-compose-up.png` — `docker-compose up -d` 成功启动截图
-6. `running-system.png` — 浏览器访问三端可运行截图
-7. `change-control-records.png` — 变更申请单与审批记录截图
-8. `config-item-register.png` — 配置项登记表截图
+**已收集的命令文本类证据（自动化导出，见同目录 .md 文件）：**
+
+| 文件 | 对应证据 |
+|---|---|
+| `audit-evidence-text.md` | git tag/branch/log、docker ps、三端可访问、API 数据 |
+| `pca-checklist.md` | 配置项物理一致性核对、基线 tag 一致性 |
+| `jacoco-coverage.md` | JaCoCo 覆盖率（class 93% / line 72% / 843 测试） |
+| `jenkins-build-history.md` | Jenkins 构建历史（多次 SUCCESS 证明 CI 可重复） |
+
+**需人工截图补充的证据（图片）：**
+
+1. `git-tag-list.png` — 所有基线 tag 截图（在 IDE/git GUI 里截 `git tag -l` 输出）
+2. `git-branch-list.png` — 分支模型截图（GitHub 仓库分支列表或 git GUI）
+3. `ci-pipeline-green.png` — Jenkins 最近一次全绿构建截图（Jenkins #28 SUCCESS）
+4. `coverage-report.png` — JaCoCo HTML 报告截图（Jenkins 构建页 → JaCoCo Coverage Report）
+5. `docker-compose-up.png` — docker compose ps 截图（终端执行命令）
+6. `running-system.png` — 浏览器三端访问截图（8080/8081/8082）
+7. `change-control-records.png` — 变更申请单实例截图（docs/变更申请单-实例/）
+8. `config-item-register.png` — 配置项登记表截图（docs/配置项登记表.md）
 9. `audit-video.mp4` — 完整审计过程录屏（可选，加分）
 
 ---
