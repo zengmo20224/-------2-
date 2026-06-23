@@ -116,9 +116,10 @@ pipeline {
         stage('Deployment Config Check') {
             when {
                 // push 到 main/develop 或手动 DEPLOY=true 时执行凭据校验
+                // 注意：单分支 Pipeline 的 when { branch 'main' } 不可靠，
+                // 用 env.GIT_BRANCH 正则匹配（值为 origin/main）
                 anyOf {
-                    branch 'main'
-                    branch 'develop'
+                    expression { env.GIT_BRANCH ==~ /.*(?:main|develop).*/ }
                     expression { params.DEPLOY == true }
                 }
             }
@@ -146,8 +147,7 @@ pipeline {
                 // push 到 main/develop 自动部署（恢复全自动部署能力）；
                 // 或手动 DEPLOY=true 时部署。凭据缺失则跳过但 Pipeline 仍成功。
                 anyOf {
-                    branch 'main'
-                    branch 'develop'
+                    expression { env.GIT_BRANCH ==~ /.*(?:main|develop).*/ }
                     expression { params.DEPLOY == true }
                 }
             }
@@ -171,8 +171,7 @@ pipeline {
         stage('Health Check') {
             when {
                 anyOf {
-                    branch 'main'
-                    branch 'develop'
+                    expression { env.GIT_BRANCH ==~ /.*(?:main|develop).*/ }
                     expression { params.DEPLOY == true }
                 }
                 expression { env.HAS_JWT_CREDENTIAL == 'true' }
