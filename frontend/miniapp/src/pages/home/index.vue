@@ -18,7 +18,7 @@
     >
       <template #action>
         <view class="home-hero__btn" @tap="goBooking">
-          <text class="home-hero__btn-text">开始预约</text>
+          <text class="home-hero__btn-text">开始预约哦</text>
         </view>
       </template>
     </PcHeroCard>
