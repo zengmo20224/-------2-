@@ -13,12 +13,12 @@
 
     <!-- Hero Section -->
     <PcHeroCard
-      title="给它安心的照护时间1"
+      title="给它安心的照护时间"
       subtitle="洗护、美容与上门照护，为宠物安排专业服务"
     >
       <template #action>
         <view class="home-hero__btn" @tap="goBooking">
-          <text class="home-hero__btn-text">开始预约</text>
+          <text class="home-hero__btn-text">开始预约1</text>
         </view>
       </template>
     </PcHeroCard>
