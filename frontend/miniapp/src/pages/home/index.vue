@@ -13,7 +13,7 @@
 
     <!-- Hero Section -->
     <PcHeroCard
-      title="给它安心的照护时间1"
+      title="给它安心的照护时间"
       subtitle="洗护、美容与上门照护，为宠物安排专业服务"
     >
       <template #action>
