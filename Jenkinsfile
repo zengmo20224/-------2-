@@ -115,7 +115,12 @@ pipeline {
 
         stage('Deployment Config Check') {
             when {
-                expression { params.DEPLOY == true }
+                // push 到 main/develop 或手动 DEPLOY=true 时执行凭据校验
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                    expression { params.DEPLOY == true }
+                }
             }
             steps {
                 script {
@@ -130,7 +135,7 @@ pipeline {
                         }
                     } catch (Exception e) {
                         env.HAS_JWT_CREDENTIAL = 'false'
-                        echo "WARNING: ${env.JWT_SECRET_CREDENTIAL_ID} 凭据未配置或校验失败，将跳过 Deploy 阶段（CI 仍判定成功）。原因: ${e.getMessage()}"
+                        echo "WARNING: ${env.JWT_SECRET_CREDENTIAL_ID} 凭据未配置或校验失败。原因: ${e.getMessage()}"
                     }
                 }
             }
@@ -138,28 +143,39 @@ pipeline {
 
         stage('Deploy') {
             when {
-                // 只有 DEPLOY=true 且凭据检查通过时才部署
-                allOf {
+                // push 到 main/develop 自动部署（恢复全自动部署能力）；
+                // 或手动 DEPLOY=true 时部署。凭据缺失则跳过但 Pipeline 仍成功。
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
                     expression { params.DEPLOY == true }
-                    expression { env.HAS_JWT_CREDENTIAL == 'true' }
                 }
             }
             steps {
-                // 滚动重建并等待健康检查通过
-                withCredentials([string(credentialsId: "${env.JWT_SECRET_CREDENTIAL_ID}", variable: 'JWT_SECRET')]) {
-                    bat 'docker compose up -d --wait --remove-orphans'
+                script {
+                    if (env.HAS_JWT_CREDENTIAL == 'false') {
+                        echo "JWT 凭据未配置，跳过 docker compose up（镜像已构建，可手动 docker compose up 生效）"
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+                    // 凭据已校验，滚动重建并等待健康检查通过
+                    withCredentials([string(credentialsId: "${env.JWT_SECRET_CREDENTIAL_ID}", variable: 'JWT_SECRET')]) {
+                        bat 'docker compose up -d --wait --remove-orphans'
+                    }
+                    echo "Deployment complete. Services:"
+                    bat 'docker compose ps'
                 }
-                echo "Deployment complete. Services:"
-                bat 'docker compose ps'
             }
         }
 
         stage('Health Check') {
             when {
-                allOf {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
                     expression { params.DEPLOY == true }
-                    expression { env.HAS_JWT_CREDENTIAL == 'true' }
                 }
+                expression { env.HAS_JWT_CREDENTIAL == 'true' }
             }
             steps {
                 script {
