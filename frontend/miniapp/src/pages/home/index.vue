@@ -3,7 +3,7 @@
     <view class="home-brand">
       <view>
         <text class="home-brand__name">PetCare</text>
-        <text class="home-brand__location">萌宠家园 · 上海徐汇店</text>
+        <text class="home-brand__location">萌宠家园 1· 上海徐汇店</text>
       </view>
       <view class="home-brand__status">
         <view class="home-brand__dot" />
